@@ -6,17 +6,18 @@
   <title>Ellie Chang</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { background:#04080f; overflow:hidden; font-family:'Segoe UI',system-ui,sans-serif; color:#d0e8ff; }
+    :root { --cyan:#71ddff; --ink:#02050b; --panel:rgba(5,10,19,.82); --line:rgba(145,210,255,.14); }
+    body { background:var(--ink); overflow:hidden; font-family:Inter,'Segoe UI',system-ui,sans-serif; color:#d9ecfa; }
     canvas { display:block; }
 
     /* ── Overlays ────────────────────────────────────────── */
     .vignette {
       position:fixed; inset:0; z-index:1; pointer-events:none;
-      background:radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.72) 100%);
+      background:radial-gradient(ellipse at 50% 42%, transparent 32%, rgba(0,3,10,.25) 68%, rgba(0,0,0,.82) 100%),linear-gradient(180deg,rgba(1,4,12,.08),rgba(1,4,12,.38));
     }
     .scanlines {
       position:fixed; inset:0; z-index:2; pointer-events:none;
-      background:repeating-linear-gradient(to bottom, transparent 0, transparent 2px, rgba(0,0,0,0.028) 2px, rgba(0,0,0,0.028) 4px);
+      opacity:.32; background:repeating-linear-gradient(to bottom, transparent 0, transparent 3px, rgba(0,0,0,.035) 3px, rgba(0,0,0,.035) 4px);
     }
 
     /* ── Loading ─────────────────────────────────────────── */
@@ -41,14 +42,14 @@
     @keyframes loadBar { to { width:100%; } }
 
     /* ── Header ──────────────────────────────────────────── */
-    #header { position:fixed; top:28px; left:28px; z-index:40; pointer-events:none; opacity:0; transition:opacity 1s 0.4s; }
+    #header { position:fixed; top:30px; left:32px; z-index:40; pointer-events:none; opacity:0; transition:opacity 1s 0.4s; }
     #header.show { opacity:1; }
-    #header h1 { font-size:1.35rem; font-weight:500; letter-spacing:6px; color:#ffffff; text-shadow:0 0 18px rgba(0,212,255,0.45); }
-    #header p  { font-size:0.78rem; letter-spacing:4px; color:#cce8ff; margin-top:5px; }
+    #header h1 { font-size:1.18rem; font-weight:650; letter-spacing:6px; color:#f4fbff; text-shadow:0 0 22px rgba(0,212,255,.35); }
+    #header p  { font-size:.65rem; letter-spacing:3.2px; color:#6f91a8; margin-top:7px; }
 
     /* ── Hint ────────────────────────────────────────────── */
     #hint { position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
-      font-size:0.62rem; letter-spacing:3px; color:#243a52;
+      font-size:0.59rem; letter-spacing:2.6px; color:#486278;
       pointer-events:none; opacity:0; transition:opacity 1s 0.6s, color 0.4s; z-index:40; white-space:nowrap; }
     #hint.show { opacity:1; }
 
@@ -57,7 +58,7 @@
       display:flex; flex-direction:column; gap:14px; z-index:40;
       opacity:0; transition:opacity 1s 0.5s; }
     #nav.show { opacity:1; }
-    .nav-dot { width:7px; height:7px; border-radius:50%; border:1px solid #1a3550;
+    .nav-dot { width:8px; height:8px; border-radius:50%; border:1px solid #31516b;
       cursor:pointer; transition:all 0.25s; position:relative; }
     .nav-dot:hover,.nav-dot.active { background:#00d4ff; border-color:#00d4ff; box-shadow:0 0 10px #00d4ff88; }
     .nav-dot::after { content:attr(data-label); position:absolute; left:18px; top:50%; transform:translateY(-50%);
@@ -69,11 +70,11 @@
     #labels { position:fixed; inset:0; pointer-events:none; z-index:30; }
     .slabel {
       position:absolute; transform:translate(-50%,-100%);
-      padding:5px 13px; background:rgba(4,12,24,0.88); border:1px solid currentColor;
+      padding:6px 14px; background:rgba(3,9,18,.72); border:1px solid currentColor;
       border-radius:20px; font-size:0.63rem; letter-spacing:3px;
       cursor:pointer; pointer-events:auto;
       transition:background 0.2s, opacity 0.2s, box-shadow 0.2s;
-      white-space:nowrap; backdrop-filter:blur(8px); opacity:0.85;
+      white-space:nowrap; backdrop-filter:blur(12px); opacity:.82;
       margin-top:-8px; user-select:none;
     }
     .slabel:hover { background:rgba(255,255,255,0.06); opacity:1; box-shadow:0 0 16px -4px currentColor; }
@@ -81,8 +82,8 @@
     /* ── Content panel ───────────────────────────────────── */
     #panel {
       position:fixed; top:0; right:0; width:min(480px,100vw); height:100vh;
-      background:rgba(4,8,16,0.97); border-left:1px solid #0e2030;
-      backdrop-filter:blur(24px); padding:56px 32px 40px; overflow-y:auto;
+      background:var(--panel); border-left:1px solid var(--line);
+      backdrop-filter:blur(30px) saturate(125%); padding:64px 38px 44px; overflow-y:auto;
       transform:translateX(100%); transition:transform 0.55s cubic-bezier(0.16,1,0.3,1); z-index:60;
     }
     #panel.open { transform:translateX(0); }
@@ -96,8 +97,8 @@
     #panel-close:hover { border-color:#00d4ff; color:#00d4ff; }
 
     #panel-eyebrow { font-size:0.6rem; letter-spacing:4px; margin-bottom:8px; }
-    #panel-title   { font-size:1.85rem; font-weight:300; line-height:1.15; margin-bottom:24px; }
-    #panel-body    { font-size:0.86rem; line-height:1.8; color:#6888a0; }
+    #panel-title   { font-size:2rem; font-weight:350; letter-spacing:-.025em; line-height:1.12; margin-bottom:26px; }
+    #panel-body    { font-size:.88rem; line-height:1.78; color:#86a2b6; }
     #panel-body strong { color:#d0e8ff; font-weight:500; }
     #panel-body p  { margin-bottom:0.8rem; }
     #panel-body .tag {
@@ -131,6 +132,13 @@
     /* ── Keyboard badge ──────────────────────────────────── */
     .kbd { display:inline-block; padding:1px 6px; background:#0d1e2e; border:1px solid #1a3050;
       border-radius:4px; font-size:0.6rem; color:#4080a0; margin:0 2px; }
+    @media (max-width:700px) {
+      #header { top:20px; left:20px; } #header h1 { font-size:1rem; letter-spacing:4px; }
+      #header p { font-size:.56rem; letter-spacing:2px; } #nav { left:18px; }
+      #hint { bottom:16px; letter-spacing:1.6px; } #panel { padding:58px 24px 34px; }
+      .slabel { font-size:.56rem; letter-spacing:2px; padding:5px 10px; }
+    }
+    @media (prefers-reduced-motion:reduce) { #loading,.load-face,.load-eye,.load-fill { animation:none!important; } }
   </style>
 </head>
 <body>
@@ -283,6 +291,8 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
+if ('outputColorSpace' in renderer && THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace;
+else if ('outputEncoding' in renderer && THREE.sRGBEncoding) renderer.outputEncoding = THREE.sRGBEncoding;
 document.body.insertBefore(renderer.domElement, document.body.firstChild);
 
 var scene  = new THREE.Scene();
@@ -292,8 +302,9 @@ var camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHei
 camera.position.set(0, 8, 10);
 camera.lookAt(0, 0, 0);
 
-// ─── Sky sphere (Hubble-palette nebula) ───────────────────────────────────────
+// ─── Sky sphere (deep indigo nebula) ─────────────────────────────────────────
 
+var skySphere;
 (function() {
   var S = 2048;
   var c = document.createElement('canvas'); c.width = c.height = S;
@@ -305,37 +316,28 @@ camera.lookAt(0, 0, 0);
   // Milky way band — dense star region diagonal
   var mw = x.createLinearGradient(0,S*0.7,S,S*0.3);
   mw.addColorStop(0,'transparent');
-  mw.addColorStop(0.3,'rgba(60,40,120,0.10)');
-  mw.addColorStop(0.5,'rgba(100,70,180,0.18)');
-  mw.addColorStop(0.7,'rgba(60,40,120,0.10)');
+  mw.addColorStop(0.3,'rgba(35,52,100,0.06)');
+  mw.addColorStop(0.5,'rgba(70,92,150,0.12)');
+  mw.addColorStop(0.7,'rgba(35,52,100,0.06)');
   mw.addColorStop(1,'transparent');
   x.fillStyle=mw; x.fillRect(0,0,S,S);
 
-  // ── Hubble palette nebula clouds ──────────────────────────────────────────
-  // Layer 1: massive background hydrogen (deep red-magenta)
-  [{cx:900,cy:800,r:700,col:'rgba(180,10,80,0.55)'},
-   {cx:400,cy:600,r:600,col:'rgba(140,0,60,0.45)'},
-   {cx:1600,cy:400,r:550,col:'rgba(160,20,100,0.40)'},
-  // Layer 2: oxygen (electric blue-teal)
-   {cx:700,cy:500,r:400,col:'rgba(0,140,255,0.50)'},
-   {cx:1400,cy:900,r:380,col:'rgba(20,180,230,0.42)'},
-   {cx:300,cy:1200,r:350,col:'rgba(0,160,220,0.38)'},
-  // Layer 3: sulfur (gold-orange)
-   {cx:1200,cy:300,r:320,col:'rgba(255,130,10,0.38)'},
-   {cx:200,cy:800,r:280,col:'rgba(240,110,20,0.32)'},
-   {cx:1700,cy:1400,r:300,col:'rgba(255,150,30,0.28)'},
-  // Layer 4: combination zones (vivid purple)
-   {cx:800,cy:1000,r:350,col:'rgba(180,20,240,0.42)'},
-   {cx:1500,cy:700,r:300,col:'rgba(150,0,200,0.35)'},
-   {cx:500,cy:300,r:280,col:'rgba(200,40,220,0.32)'},
-  // Layer 5: bright inner cores
-   {cx:850,cy:750,r:180,col:'rgba(255,160,200,0.55)'},
-   {cx:680,cy:520,r:130,col:'rgba(160,220,255,0.60)'},
-   {cx:1350,cy:850,r:120,col:'rgba(255,200,100,0.48)'},
-  // Layer 6: hot blue-white star-forming cores
-   {cx:720,cy:480,r:70, col:'rgba(220,240,255,0.70)'},
-   {cx:860,cy:730,r:60, col:'rgba(255,230,210,0.65)'},
-   {cx:1380,cy:860,r:55, col:'rgba(200,255,255,0.58)'},
+  // Broad, restrained color masses: navy first, then cyan/violet highlights.
+  [{cx:900,cy:800,r:760,col:'rgba(29,43,126,0.34)'},
+   {cx:350,cy:650,r:620,col:'rgba(52,22,122,0.27)'},
+   {cx:1640,cy:420,r:590,col:'rgba(18,61,140,0.25)'},
+   {cx:690,cy:500,r:430,col:'rgba(0,137,190,0.29)'},
+   {cx:1420,cy:920,r:410,col:'rgba(34,105,215,0.25)'},
+   {cx:280,cy:1250,r:390,col:'rgba(0,155,164,0.20)'},
+   {cx:820,cy:1040,r:390,col:'rgba(130,38,175,0.24)'},
+   {cx:1510,cy:710,r:330,col:'rgba(173,38,148,0.19)'},
+   {cx:520,cy:290,r:310,col:'rgba(98,50,200,0.22)'},
+   {cx:1710,cy:1420,r:300,col:'rgba(25,125,180,0.17)'},
+   {cx:860,cy:750,r:190,col:'rgba(150,128,235,0.25)'},
+   {cx:675,cy:520,r:145,col:'rgba(104,210,235,0.28)'},
+   {cx:1370,cy:870,r:130,col:'rgba(209,111,190,0.20)'},
+   {cx:720,cy:480,r:68,col:'rgba(215,244,255,0.48)'},
+   {cx:870,cy:740,r:58,col:'rgba(228,217,255,0.40)'},
   ].forEach(function(cl){
     var g=x.createRadialGradient(cl.cx,cl.cy,0,cl.cx,cl.cy,cl.r);
     g.addColorStop(0,cl.col); g.addColorStop(0.5,cl.col.replace(/[\d.]+\)$/,function(m){return (parseFloat(m)*0.4).toFixed(2)+')'})); g.addColorStop(1,'transparent');
@@ -354,14 +356,14 @@ camera.lookAt(0, 0, 0);
   var starCols=['rgba(255,255,255,','rgba(180,215,255,','rgba(255,220,170,','rgba(255,180,180,','rgba(180,255,230,'];
   for(var si=0;si<1800;si++){
     var sx=rng(si*1.13)*S, sy=rng(si*2.37)*S, sb=rng(si*3.71), sc=Math.floor(rng(si*5.11)*5);
-    x.beginPath(); x.arc(sx,sy,0.3+sb*2.2,0,Math.PI*2);
-    x.fillStyle=starCols[sc]+(0.5+sb*0.5)+')'; x.fill();
+    x.beginPath(); x.arc(sx,sy,0.2+sb*0.9,0,Math.PI*2);
+    x.fillStyle=starCols[sc]+(0.35+sb*0.6)+')'; x.fill();
   }
 
   // Bright "giant" stars with halos + diffraction spikes
-  var giantPos=[[320,280],[1050,180],[1750,580],[480,1100],[1600,1500],[820,1700],[1300,400],[200,600],[1900,900]];
+  var giantPos=[[320,280],[1050,180],[1750,580],[480,1100],[1600,1500]];
   giantPos.forEach(function(p,i){
-    var br=0.4+rng(i*13.7)*0.6, sz=14+br*18;
+    var br=0.4+rng(i*13.7)*0.6, sz=5+br*7;
     // Halo glow
     var h=x.createRadialGradient(p[0],p[1],0,p[0],p[1],sz*2.5);
     h.addColorStop(0,'rgba(255,255,255,0.95)');
@@ -371,7 +373,7 @@ camera.lookAt(0, 0, 0);
     h.addColorStop(1,'transparent');
     x.fillStyle=h; x.fillRect(p[0]-sz*3,p[1]-sz*3,sz*6,sz*6);
     // Diffraction cross
-    var spLen=sz*4+br*20;
+    var spLen=sz*2.8+br*8;
     x.strokeStyle='rgba(255,255,255,'+(0.12+br*0.10)+')'; x.lineWidth=0.8;
     x.beginPath(); x.moveTo(p[0]-spLen,p[1]); x.lineTo(p[0]+spLen,p[1]); x.stroke();
     x.beginPath(); x.moveTo(p[0],p[1]-spLen); x.lineTo(p[0],p[1]+spLen); x.stroke();
@@ -382,12 +384,13 @@ camera.lookAt(0, 0, 0);
   });
 
   var tex=new THREE.CanvasTexture(c);
-  var sphere=new THREE.Mesh(
+  if ('colorSpace' in tex && THREE.SRGBColorSpace) tex.colorSpace=THREE.SRGBColorSpace;
+  skySphere=new THREE.Mesh(
     new THREE.SphereGeometry(58,48,32),
     new THREE.MeshBasicMaterial({map:tex,side:THREE.BackSide})
   );
-  sphere.userData.isSky=true;
-  scene.add(sphere);
+  skySphere.userData.isSky=true;
+  scene.add(skySphere);
 })();
 
 // ─── Lights ───────────────────────────────────────────────────────────────────
@@ -412,33 +415,50 @@ scene.add(fillLight);
 var floorTex = (function(){
   var c=document.createElement('canvas'); c.width=c.height=1024;
   var x=c.getContext('2d');
-  x.fillStyle='#04090f'; x.fillRect(0,0,1024,1024);
-  var R=42, hH=R*Math.sqrt(3);
-  // Subtle filled hexes
-  x.fillStyle='rgba(0,60,100,0.055)';
-  x.strokeStyle='rgba(0,120,180,0.18)'; x.lineWidth=0.7;
+  var base=x.createRadialGradient(512,470,30,512,512,720);
+  base.addColorStop(0,'#0b1b28'); base.addColorStop(.48,'#07121d'); base.addColorStop(1,'#010409');
+  x.fillStyle=base; x.fillRect(0,0,1024,1024);
+
+  // Fine honeycomb plating, fading naturally into the outer rim.
+  var R=30, hH=R*Math.sqrt(3);
+  x.lineWidth=.8;
   for(var col=-1;col<1024/(R*1.5)+2;col++){
     for(var row=-1;row<1024/hH+2;row++){
-      var cx=col*R*3, cy=row*hH+(col%2===0?0:hH/2);
+      var cx=col*R*1.5, cy=row*hH+(col%2===0?0:hH/2);
+      var edge=Math.hypot(cx-512,cy-512)/720;
+      x.strokeStyle='rgba(74,162,205,'+(Math.max(0,.12-edge*.09))+')';
+      x.fillStyle='rgba(20,79,108,'+(Math.max(0,.026-edge*.02))+')';
       x.beginPath();
       for(var i=0;i<6;i++){var a=(Math.PI/3)*i;x.lineTo(cx+R*Math.cos(a),cy+R*Math.sin(a));}
       x.closePath(); x.fill(); x.stroke();
     }
   }
-  // Brighter accent hexes scattered
-  x.fillStyle='rgba(0,160,220,0.09)'; x.strokeStyle='rgba(0,180,255,0.35)'; x.lineWidth=1;
-  [[200,180],[600,350],[350,700],[780,200],[150,600],[820,750],[480,480]].forEach(function(p){
-    x.beginPath();
-    for(var i=0;i<6;i++){var a=(Math.PI/3)*i;x.lineTo(p[0]+R*Math.cos(a),p[1]+R*Math.sin(a));}
-    x.closePath(); x.fill(); x.stroke();
+
+  // Concentric navigation tracks and broken circuit arcs.
+  [132,240,355,468].forEach(function(rad,ri){
+    x.setLineDash(ri%2?[16,11]:[5,16]); x.lineWidth=ri===3?2:1;
+    x.strokeStyle=ri===3?'rgba(73,196,238,.24)':'rgba(66,151,194,.16)';
+    x.beginPath(); x.arc(512,512,rad,0,Math.PI*2); x.stroke();
   });
-  var t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(2,2);
+  x.setLineDash([]);
+  for(var spoke=0;spoke<12;spoke++){
+    var sa=spoke*Math.PI/6, inner=385, outer=470;
+    x.strokeStyle='rgba(74,181,224,.16)'; x.lineWidth=1;
+    x.beginPath(); x.moveTo(512+Math.cos(sa)*inner,512+Math.sin(sa)*inner);
+    x.lineTo(512+Math.cos(sa)*outer,512+Math.sin(sa)*outer); x.stroke();
+    x.fillStyle=spoke%3===0?'rgba(110,225,255,.8)':'rgba(74,181,224,.42)';
+    x.fillRect(510+Math.cos(sa)*428,510+Math.sin(sa)*428,4,4);
+  }
+  var t=new THREE.CanvasTexture(c);
+  t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping; t.repeat.set(1,1);
+  t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+  if ('colorSpace' in t && THREE.SRGBColorSpace) t.colorSpace=THREE.SRGBColorSpace;
   return t;
 })();
 
 var floorMesh = new THREE.Mesh(
   new THREE.CircleGeometry(9.5, 80),
-  new THREE.MeshStandardMaterial({ map:floorTex, roughness:0.85, metalness:0.2 })
+  new THREE.MeshStandardMaterial({map:floorTex,color:0xc8e3ee,emissive:0x06131d,emissiveIntensity:.5,roughness:.7,metalness:.38})
 );
 floorMesh.rotation.x = -Math.PI/2;
 floorMesh.position.y = 0.0;
@@ -447,10 +467,10 @@ scene.add(floorMesh);
 
 // Thin raised rim
 var floorRim = new THREE.Mesh(
-  new THREE.CylinderGeometry(9.5,9.6,0.06,80),
+  new THREE.CylinderGeometry(9.5,9.6,0.10,80,1,true),
   new THREE.MeshStandardMaterial({color:0x0a1a28, roughness:0.4, metalness:0.8})
 );
-floorRim.position.y=-0.03; scene.add(floorRim);
+floorRim.position.y=-0.05; scene.add(floorRim);
 
 // Edge glow ring
 var edgeRing = new THREE.Mesh(
@@ -458,6 +478,20 @@ var edgeRing = new THREE.Mesh(
   new THREE.MeshStandardMaterial({color:0x004466, emissive:0x002233, emissiveIntensity:1, transparent:true, opacity:0.7})
 );
 edgeRing.rotation.x=Math.PI/2; edgeRing.position.y=0.01; scene.add(edgeRing);
+
+// Slow scanning arcs add life without moving the floor pattern itself.
+var floorSweep=new THREE.Group(); floorSweep.position.y=0.018;
+[
+  {r0:8.56,r1:8.64,start:0,len:Math.PI*.34,op:.30},
+  {r0:4.78,r1:4.82,start:Math.PI,len:Math.PI*.22,op:.16}
+].forEach(function(a){
+  var arc=new THREE.Mesh(
+    new THREE.RingGeometry(a.r0,a.r1,96,1,a.start,a.len),
+    new THREE.MeshBasicMaterial({color:0x6cddff,transparent:true,opacity:a.op,side:THREE.DoubleSide,depthWrite:false})
+  );
+  arc.rotation.x=-Math.PI/2; floorSweep.add(arc);
+});
+scene.add(floorSweep);
 
 // ── Station platforms (elevated hex pads) ──────────────────────────────────
 STATIONS.forEach(function(data){
@@ -496,42 +530,77 @@ scene.add(beaconRing);
 
 // ─── Stars ────────────────────────────────────────────────────────────────────
 
-// Circular glowing sprite — makes every star a soft round disc instead of a pixel
+// Crisp pinpoint for most stars, with a separate glint reserved for the brightest.
 var starSpriteTex = (function(){
   var sc=document.createElement('canvas'); sc.width=sc.height=64;
   var sx=sc.getContext('2d');
   var g=sx.createRadialGradient(32,32,0,32,32,32);
-  g.addColorStop(0,   'rgba(255,255,255,1.00)');
-  g.addColorStop(0.08,'rgba(245,250,255,0.92)');
-  g.addColorStop(0.22,'rgba(200,225,255,0.55)');
-  g.addColorStop(0.50,'rgba(140,180,255,0.15)');
-  g.addColorStop(1,   'transparent');
+  g.addColorStop(0,'rgba(255,255,255,1)');
+  g.addColorStop(.035,'rgba(255,255,255,1)');
+  g.addColorStop(.10,'rgba(225,240,255,.88)');
+  g.addColorStop(.24,'rgba(165,205,255,.24)');
+  g.addColorStop(.52,'transparent');
   sx.fillStyle=g; sx.fillRect(0,0,64,64);
   return new THREE.CanvasTexture(sc);
 })();
 
-var starLayers = [];
+var starGlintTex = (function(){
+  var sc=document.createElement('canvas'); sc.width=sc.height=96;
+  var sx=sc.getContext('2d'), g=sx.createRadialGradient(48,48,0,48,48,34);
+  g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(.08,'rgba(235,247,255,.9)');
+  g.addColorStop(.3,'rgba(158,205,255,.18)'); g.addColorStop(1,'transparent');
+  sx.fillStyle=g; sx.fillRect(0,0,96,96);
+  var hg=sx.createLinearGradient(6,48,90,48);
+  hg.addColorStop(0,'transparent'); hg.addColorStop(.46,'rgba(220,240,255,.08)');
+  hg.addColorStop(.5,'rgba(255,255,255,.72)'); hg.addColorStop(.54,'rgba(220,240,255,.08)'); hg.addColorStop(1,'transparent');
+  sx.fillStyle=hg; sx.fillRect(6,47.5,84,1);
+  var vg=sx.createLinearGradient(48,8,48,88);
+  vg.addColorStop(0,'transparent'); vg.addColorStop(.47,'rgba(220,240,255,.08)');
+  vg.addColorStop(.5,'rgba(255,255,255,.62)'); vg.addColorStop(.53,'rgba(220,240,255,.08)'); vg.addColorStop(1,'transparent');
+  sx.fillStyle=vg; sx.fillRect(47.5,8,1,80);
+  return new THREE.CanvasTexture(sc);
+})();
+
+var hazeSpriteTex = (function(){
+  var sc=document.createElement('canvas'); sc.width=sc.height=64;
+  var sx=sc.getContext('2d'), g=sx.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,'rgba(255,255,255,.18)'); g.addColorStop(.3,'rgba(255,255,255,.09)');
+  g.addColorStop(.7,'rgba(255,255,255,.025)'); g.addColorStop(1,'transparent');
+  sx.fillStyle=g; sx.fillRect(0,0,64,64); return new THREE.CanvasTexture(sc);
+})();
+
+var starLayers = [], starGroups = [];
 (function() {
-  function mkStars(count,r0,r1,col,sz,op){
+  // A fixed seed creates a deliberate sky composition on every visit.
+  var seed=271828;
+  function rand(){ seed=(seed*1664525+1013904223)>>>0; return seed/4294967296; }
+  function mkStars(count,r0,r1,col,sz,tex){
     var g=new THREE.BufferGeometry(), p=[];
     for(var i=0;i<count;i++){
-      var th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1), r=r0+Math.random()*(r1-r0);
+      var th=rand()*Math.PI*2, ph=Math.acos(2*rand()-1), r=r0+rand()*(r1-r0);
       p.push(r*Math.sin(ph)*Math.cos(th), r*Math.sin(ph)*Math.sin(th), r*Math.cos(ph));
     }
     g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));
     var m=new THREE.PointsMaterial({
-      map:starSpriteTex, color:col, size:sz,
-      transparent:true, opacity:op, sizeAttenuation:true,
-      depthWrite:false, alphaTest:0.004
+      map:tex||starSpriteTex, color:col, size:sz,
+      transparent:true, opacity:1, sizeAttenuation:true,
+      depthWrite:false, alphaTest:0.01
     });
-    scene.add(new THREE.Points(g,m)); return m;
+    var points=new THREE.Points(g,m);
+    points.rotation.set(rand()*.4,rand()*.4,rand()*.2);
+    scene.add(points); starGroups.push(points); return m;
   }
-  // Tiny sizes = realistic star pinpoints; glow sprite adds the characteristic halo
-  starLayers.push(mkStars(3500, 44, 56, 0xffffff, 0.07, 0.90)); // main white field
-  starLayers.push(mkStars(700,  42, 54, 0xb0d8ff, 0.13, 0.92)); // blue-white
-  starLayers.push(mkStars(500,  43, 55, 0xffdd88, 0.12, 0.85)); // warm yellow
-  starLayers.push(mkStars(280,  42, 54, 0xff9999, 0.15, 0.80)); // red giants
-  starLayers.push(mkStars(160,  43, 55, 0x99ffcc, 0.11, 0.75)); // teal
+  function addLayer(count,col,size,base,amp,rate,phase,tex){
+    starLayers.push({mat:mkStars(count,43,57,col,size,tex),base:base,amp:amp,rate:rate,phase:phase});
+  }
+  // Independent layers prevent the entire sky from blinking in sync.
+  addLayer(1150,0xffffff,.030,.84,.025,.17,.2);
+  addLayer(1150,0xf4f8ff,.031,.82,.030,.23,1.7);
+  addLayer(1150,0xffffff,.028,.86,.020,.14,3.1);
+  addLayer(1050,0xe9f3ff,.034,.80,.035,.27,4.6);
+  addLayer(540,0xbad9ff,.048,.82,.045,.31,2.3);
+  addLayer(220,0xffdfae,.052,.76,.045,.25,5.2);
+  addLayer(48,0xe5f3ff,.095,.84,.10,.42,.8,starGlintTex);
 })();
 
 // ─── Nebula particle clouds (animated, rotate at different speeds) ─────────────
@@ -540,11 +609,10 @@ var nebulaCloud = [];
 (function(){
   // Each cloud is a colored haze that orbits — gives the background life
   var cfgs=[
-    {col:0xff2277, sz:2.2, cnt:200, r0:30, r1:50, spd: 0.007, seed:0.0},
-    {col:0x2299ff, sz:2.0, cnt:180, r0:32, r1:52, spd:-0.005, seed:1.4},
-    {col:0xff9922, sz:1.8, cnt:160, r0:31, r1:48, spd: 0.006, seed:2.8},
-    {col:0xbb44ff, sz:1.7, cnt:140, r0:33, r1:51, spd:-0.008, seed:4.2},
-    {col:0x22ffcc, sz:1.5, cnt:110, r0:30, r1:49, spd: 0.005, seed:5.6},
+    {col:0x315ee8,hue:.63,sz:3.8,cnt:75,r0:30,r1:50,spd:.006,seed:0},
+    {col:0x7b42df,hue:.72,sz:4.2,cnt:65,r0:32,r1:52,spd:-.004,seed:1.4},
+    {col:0x21b8c5,hue:.51,sz:3.5,cnt:60,r0:31,r1:48,spd:.005,seed:2.8},
+    {col:0xc33c9d,hue:.89,sz:3.2,cnt:48,r0:33,r1:51,spd:-.006,seed:4.2},
   ];
   cfgs.forEach(function(cfg){
     var geo=new THREE.BufferGeometry(), pts=[];
@@ -555,13 +623,13 @@ var nebulaCloud = [];
     }
     geo.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
     var mat=new THREE.PointsMaterial({
-      map:starSpriteTex, color:cfg.col, size:cfg.sz,
-      transparent:true, opacity:0.07, sizeAttenuation:true,
-      depthWrite:false, alphaTest:0.001
+      map:hazeSpriteTex,color:cfg.col,size:cfg.sz,
+      transparent:true,opacity:.028,sizeAttenuation:true,
+      depthWrite:false,blending:THREE.AdditiveBlending
     });
     var cloud=new THREE.Points(geo,mat);
     scene.add(cloud);
-    nebulaCloud.push({pts:cloud, mat:mat, spd:cfg.spd, seed:cfg.seed});
+    nebulaCloud.push({pts:cloud,mat:mat,spd:cfg.spd,seed:cfg.seed,hue:cfg.hue});
   });
 })();
 
@@ -633,10 +701,12 @@ scene.add(pMesh);
 
 var miniRobots = [], sparks = [];
 
-function buildMini(col) {
+function buildMini(col,shellCol,detailCol) {
   var g = new THREE.Group();
-  var bMat = new THREE.MeshStandardMaterial({color:0xddeaf4, emissive:0xddeaf4, emissiveIntensity:0.18, roughness:0.25, metalness:0.45});
-  var dMat = new THREE.MeshStandardMaterial({color:0xb0c8d8, emissive:0xb0c8d8, emissiveIntensity:0.10, roughness:0.3,  metalness:0.45});
+  shellCol=shellCol===undefined?0xddeaf4:shellCol;
+  detailCol=detailCol===undefined?0xb0c8d8:detailCol;
+  var bMat = new THREE.MeshStandardMaterial({color:shellCol,emissive:shellCol,emissiveIntensity:0.12,roughness:0.3,metalness:0.28});
+  var dMat = new THREE.MeshStandardMaterial({color:detailCol,emissive:detailCol,emissiveIntensity:0.07,roughness:0.34,metalness:0.25});
   var eM   = new THREE.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:3.5});
 
   var legLG = new THREE.Group(); legLG.position.set(-0.075,0.16,0);
@@ -706,22 +776,25 @@ function makeBBox(w,h,d,col){
   m2.g.position.set(-7.2,0.08,0); scene.add(m2.g);
   miniRobots.push({type:'patrol',m:m2,t:4.5,orbitR:7.2,orbitAngle:Math.PI,orbitSpeed:-0.1});
 
-  // ── 3. Franka grasper — silver/gray, pick-and-place robot arm ─────────────
-  var m3 = buildMini(0xb8c8d8);
-  var aMat = new THREE.MeshStandardMaterial({color:0xc8d8e8,emissive:0xc8d8e8,emissiveIntensity:0.45,roughness:0.2,metalness:0.7});
+  // ── 3. Franka grasper — white shell with dark articulated joints ─────────
+  var m3 = buildMini(0x8fdcff,0xffffff,0xe9eef2);
+  var aMat = new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:.1,roughness:.28,metalness:.18});
+  var jMat = new THREE.MeshStandardMaterial({color:0x202832,roughness:.42,metalness:.55});
   // Extra robot arm segments: pivot → seg1 → seg2 → gripper
   var fPivot = new THREE.Group(); fPivot.position.set(0.24,0.34,0); m3.g.add(fPivot);
+  fPivot.add(new THREE.Mesh(new THREE.SphereGeometry(.052,10,8),jMat));
   var fSeg1 = new THREE.Group();
   var fs1m = new THREE.Mesh(new THREE.BoxGeometry(0.065,0.2,0.065),aMat.clone()); fs1m.position.y=-0.1; fSeg1.add(fs1m);
   fPivot.add(fSeg1);
   var fSeg2 = new THREE.Group(); fSeg2.position.y=-0.2; fSeg1.add(fSeg2);
+  fSeg2.add(new THREE.Mesh(new THREE.SphereGeometry(.046,10,8),jMat));
   var fs2m = new THREE.Mesh(new THREE.BoxGeometry(0.05,0.16,0.05),aMat.clone()); fs2m.position.y=-0.08; fSeg2.add(fs2m);
   var gGrip = new THREE.Group(); gGrip.position.y=-0.17; fSeg2.add(gGrip);
   var gf1=new THREE.Mesh(new THREE.BoxGeometry(0.025,0.07,0.025),aMat.clone()); gf1.position.set(0.032,0,0); gGrip.add(gf1);
   var gf2=new THREE.Mesh(new THREE.BoxGeometry(0.025,0.07,0.025),aMat.clone()); gf2.position.set(-0.032,0,0); gGrip.add(gf2);
   var gripL=new THREE.PointLight(0xffffff,2.0,2.5); gripL.position.set(0.24,0.1,0); m3.g.add(gripL);
   // Wide fill light on robot body
-  var frankFill=new THREE.PointLight(0x88aacc,1.0,3.5); frankFill.position.set(0,1.2,0.5); m3.g.add(frankFill);
+  var frankFill=new THREE.PointLight(0xffffff,1.15,3.5); frankFill.position.set(0,1.2,0.5); m3.g.add(frankFill);
   // Object to pick up — orange so it contrasts with the silver arm
   var pickCube=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.1,0.1),
     new THREE.MeshStandardMaterial({color:0xff7744,emissive:0xff8855,emissiveIntensity:1.3}));
@@ -1352,20 +1425,23 @@ function animate() {
     }
   });
 
-  // Sky rotate
-  scene.traverse(function(o){ if(o.userData.isSky) o.rotation.y=gt*0.0012; });
-  // Star twinkle (each layer breathes at its own rate)
+  // The distant sky and foreground star shells drift at separate speeds for depth.
+  skySphere.rotation.y=gt*.0032;
+  skySphere.rotation.x=Math.sin(gt*.035)*.012;
+  // Small independent groups twinkle asynchronously.
   if(starLayers.length){
-    starLayers[0].opacity = 0.78 + Math.sin(gt*0.28)*0.06;
-    starLayers[1].opacity = 0.84 + Math.sin(gt*0.41+1.2)*0.08;
-    starLayers[2].opacity = 0.74 + Math.sin(gt*0.37+2.5)*0.07;
-    starLayers[3].opacity = 0.68 + Math.sin(gt*0.33+0.8)*0.08;
-    starLayers[4].opacity = 0.64 + Math.sin(gt*0.45+3.1)*0.07;
+    starLayers.forEach(function(layer){
+      layer.mat.opacity=layer.base+Math.sin(gt*layer.rate+layer.phase)*layer.amp;
+    });
+    starGroups.forEach(function(group,i){ group.rotation.y += dt*(0.0007+i*0.00015); });
   }
-  // Nebula clouds drift
+  // Haze drifts, rolls, and changes hue almost imperceptibly.
   nebulaCloud.forEach(function(nc){
     nc.pts.rotation.y += nc.spd * dt;
-    nc.mat.opacity = 0.055 + Math.abs(Math.sin(gt*0.22+nc.seed))*0.055;
+    nc.pts.rotation.z += nc.spd*.22*dt;
+    nc.pts.rotation.x=Math.sin(gt*.025+nc.seed)*.04;
+    nc.mat.opacity=.016+Math.abs(Math.sin(gt*.12+nc.seed))*.02;
+    nc.mat.color.setHSL(nc.hue+Math.sin(gt*.045+nc.seed)*.018,.68,.60);
   });
 
   // Planets orbit + slow self-rotation
@@ -1384,6 +1460,8 @@ function animate() {
   // Beacon
   beaconRing.material.opacity=0.12+Math.sin(gt*2.5)*0.09;
   edgeRing.material.opacity=0.55+Math.sin(gt*0.8)*0.12;
+  floorSweep.rotation.y=gt*.065;
+  floorSweep.children[0].material.opacity=.22+Math.sin(gt*.7)*.08;
 
   // Particles
   for(var pi=0;pi<PC;pi++){
@@ -1515,7 +1593,7 @@ function animate() {
 
   // ── Shooting stars ────────────────────────────────────────────────────────
   nextShoot -= dt;
-  if(nextShoot <= 0) { spawnShootingStar(); nextShoot = 1.5+Math.random()*3.5; }
+  if(nextShoot <= 0) { spawnShootingStar(); nextShoot = 6+Math.random()*8; }
   shootingStars = shootingStars.filter(function(ss) {
     ss.t += dt;
     var p = ss.t/ss.life;
@@ -1529,7 +1607,7 @@ function animate() {
 
   // ── Rockets ───────────────────────────────────────────────────────────────
   nextRocket -= dt;
-  if(nextRocket <= 0) { spawnRocket(); nextRocket = 10+Math.random()*14; }
+  if(nextRocket <= 0) { spawnRocket(); nextRocket = 22+Math.random()*24; }
   rockets = rockets.filter(function(rk) {
     rk.t += dt; var p = rk.t/rk.life;
     if(p >= 1) { scene.remove(rk.g); return false; }
