@@ -1575,7 +1575,7 @@ function animate() {
 
   // ── Rockets ───────────────────────────────────────────────────────────────
   nextRocket -= dt;
-  if(nextRocket <= 0) { spawnRocket(); nextRocket = 5+Math.random()*7; }
+  if(nextRocket <= 0) { spawnRocket(); nextRocket = 10+Math.random()*14; }
   rockets = rockets.filter(function(rk) {
     rk.t += dt; var p = rk.t/rk.life;
     if(p >= 1) { scene.remove(rk.g); return false; }
