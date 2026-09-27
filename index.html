@@ -2,11 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#04080f">
   <title>Ellie Chang</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { background:#04080f; overflow:hidden; font-family:'Segoe UI',system-ui,sans-serif; color:#d0e8ff; }
+    html, body { height:100%; }
+    body { background:#04080f; overflow:hidden; font-family:'Segoe UI',system-ui,sans-serif; color:#d0e8ff;
+      touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
     canvas { display:block; }
 
     /* ── Overlays ────────────────────────────────────────── */
@@ -51,6 +54,7 @@
       font-size:0.62rem; letter-spacing:3px; color:#243a52;
       pointer-events:none; opacity:0; transition:opacity 1s 0.6s, color 0.4s; z-index:40; white-space:nowrap; }
     #hint.show { opacity:1; }
+    .touch-only { display:none; }
 
     /* ── Nav dots ─────────────────────────────────────────── */
     #nav { position:fixed; left:28px; top:50%; transform:translateY(-50%);
@@ -59,6 +63,7 @@
     #nav.show { opacity:1; }
     .nav-dot { width:7px; height:7px; border-radius:50%; border:1px solid #1a3550;
       cursor:pointer; transition:all 0.25s; position:relative; }
+    .nav-dot::before { content:''; position:absolute; inset:-8px; } /* bigger tap target */
     .nav-dot:hover,.nav-dot.active { background:#00d4ff; border-color:#00d4ff; box-shadow:0 0 10px #00d4ff88; }
     .nav-dot::after { content:attr(data-label); position:absolute; left:18px; top:50%; transform:translateY(-50%);
       font-size:0.6rem; letter-spacing:2px; color:#2a5070; white-space:nowrap; opacity:0; transition:opacity 0.2s; }
@@ -80,14 +85,17 @@
 
     /* ── Content panel ───────────────────────────────────── */
     #panel {
-      position:fixed; top:0; right:0; width:min(480px,100vw); height:100vh;
+      position:fixed; top:0; right:0; width:min(480px,100vw); height:100vh; height:100dvh;
       background:rgba(4,8,16,0.97); border-left:1px solid #0e2030;
       backdrop-filter:blur(24px); padding:56px 32px 40px; overflow-y:auto;
+      overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
       transform:translateX(100%); transition:transform 0.55s cubic-bezier(0.16,1,0.3,1); z-index:60;
     }
     #panel.open { transform:translateX(0); }
     #panel::-webkit-scrollbar { width:3px; }
     #panel::-webkit-scrollbar-thumb { background:#0e2030; border-radius:2px; }
+    #panel-handle { display:none; position:absolute; top:10px; left:50%; transform:translateX(-50%);
+      width:40px; height:4px; border-radius:2px; background:#1a3550; }
 
     #panel-close { position:absolute; top:20px; right:20px; width:30px; height:30px;
       border:1px solid #0e2030; border-radius:50%; background:transparent;
@@ -108,6 +116,7 @@
     #panel-body .entry { margin-bottom:2rem; }
     #panel-body .edate  { font-size:0.63rem; letter-spacing:2px; margin-bottom:5px; }
     #panel-body .etitle { color:#d0e8ff; font-weight:500; font-size:0.95rem; margin-bottom:7px; }
+    #panel-body .eorg   { font-size:0.72rem; color:#4a6a85; margin:-4px 0 8px; }
     #panel-body .gh-btn {
       display:inline-flex; align-items:center; gap:7px;
       padding:8px 16px; border:1px solid #1a3050; border-radius:8px;
@@ -125,12 +134,83 @@
       display:flex; align-items:center; gap:12px;
       padding:12px 16px; border:1px solid #0e2030; border-radius:8px;
       text-decoration:none; color:#d0e8ff; margin-bottom:10px; transition:border-color 0.2s;
+      word-break:break-all;
     }
     #panel-body .lrow:hover { border-color:#00d4ff44; }
 
     /* ── Keyboard badge ──────────────────────────────────── */
     .kbd { display:inline-block; padding:1px 6px; background:#0d1e2e; border:1px solid #1a3050;
       border-radius:4px; font-size:0.6rem; color:#4080a0; margin:0 2px; }
+
+    /* ── Robot speech bubble ─────────────────────────────── */
+    #robot-say {
+      position:fixed; left:0; top:0; z-index:35; pointer-events:none;
+      transform:translate(-50%,-100%); margin-top:-14px;
+      max-width:min(270px,70vw); width:max-content;
+      padding:8px 12px 9px; background:rgba(3,14,24,0.92);
+      border:1px solid #00d4ff66; border-radius:4px;
+      font-family:'Courier New',ui-monospace,Menlo,monospace; font-size:0.66rem; line-height:1.55;
+      letter-spacing:1.5px; color:#8eeaff; text-shadow:0 0 6px #00d4ff88;
+      box-shadow:0 0 18px -6px #00d4ff, inset 0 0 12px -8px #00d4ff;
+      opacity:0; transition:opacity 0.3s;
+    }
+    #robot-say.show { opacity:1; }
+    #robot-say::after { /* tail */
+      content:''; position:absolute; left:50%; bottom:-6px; width:10px; height:10px;
+      background:rgba(3,14,24,0.92); border-right:1px solid #00d4ff66; border-bottom:1px solid #00d4ff66;
+      transform:translateX(-50%) rotate(45deg);
+    }
+    #robot-say .say-tag { display:block; font-size:0.52rem; letter-spacing:2.5px; color:#2f7f9c; margin-bottom:2px; }
+    #robot-say .say-caret { display:inline-block; margin-left:2px; animation:caret 0.9s steps(1) infinite; }
+    #robot-say::before { /* corner brackets */
+      content:''; position:absolute; inset:-4px; pointer-events:none;
+      background:
+        linear-gradient(#00d4ff,#00d4ff) top left/8px 1px no-repeat,
+        linear-gradient(#00d4ff,#00d4ff) top left/1px 8px no-repeat,
+        linear-gradient(#00d4ff,#00d4ff) top right/8px 1px no-repeat,
+        linear-gradient(#00d4ff,#00d4ff) top right/1px 8px no-repeat;
+      opacity:0.7;
+    }
+    @keyframes caret { 50% { opacity:0; } }
+
+    /* ── Touch devices: swap hint text ───────────────────── */
+    @media (hover:none) {
+      .desktop-only { display:none; }
+      .touch-only { display:inline; }
+    }
+
+    /* ── Phones / narrow screens ─────────────────────────── */
+    @media (max-width:768px) {
+      #header { top:calc(18px + env(safe-area-inset-top)); left:18px; }
+      #header h1 { font-size:1.02rem; letter-spacing:4px; }
+      #header p  { font-size:0.58rem; letter-spacing:2.5px; margin-top:4px; }
+
+      #nav { left:50%; top:auto; bottom:calc(24px + env(safe-area-inset-bottom));
+        transform:translateX(-50%); flex-direction:row; gap:20px; }
+      .nav-dot { width:10px; height:10px; }
+      .nav-dot::before { inset:-12px; }
+      .nav-dot::after { display:none; }
+
+      #hint { bottom:calc(56px + env(safe-area-inset-bottom)); font-size:0.55rem; letter-spacing:2px; }
+
+      .slabel { font-size:0.55rem; letter-spacing:2px; padding:4px 10px; }
+      #robot-say { font-size:0.58rem; letter-spacing:1.2px; max-width:64vw; padding:7px 10px 8px; }
+
+      /* Panel becomes a bottom sheet so the robot stays visible above it */
+      #panel {
+        top:auto; bottom:0; right:0; left:0; width:100vw;
+        height:62vh; height:62dvh;
+        border-left:none; border-top:1px solid #0e2030; border-radius:18px 18px 0 0;
+        padding:36px 22px calc(28px + env(safe-area-inset-bottom));
+        transform:translateY(100%);
+      }
+      #panel.open { transform:translateY(0); }
+      #panel-handle { display:block; }
+      #panel-close { top:14px; right:14px; width:36px; height:36px; }
+      #panel-title { font-size:1.45rem; margin-bottom:18px; }
+      #panel-body  { font-size:0.84rem; line-height:1.7; }
+      #panel-body .entry { margin-bottom:1.6rem; }
+    }
   </style>
 </head>
 <body>
@@ -157,11 +237,16 @@
   <div class="nav-dot" data-station="4" data-label="CONTACT"></div>
 </nav>
 
-<div id="hint">CLICK A STATION &nbsp;·&nbsp; KEYS <span class="kbd">1</span>–<span class="kbd">5</span> &nbsp;·&nbsp; <span class="kbd">ESC</span> TO CLOSE</div>
+<div id="hint">
+  <span class="desktop-only">CLICK A STATION &nbsp;·&nbsp; KEYS <span class="kbd">1</span>–<span class="kbd">5</span> &nbsp;·&nbsp; <span class="kbd">ESC</span> TO CLOSE</span>
+  <span class="touch-only">TAP A STATION &nbsp;·&nbsp; TAP THE ROBOT TO SAY HI</span>
+</div>
 <div id="labels"></div>
+<div id="robot-say"><span class="say-tag">UNIT-E://</span><span id="say-text"></span><span class="say-caret">█</span></div>
 
 <div id="panel">
-  <button id="panel-close">×</button>
+  <div id="panel-handle"></div>
+  <button id="panel-close" aria-label="Close">×</button>
   <div id="panel-eyebrow"></div>
   <div id="panel-title"></div>
   <div id="panel-body"></div>
@@ -184,6 +269,20 @@ setTimeout(function(){
 },8000);
 </script>
 <script>
+// ─── Device / layout helpers ─────────────────────────────────────────────────
+
+var IS_TOUCH  = window.matchMedia('(hover:none)').matches;
+var LOW_POWER = IS_TOUCH || window.innerWidth <= 768;
+function isMobileLayout(){ return window.innerWidth <= 768; }
+// Camera distance / FOV adapt to screen shape so all 5 stations fit on a portrait phone
+function camBase(){
+  var a = window.innerWidth / window.innerHeight;
+  if (a < 0.75) return {y:12, z:14};
+  if (a < 1.1)  return {y:10, z:12};
+  return {y:8, z:10};
+}
+function camFov(){ return (window.innerWidth / window.innerHeight) < 0.75 ? 60 : 52; }
+
 // ─── Station data ─────────────────────────────────────────────────────────────
 
 var STATIONS = [
@@ -204,6 +303,12 @@ var STATIONS = [
     id:'research', label:'RESEARCH', color:0xaa55ff, hex:'#aa55ff', px:2.9, pz:-1.8,
     eyebrow:'02 · RESEARCH', title:'Academic Work',
     body:`<div class="entry">
+<div class="edate" style="color:#aa55ff">SEP 2026 – PRESENT</div>
+<div class="etitle">Research Team Lead · UTMIST</div>
+<div class="eorg">University of Toronto Machine Intelligence Student Team</div>
+<p>Investigating how <strong>vision-language models</strong> maintain consistent representations of objects and spatial relationships across <strong>viewpoint changes, occlusion, and dynamic scenes</strong>.</p>
+</div>
+<div class="entry">
 <div class="edate" style="color:#aa55ff">MAY 2026 – PRESENT</div>
 <div class="etitle">Research Intern · Prof. Sven Dickinson's Lab, UofT</div>
 <p>Investigating whether deep neural networks exhibit human-like <strong>Gestalt grouping</strong> under naturalistic visual stimuli. Supervised by Prof. Sven Dickinson and Dr. Matthias Tangemann.</p>
@@ -211,7 +316,7 @@ var STATIONS = [
 <div class="entry">
 <div class="edate" style="color:#aa55ff">SEP 2025 – APR 2026</div>
 <div class="etitle">Data Scientist · Dr. Duncan Lab</div>
-<p>Analyzed <strong>eye-tracking data</strong> from clinical visual-search tasks. Benchmarked DNN attention models against human fixation patterns to evaluate explanatory power.Worked under the supervision of Dr. Duncan and PhD candidate Thomas Biba.</p>
+<p>Analyzed <strong>eye-tracking data</strong> from clinical visual-search tasks. Benchmarked DNN attention models against human fixation patterns to evaluate explanatory power. Worked under the supervision of Dr. Duncan and PhD candidate Thomas Biba.</p>
 </div>
 <div class="entry">
 <div class="edate" style="color:#aa55ff">SEP 2025 – APR 2026</div>
@@ -278,7 +383,7 @@ var STATIONS = [
 
 var renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, LOW_POWER ? 1.5 : 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -288,8 +393,9 @@ document.body.insertBefore(renderer.domElement, document.body.firstChild);
 var scene  = new THREE.Scene();
 scene.fog  = new THREE.FogExp2(0x000208, 0.016);
 
-var camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 120);
-camera.position.set(0, 8, 10);
+var camera = new THREE.PerspectiveCamera(camFov(), window.innerWidth / window.innerHeight, 0.1, 120);
+var _cb0 = camBase();
+camera.position.set(0, _cb0.y, _cb0.z);
 camera.lookAt(0, 0, 0);
 
 // ─── Sky sphere (Hubble-palette nebula) ───────────────────────────────────────
@@ -312,27 +418,21 @@ camera.lookAt(0, 0, 0);
   x.fillStyle=mw; x.fillRect(0,0,S,S);
 
   // ── Hubble palette nebula clouds ──────────────────────────────────────────
-  // Layer 1: massive background hydrogen (deep red-magenta)
   [{cx:900,cy:800,r:700,col:'rgba(180,10,80,0.55)'},
    {cx:400,cy:600,r:600,col:'rgba(140,0,60,0.45)'},
    {cx:1600,cy:400,r:550,col:'rgba(160,20,100,0.40)'},
-  // Layer 2: oxygen (electric blue-teal)
    {cx:700,cy:500,r:400,col:'rgba(0,140,255,0.50)'},
    {cx:1400,cy:900,r:380,col:'rgba(20,180,230,0.42)'},
    {cx:300,cy:1200,r:350,col:'rgba(0,160,220,0.38)'},
-  // Layer 3: sulfur (gold-orange)
    {cx:1200,cy:300,r:320,col:'rgba(255,130,10,0.38)'},
    {cx:200,cy:800,r:280,col:'rgba(240,110,20,0.32)'},
    {cx:1700,cy:1400,r:300,col:'rgba(255,150,30,0.28)'},
-  // Layer 4: combination zones (vivid purple)
    {cx:800,cy:1000,r:350,col:'rgba(180,20,240,0.42)'},
    {cx:1500,cy:700,r:300,col:'rgba(150,0,200,0.35)'},
    {cx:500,cy:300,r:280,col:'rgba(200,40,220,0.32)'},
-  // Layer 5: bright inner cores
    {cx:850,cy:750,r:180,col:'rgba(255,160,200,0.55)'},
    {cx:680,cy:520,r:130,col:'rgba(160,220,255,0.60)'},
    {cx:1350,cy:850,r:120,col:'rgba(255,200,100,0.48)'},
-  // Layer 6: hot blue-white star-forming cores
    {cx:720,cy:480,r:70, col:'rgba(220,240,255,0.70)'},
    {cx:860,cy:730,r:60, col:'rgba(255,230,210,0.65)'},
    {cx:1380,cy:860,r:55, col:'rgba(200,255,255,0.58)'},
@@ -342,14 +442,14 @@ camera.lookAt(0, 0, 0);
     x.fillStyle=g; x.fillRect(0,0,S,S);
   });
 
-  // Dark dust lanes (opacity wipe — makes it look 3D)
+  // Dark dust lanes
   [{cx:600,cy:700,r:220,op:0.22},{cx:1100,cy:500,r:180,op:0.18},{cx:400,cy:1000,r:160,op:0.15}].forEach(function(d){
     var g=x.createRadialGradient(d.cx,d.cy,0,d.cx,d.cy,d.r);
     g.addColorStop(0,'rgba(0,1,6,'+d.op+')'); g.addColorStop(1,'transparent');
     x.fillStyle=g; x.fillRect(0,0,S,S);
   });
 
-  // Dense micro-star field (thousands baked in)
+  // Dense micro-star field
   var rng=function(s){s=Math.sin(s*127.1)*43758.5453;return s-Math.floor(s);};
   var starCols=['rgba(255,255,255,','rgba(180,215,255,','rgba(255,220,170,','rgba(255,180,180,','rgba(180,255,230,'];
   for(var si=0;si<1800;si++){
@@ -362,7 +462,6 @@ camera.lookAt(0, 0, 0);
   var giantPos=[[320,280],[1050,180],[1750,580],[480,1100],[1600,1500],[820,1700],[1300,400],[200,600],[1900,900]];
   giantPos.forEach(function(p,i){
     var br=0.4+rng(i*13.7)*0.6, sz=14+br*18;
-    // Halo glow
     var h=x.createRadialGradient(p[0],p[1],0,p[0],p[1],sz*2.5);
     h.addColorStop(0,'rgba(255,255,255,0.95)');
     h.addColorStop(0.08,'rgba(220,235,255,0.80)');
@@ -370,12 +469,10 @@ camera.lookAt(0, 0, 0);
     h.addColorStop(0.6,'rgba(100,150,255,0.08)');
     h.addColorStop(1,'transparent');
     x.fillStyle=h; x.fillRect(p[0]-sz*3,p[1]-sz*3,sz*6,sz*6);
-    // Diffraction cross
     var spLen=sz*4+br*20;
     x.strokeStyle='rgba(255,255,255,'+(0.12+br*0.10)+')'; x.lineWidth=0.8;
     x.beginPath(); x.moveTo(p[0]-spLen,p[1]); x.lineTo(p[0]+spLen,p[1]); x.stroke();
     x.beginPath(); x.moveTo(p[0],p[1]-spLen); x.lineTo(p[0],p[1]+spLen); x.stroke();
-    // Diagonal faint spikes
     x.strokeStyle='rgba(255,255,255,'+(0.05+br*0.05)+')'; x.lineWidth=0.5;
     x.beginPath(); x.moveTo(p[0]-spLen*0.6,p[1]-spLen*0.6); x.lineTo(p[0]+spLen*0.6,p[1]+spLen*0.6); x.stroke();
     x.beginPath(); x.moveTo(p[0]+spLen*0.6,p[1]-spLen*0.6); x.lineTo(p[0]-spLen*0.6,p[1]+spLen*0.6); x.stroke();
@@ -397,7 +494,7 @@ scene.add(new THREE.AmbientLight(0x2a3f55, 5.5));
 var sun = new THREE.DirectionalLight(0x6090c0, 2);
 sun.position.set(4, 12, 6);
 sun.castShadow = true;
-sun.shadow.mapSize.width = sun.shadow.mapSize.height = 2048;
+sun.shadow.mapSize.width = sun.shadow.mapSize.height = LOW_POWER ? 1024 : 2048;
 sun.shadow.camera.left = sun.shadow.camera.bottom = -12;
 sun.shadow.camera.right = sun.shadow.camera.top = 12;
 sun.shadow.bias = -0.001;
@@ -408,12 +505,10 @@ scene.add(fillLight);
 
 // ─── Floor ────────────────────────────────────────────────────────────────────
 
-// Circuit-board floor texture with hex base + PCB traces
 var floorTex = (function(){
   var c=document.createElement('canvas'); c.width=c.height=1024;
   var x=c.getContext('2d');
   x.fillStyle='#030b0f'; x.fillRect(0,0,1024,1024);
-  // Hex grid (subtle base)
   var R=42, hH=R*Math.sqrt(3);
   x.fillStyle='rgba(0,55,90,0.045)';
   x.strokeStyle='rgba(0,110,165,0.09)'; x.lineWidth=0.7;
@@ -425,9 +520,8 @@ var floorTex = (function(){
       x.closePath(); x.fill(); x.stroke();
     }
   }
-  // ── Circuit traces (PCB style, 80px grid) ────────────────────────────────
   x.lineCap='round'; x.lineJoin='round';
-  var pT=[  // primary traces
+  var pT=[
     [80,80, 480,80], [480,80, 480,320], [320,80, 320,320], [80,240,320,240],
     [480,320,720,320],[720,80, 720,320],[720,320,880,320],[880,80, 880,320],
     [80,480,400,480], [400,320,400,640],[160,480,160,640],[160,640,400,640],
@@ -439,7 +533,7 @@ var floorTex = (function(){
     x.strokeStyle='rgba(0,225,195,0.48)'; x.lineWidth=1.6;
     x.beginPath(); x.moveTo(s[0],s[1]); x.lineTo(s[2],s[3]); x.stroke();
   });
-  var sT=[  // secondary thin traces
+  var sT=[
     [160,80, 160,240],[560,80, 560,240],[240,240,240,480],[480,400,640,400],
     [240,720,320,720],[480,720,560,720],[720,800,720,880],[160,800,160,880],
   ];
@@ -447,7 +541,6 @@ var floorTex = (function(){
     x.strokeStyle='rgba(0,180,160,0.28)'; x.lineWidth=1.0;
     x.beginPath(); x.moveTo(s[0],s[1]); x.lineTo(s[2],s[3]); x.stroke();
   });
-  // Via dots (solder pads at junctions)
   [[80,80],[480,80],[320,80],[720,80],[880,80],[160,80],[560,80],
    [80,240],[320,240],[480,320],[720,320],[880,320],[400,320],
    [80,480],[400,480],[160,480],[640,480],[880,480],[240,480],
@@ -459,7 +552,6 @@ var floorTex = (function(){
     x.fillStyle='rgba(0,200,170,0.20)';
     x.beginPath(); x.arc(v[0],v[1],6.5,0,Math.PI*2); x.fill();
   });
-  // IC chip footprints
   [{x:480,y:160,w:90,h:54},{x:400,y:560,w:80,h:50},{x:720,y:560,w:90,h:54},{x:320,y:800,w:76,h:48}].forEach(function(cp){
     x.fillStyle='rgba(0,120,100,0.22)'; x.strokeStyle='rgba(0,215,185,0.58)'; x.lineWidth=1.6;
     x.beginPath(); x.rect(cp.x-cp.w/2,cp.y-cp.h/2,cp.w,cp.h); x.fill(); x.stroke();
@@ -469,7 +561,6 @@ var floorTex = (function(){
       if(px+8<cp.x+cp.w/2){ x.fillRect(px,cp.y-cp.h/2-7,8,6); x.fillRect(px,cp.y+cp.h/2,8,6); }
     }
   });
-  // Accent hexes
   x.fillStyle='rgba(0,175,215,0.07)'; x.strokeStyle='rgba(0,200,255,0.26)'; x.lineWidth=1;
   [[200,180],[600,350],[350,700],[780,200],[150,600],[820,750],[480,480]].forEach(function(p){
     x.beginPath();
@@ -489,31 +580,26 @@ floorMesh.position.y = 0.0;
 floorMesh.receiveShadow = true;
 scene.add(floorMesh);
 
-// Thin raised rim
 var floorRim = new THREE.Mesh(
   new THREE.CylinderGeometry(9.5,9.6,0.06,80),
   new THREE.MeshStandardMaterial({color:0x0a1a28, roughness:0.4, metalness:0.8})
 );
 floorRim.position.y=-0.03; scene.add(floorRim);
 
-// Edge glow ring
 var edgeRing = new THREE.Mesh(
   new THREE.TorusGeometry(9.5, 0.07, 8, 80),
   new THREE.MeshStandardMaterial({color:0x004466, emissive:0x002233, emissiveIntensity:1, transparent:true, opacity:0.7})
 );
 edgeRing.rotation.x=Math.PI/2; edgeRing.position.y=0.01; scene.add(edgeRing);
 
-// ── Station platforms (elevated hex pads) ──────────────────────────────────
+// ── Station platforms ─────────────────────────────────────────────────────────
 STATIONS.forEach(function(data){
-  // Raised hex pad
   var pad=new THREE.Mesh(new THREE.CylinderGeometry(0.85,0.88,0.07,6),
     new THREE.MeshStandardMaterial({color:0x0b1a28,roughness:0.35,metalness:0.8}));
   pad.position.set(data.px,0.035,data.pz); scene.add(pad);
-  // Glowing rim
   var rim=new THREE.Mesh(new THREE.TorusGeometry(0.87,0.025,8,36),
     new THREE.MeshStandardMaterial({color:data.color,emissive:data.color,emissiveIntensity:0.7}));
   rim.rotation.x=Math.PI/2; rim.position.set(data.px,0.07,data.pz); scene.add(rim);
-  // Under-glow disc
   var glow=new THREE.Mesh(new THREE.CircleGeometry(0.7,32),
     new THREE.MeshBasicMaterial({color:data.color,transparent:true,opacity:0.08,side:THREE.DoubleSide}));
   glow.rotation.x=-Math.PI/2; glow.position.set(data.px,0.005,data.pz); scene.add(glow);
@@ -529,7 +615,6 @@ var hubRings=[];
   hubRings.push({m:null,spin:null,topLight:topL});
 })();
 
-// Center beacon (kept for pulse)
 var beaconRing = new THREE.Mesh(
   new THREE.RingGeometry(0.22, 0.4, 48),
   new THREE.MeshBasicMaterial({ color:0x00d4ff, side:THREE.DoubleSide, transparent:true, opacity:0.22 })
@@ -540,7 +625,6 @@ scene.add(beaconRing);
 
 // ─── Stars ────────────────────────────────────────────────────────────────────
 
-// Circular glowing sprite — makes every star a soft round disc instead of a pixel
 var starSpriteTex = (function(){
   var sc=document.createElement('canvas'); sc.width=sc.height=64;
   var sx=sc.getContext('2d');
@@ -556,7 +640,9 @@ var starSpriteTex = (function(){
 
 var starLayers = [];
 (function() {
+  var k = LOW_POWER ? 0.5 : 1; // fewer stars on phones
   function mkStars(count,r0,r1,col,sz,op){
+    count = Math.round(count*k);
     var g=new THREE.BufferGeometry(), p=[];
     for(var i=0;i<count;i++){
       var th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1), r=r0+Math.random()*(r1-r0);
@@ -570,19 +656,17 @@ var starLayers = [];
     });
     scene.add(new THREE.Points(g,m)); return m;
   }
-  // Tiny sizes = realistic star pinpoints; glow sprite adds the characteristic halo
-  starLayers.push(mkStars(3500, 44, 56, 0xffffff, 0.07, 0.90)); // main white field
-  starLayers.push(mkStars(700,  42, 54, 0xb0d8ff, 0.13, 0.92)); // blue-white
-  starLayers.push(mkStars(500,  43, 55, 0xffdd88, 0.12, 0.85)); // warm yellow
-  starLayers.push(mkStars(280,  42, 54, 0xff9999, 0.15, 0.80)); // red giants
-  starLayers.push(mkStars(160,  43, 55, 0x99ffcc, 0.11, 0.75)); // teal
+  starLayers.push(mkStars(3500, 44, 56, 0xffffff, 0.07, 0.90));
+  starLayers.push(mkStars(700,  42, 54, 0xb0d8ff, 0.13, 0.92));
+  starLayers.push(mkStars(500,  43, 55, 0xffdd88, 0.12, 0.85));
+  starLayers.push(mkStars(280,  42, 54, 0xff9999, 0.15, 0.80));
+  starLayers.push(mkStars(160,  43, 55, 0x99ffcc, 0.11, 0.75));
 })();
 
-// ─── Nebula particle clouds (animated, rotate at different speeds) ─────────────
+// ─── Nebula particle clouds ───────────────────────────────────────────────────
 
 var nebulaCloud = [];
 (function(){
-  // Each cloud is a colored haze that orbits — gives the background life
   var cfgs=[
     {col:0xff2277, sz:2.2, cnt:200, r0:30, r1:50, spd: 0.007, seed:0.0},
     {col:0x2299ff, sz:2.0, cnt:180, r0:32, r1:52, spd:-0.005, seed:1.4},
@@ -611,7 +695,7 @@ var nebulaCloud = [];
 
 // ─── Background planets ───────────────────────────────────────────────────────
 
-var planets = [];
+var planets = [], moons = [];
 (function(){
   function mkPlanet(col, atmCol, radius, hasRings, ringCol) {
     var g = new THREE.Group();
@@ -620,17 +704,13 @@ var planets = [];
     });
     var sphere = new THREE.Mesh(new THREE.SphereGeometry(radius,40,30), mat);
     g.add(sphere);
-    // Atmosphere glow (BackSide sphere slightly larger)
     var atmMat = new THREE.MeshBasicMaterial({color:atmCol, transparent:true, opacity:0.13, side:THREE.BackSide});
     g.add(new THREE.Mesh(new THREE.SphereGeometry(radius*1.20,24,18), atmMat));
-    // Self-illumination
     var pl = new THREE.PointLight(col, 1.2, radius*9); g.add(pl);
     if (hasRings) {
-      // Outer ring
       var rM = new THREE.MeshBasicMaterial({color:ringCol||col, transparent:true, opacity:0.50, side:THREE.DoubleSide});
       var ring = new THREE.Mesh(new THREE.RingGeometry(radius*1.45, radius*2.7, 72), rM);
       ring.rotation.x = -Math.PI/2 + 0.38; g.add(ring);
-      // Inner ring (darker)
       var rM2 = new THREE.MeshBasicMaterial({color:ringCol||col, transparent:true, opacity:0.25, side:THREE.DoubleSide});
       var ring2 = new THREE.Mesh(new THREE.RingGeometry(radius*1.25, radius*1.45, 72), rM2);
       ring2.rotation.x = -Math.PI/2 + 0.38; g.add(ring2);
@@ -638,30 +718,51 @@ var planets = [];
     return {g:g, sphere:sphere, pl:pl, atmMat:atmMat};
   }
 
-  // Orange gas giant (Jupiter-like)
   var p1 = mkPlanet(0xff6622, 0xff9944, 1.6, false);
   scene.add(p1.g); planets.push({obj:p1, R:22, Y:9,  ang:0.8,  spd:0.016});
-
-  // Icy ring planet (Saturn-like) — blue/silver with rings
   var p2 = mkPlanet(0x88aaee, 0xaaccff, 1.1, true, 0xc8ddff);
   scene.add(p2.g); planets.push({obj:p2, R:31, Y:16, ang:2.5,  spd:0.011});
-
-  // Red rocky planet (Mars-like)
   var p3 = mkPlanet(0xcc3311, 0xff5533, 0.65, false);
   scene.add(p3.g); planets.push({obj:p3, R:16, Y:5,  ang:4.2,  spd:0.026});
-
-  // Purple gas giant
   var p4 = mkPlanet(0x8822ee, 0xaa66ff, 1.2, false);
   scene.add(p4.g); planets.push({obj:p4, R:37, Y:21, ang:1.1,  spd:0.009});
-
-  // Teal-green small planet
   var p5 = mkPlanet(0x22ccaa, 0x44ffcc, 0.55, false);
   scene.add(p5.g); planets.push({obj:p5, R:25, Y:11, ang:3.8,  spd:0.021});
+
+  // ── New planets ──
+  // Pink ringed ice world
+  var p6 = mkPlanet(0xff5fa8, 0xff9fd0, 0.9, true, 0xffc0e0);
+  scene.add(p6.g); planets.push({obj:p6, R:27, Y:7,  ang:5.2, spd:0.013});
+
+  // Deep-blue ocean world with a moon
+  var p7 = mkPlanet(0x1e4dff, 0x66aaff, 1.35, false);
+  scene.add(p7.g); planets.push({obj:p7, R:34, Y:12, ang:0.2, spd:0.008});
+  addMoon(p7, 0xbbbbcc, 0.28, 2.4, 0.6, 0.35);
+
+  // Golden desert planet
+  var p8 = mkPlanet(0xe0b050, 0xffd890, 0.75, false);
+  scene.add(p8.g); planets.push({obj:p8, R:19, Y:13, ang:2.0, spd:0.019});
+
+  // Small molten lava planet
+  var p9 = mkPlanet(0xff3a00, 0xff7a30, 0.5, false);
+  scene.add(p9.g); planets.push({obj:p9, R:18, Y:9,  ang:5.9, spd:0.03});
+
+  // Give the orange gas giant a moon too
+  addMoon(p1, 0xffe0c0, 0.3, 2.6, 0.5, -0.25);
+
+  function addMoon(p, col, r, dist, spd, tilt){
+    var tiltG = new THREE.Group(); tiltG.rotation.z = tilt; p.g.add(tiltG);
+    var pivot = new THREE.Group(); tiltG.add(pivot);
+    var moon = new THREE.Mesh(new THREE.SphereGeometry(r,20,14),
+      new THREE.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:0.3, roughness:0.9}));
+    moon.position.x = dist; pivot.add(moon);
+    moons.push({pivot:pivot, spd:spd});
+  }
 })();
 
 // ─── Particles ────────────────────────────────────────────────────────────────
 
-var PC = 180;
+var PC = LOW_POWER ? 110 : 180;
 var pPos = new Float32Array(PC*3);
 var pVel = [];
 for (var i = 0; i < PC; i++) {
@@ -724,7 +825,6 @@ function buildMini(col) {
           eyeL:eyeL.material,eyeR:eyeR.material,antBall:antBall.material,antLight:antLight,eyeLight:eyeLight,halo:halo,cpL:cpL};
 }
 
-// Wireframe bounding box helper for YOLO bot
 function makeBBox(w,h,d,col){
   var hw=w/2,hh=h/2,hd=d/2;
   var c=[[-hw,-hh,-hd],[hw,-hh,-hd],[hw,hh,-hd],[-hw,hh,-hd],
@@ -740,20 +840,19 @@ function makeBBox(w,h,d,col){
 }
 
 (function(){
-  // ── 1. Patroller A — cyan, clockwise orbit ────────────────────────────────
+  // 1. Patroller A
   var m1 = buildMini(0x00d4ff);
   m1.g.position.set(6.5,0.08,0); scene.add(m1.g);
   miniRobots.push({type:'patrol',m:m1,t:0,orbitR:6.5,orbitAngle:0,orbitSpeed:0.13});
 
-  // ── 2. Patroller B — pink, counter-clockwise ──────────────────────────────
+  // 2. Patroller B
   var m2 = buildMini(0xff3080);
   m2.g.position.set(-7.2,0.08,0); scene.add(m2.g);
   miniRobots.push({type:'patrol',m:m2,t:4.5,orbitR:7.2,orbitAngle:Math.PI,orbitSpeed:-0.1});
 
-  // ── 3. Franka grasper — silver/gray, pick-and-place robot arm ─────────────
+  // 3. Franka grasper
   var m3 = buildMini(0xb8c8d8);
   var aMat = new THREE.MeshStandardMaterial({color:0xc8d8e8,emissive:0xc8d8e8,emissiveIntensity:0.45,roughness:0.2,metalness:0.7});
-  // Extra robot arm segments: pivot → seg1 → seg2 → gripper
   var fPivot = new THREE.Group(); fPivot.position.set(0.24,0.34,0); m3.g.add(fPivot);
   var fSeg1 = new THREE.Group();
   var fs1m = new THREE.Mesh(new THREE.BoxGeometry(0.065,0.2,0.065),aMat.clone()); fs1m.position.y=-0.1; fSeg1.add(fs1m);
@@ -764,9 +863,7 @@ function makeBBox(w,h,d,col){
   var gf1=new THREE.Mesh(new THREE.BoxGeometry(0.025,0.07,0.025),aMat.clone()); gf1.position.set(0.032,0,0); gGrip.add(gf1);
   var gf2=new THREE.Mesh(new THREE.BoxGeometry(0.025,0.07,0.025),aMat.clone()); gf2.position.set(-0.032,0,0); gGrip.add(gf2);
   var gripL=new THREE.PointLight(0xffffff,2.0,2.5); gripL.position.set(0.24,0.1,0); m3.g.add(gripL);
-  // Wide fill light on robot body
   var frankFill=new THREE.PointLight(0x88aacc,1.0,3.5); frankFill.position.set(0,1.2,0.5); m3.g.add(frankFill);
-  // Object to pick up — orange so it contrasts with the silver arm
   var pickCube=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.1,0.1),
     new THREE.MeshStandardMaterial({color:0xff7744,emissive:0xff8855,emissiveIntensity:1.3}));
   pickCube.position.set(0.52,0.05,0.0); m3.g.add(pickCube);
@@ -774,50 +871,41 @@ function makeBBox(w,h,d,col){
   m3.g.position.set(-5.0,0.04,-4.2); m3.g.rotation.y=0.9; scene.add(m3.g);
   miniRobots.push({type:'franka',m:m3,t:0,fPivot:fPivot,fSeg1:fSeg1,fSeg2:fSeg2,gf1:gf1,gf2:gf2,gripL:gripL,pickCube:pickCube,sparkTimer:0});
 
-  // ── 4. YOLO detector — orange, prominent bounding boxes ──────────────────
+  // 4. YOLO detector
   var m4 = buildMini(0xff8800);
   var detCols=[0xff8800,0xffcc00,0xff4444];
   var detOff=[{x:0.75,z:0.15},{x:1.15,z:-0.42},{x:0.52,z:-0.72}];
   var detBoxes=[];
   detOff.forEach(function(p,i){
-    // Detected object (emissive so it glows)
     var obj=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.15,0.15),
       new THREE.MeshStandardMaterial({color:detCols[i],emissive:detCols[i],emissiveIntensity:0.5,roughness:0.3}));
     obj.position.set(p.x,0.075,p.z); m4.g.add(obj);
-    // Big bounding box — tall so it's obvious
     var bb=makeBBox(0.30,0.48,0.30,detCols[i]); bb.position.set(p.x,0.24,p.z); m4.g.add(bb);
-    // Label chip above box (small glowing plane)
     var lblM=new THREE.MeshBasicMaterial({color:detCols[i],transparent:true,opacity:0.75,side:THREE.DoubleSide});
     var lbl=new THREE.Mesh(new THREE.PlaneGeometry(0.24,0.06),lblM);
     lbl.position.set(p.x,0.52,p.z); lbl.rotation.x=-0.3; m4.g.add(lbl);
-    // Point light tinting the detection zone
     var pl=new THREE.PointLight(detCols[i],0.6,0.8); pl.position.set(p.x,0.25,p.z); m4.g.add(pl);
     detBoxes.push({mesh:bb,mat:bb.material,lblMat:lblM,pl:pl,phase:i*0.9});
   });
   m4.g.position.set(5.2,0.08,-3.8); m4.g.rotation.y=-0.6; scene.add(m4.g);
   miniRobots.push({type:'yolo',m:m4,t:0,detBoxes:detBoxes});
 
-  // ── 5. SAM segmenter — purple, bright laser scan beam + seg masks ─────────
+  // 5. SAM segmenter
   var m5 = buildMini(0xaa55ff);
-  // Horizontal scan LINE — bright, obvious
   var slPts=[new THREE.Vector3(-1.4,0,0),new THREE.Vector3(1.4,0,0)];
   var slGeo=new THREE.BufferGeometry().setFromPoints(slPts);
   var slMat=new THREE.LineBasicMaterial({color:0xdd88ff,transparent:true,opacity:0.95});
   var scanLine=new THREE.Line(slGeo,slMat); m5.g.add(scanLine);
-  // Moving light that follows the beam
   var scanLight=new THREE.PointLight(0xaa55ff,2.2,3.0); m5.g.add(scanLight);
-  // Faint trailing plane (behind the beam)
   var scanMat=new THREE.MeshBasicMaterial({color:0xaa55ff,transparent:true,opacity:0.18,side:THREE.DoubleSide,depthWrite:false});
   var scanPlane=new THREE.Mesh(new THREE.PlaneGeometry(2.8,2.8),scanMat);
   scanPlane.rotation.x=-Math.PI/2; m5.g.add(scanPlane);
-  // Segmentation mask patches (larger + outline rings)
   var segPatches=[], segCols2=[0xaa55ff,0x7733dd,0xdd88ff];
   [[-0.4,0.6],[0.6,0.3],[0.1,-0.65]].forEach(function(p,i){
     var r=0.30+i*0.09;
     var pm=new THREE.MeshBasicMaterial({color:segCols2[i],transparent:true,opacity:0.40,side:THREE.DoubleSide});
     var patch=new THREE.Mesh(new THREE.CircleGeometry(r,20),pm);
     patch.rotation.x=-Math.PI/2; patch.position.set(p[0],0.003,p[1]); m5.g.add(patch);
-    // Bright outline ring
     var om=new THREE.MeshBasicMaterial({color:segCols2[i],transparent:true,opacity:0.80,side:THREE.DoubleSide});
     var ring=new THREE.Mesh(new THREE.RingGeometry(r,r+0.018,20),om);
     ring.rotation.x=-Math.PI/2; ring.position.set(p[0],0.004,p[1]); m5.g.add(ring);
@@ -828,7 +916,7 @@ function makeBBox(w,h,d,col){
   m5.g.position.set(4.0,0.08,5.5); m5.g.rotation.y=-2.2; scene.add(m5.g);
   miniRobots.push({type:'sam',m:m5,t:0,scanLine:scanLine,slMat:slMat,scanLight:scanLight,scanPlane:scanPlane,scanMat:scanMat,segPatches:segPatches});
 
-  // ── 6. RL training bot — yellow, tiny agent runs laps nearby ─────────────
+  // 6. RL training bot
   var m6 = buildMini(0xffdd00);
   var agentMesh=new THREE.Mesh(new THREE.SphereGeometry(0.055,8,8),
     new THREE.MeshStandardMaterial({color:0xffdd00,emissive:0xffdd00,emissiveIntensity:1.4}));
@@ -854,14 +942,12 @@ function spawnShootingStar() {
   var dir = new THREE.Vector3(-Math.sin(theta+0.8), -0.4-Math.random()*0.35, -Math.cos(theta+0.8)).normalize();
   var len = 6+Math.random()*10;
   var col = ssColors[Math.floor(Math.random()*ssColors.length)];
-  // Trail line (relative to group position so it moves with position.addScaledVector)
   var pts = [new THREE.Vector3(0,0,0), new THREE.Vector3(dir.x*len,dir.y*len,dir.z*len)];
   var geo = new THREE.BufferGeometry().setFromPoints(pts);
   var mat = new THREE.LineBasicMaterial({color:col, transparent:true, opacity:1.0});
   var line = new THREE.Line(geo, mat);
   line.position.set(sx,sy,sz);
   scene.add(line);
-  // Glowing head so it's clearly visible
   var hMesh = new THREE.Mesh(new THREE.SphereGeometry(0.12,5,3), new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:1.0}));
   hMesh.position.set(sx,sy,sz);
   scene.add(hMesh);
@@ -876,32 +962,24 @@ function spawnRocket() {
   var g = new THREE.Group();
   var bMat = new THREE.MeshStandardMaterial({color:0xd8e0e8,emissive:0xc8d8e8,emissiveIntensity:0.55,roughness:0.22,metalness:0.75});
   var nMat = new THREE.MeshStandardMaterial({color:0xff4422,emissive:0xff7744,emissiveIntensity:1.1,roughness:0.3,metalness:0.1});
-  // Body
   g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.22,1.0,8), bMat));
-  // Nose cone
   var nose=new THREE.Mesh(new THREE.ConeGeometry(0.18,0.5,8),nMat); nose.position.y=0.75; g.add(nose);
-  // 4 fins
   for(var fi=0;fi<4;fi++){
     var fa=fi*(Math.PI/2);
     var fin=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.28,0.38),bMat);
     fin.position.set(Math.sin(fa)*0.18,-0.42,Math.cos(fa)*0.18);
     fin.rotation.y=fa; g.add(fin);
   }
-  // Cockpit window
   var winMesh=new THREE.Mesh(new THREE.SphereGeometry(0.07,7,5),
     new THREE.MeshStandardMaterial({color:0x88ddff,emissive:0x88ddff,emissiveIntensity:1.3}));
   winMesh.position.y=0.15; g.add(winMesh);
-  // Exhaust flame (inverted cone below body)
   var flameMat=new THREE.MeshBasicMaterial({color:0xff9944,transparent:true,opacity:0.9,side:THREE.DoubleSide});
   var flame=new THREE.Mesh(new THREE.ConeGeometry(0.14,0.55,8),flameMat);
   flame.position.y=-0.77; flame.rotation.x=Math.PI; g.add(flame);
-  // Inner brighter flame
   var iMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.7,side:THREE.DoubleSide});
   var iFlame=new THREE.Mesh(new THREE.ConeGeometry(0.07,0.35,6),iMat);
   iFlame.position.y=-0.77; iFlame.rotation.x=Math.PI; g.add(iFlame);
   var exL=new THREE.PointLight(0xff8833,5.5,4.0); exL.position.y=-0.9; g.add(exL);
-  // Camera at y=8 looks DOWNWARD — rockets at y=12+ are above the view frustum.
-  // Keep y=1.5-5 so they appear in the upper portion of the screen.
   var theta=Math.random()*Math.PI*2;
   var sy=1.5+Math.random()*3.5;
   var sr=22;
@@ -929,14 +1007,12 @@ var Robot = (function(){
     this.root  = new THREE.Group();
     var S = mkMat(0xc4d4e2,0xc4d4e2,0.22), D = mkMat(0x8899a8,0x8899a8,0.12), CG = mkMat(0x00d4ff,0x00d4ff,1.6);
 
-    // Body
     this.bodyG = new THREE.Group(); this.bodyG.position.y=0.72;
     var bm = new THREE.Mesh(new THREE.BoxGeometry(0.56,0.65,0.36),S); bm.castShadow=true;
     var ch = new THREE.Mesh(new THREE.BoxGeometry(0.26,0.2,0.04),CG); ch.position.set(0,0.02,0.19);
     var cl = new THREE.PointLight(0x00d4ff,0.38,1.2); cl.position.set(0,0.02,0.38);
     this.bodyG.add(bm,ch,cl);
 
-    // Head
     this.headG = new THREE.Group(); this.headG.position.y=1.18;
     var hm = new THREE.Mesh(new THREE.BoxGeometry(0.46,0.36,0.36),S); hm.castShadow=true;
     var eg = new THREE.BoxGeometry(0.086,0.068,0.04);
@@ -948,35 +1024,29 @@ var Robot = (function(){
     this.headG.add(hm,le,re,eL,mo);
     [[-0.26],[0.26]].forEach(function(d){var e=new THREE.Mesh(new THREE.BoxGeometry(0.055,0.09,0.055),D);e.position.set(d[0],0.04,0);this.headG.add(e);}.bind(this));
 
-    // Antenna
     this.antG=new THREE.Group(); this.antG.position.y=0.2;
     var aS=new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.016,0.26,8),D); aS.position.y=0.13;
     var aB=new THREE.Mesh(new THREE.SphereGeometry(0.042,8,8),CG); aB.position.y=0.27;
     var aL=new THREE.PointLight(0x00d4ff,0.28,0.6); aL.position.y=0.27;
     this.antG.add(aS,aB,aL); this.headG.add(this.antG);
 
-    // Arms
     this.leftArm  = mkArm(-1,D); this.rightArm = mkArm(1,D);
-
-    // Legs
     this.leftLeg  = mkLeg(-1,D); this.rightLeg = mkLeg(1,D);
 
     this.root.add(this.bodyG,this.headG,this.leftArm,this.rightArm,this.leftLeg,this.rightLeg);
     this.baseY=0.114; this.root.position.y=this.baseY;
     scene.add(this.root);
 
-    // Overhead fill light — keeps robot visible regardless of scene lighting
     var fill = new THREE.PointLight(0xffffff, 1.8, 4.5);
     fill.position.set(0, 2.5, 0.5);
     this.root.add(fill);
 
-    // Shadow blob
     var blob=new THREE.Mesh(new THREE.CircleGeometry(0.34,16),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.2}));
     blob.rotation.x=-Math.PI/2; blob.position.y=-this.baseY+0.002;
     this.root.add(blob); this.blob=blob;
 
     this.state='idle'; this.t=0; this.target=null; this.stLook=null; this.onDone=null; this.speed=2.6;
-    this.headTargetY=0; // for look-around
+    this.headTargetY=0;
   }
 
   function mkArm(s,D){ var g=new THREE.Group(); g.position.set(s*0.375,0.98,0);
@@ -1000,7 +1070,6 @@ var Robot = (function(){
     if(this.state==='idle'){
       this.root.position.y=this.baseY+Math.sin(t*1.25)*0.022;
       this.antG.rotation.z=Math.sin(t*1.9)*0.11;
-      // Head tracks mouse (set externally)
       this.headG.rotation.y+=(this.headTargetY-this.headG.rotation.y)*0.08;
       this.leftArm.rotation.x=Math.sin(t*1.25)*0.04;
       this.rightArm.rotation.x=-Math.sin(t*1.25)*0.04;
@@ -1038,7 +1107,6 @@ var robot = new Robot();
 // ─── Stations ─────────────────────────────────────────────────────────────────
 
 var stationObjs = [];
-var nnData = []; // for neural network animation
 
 STATIONS.forEach(function(data, idx) {
   var group = new THREE.Group();
@@ -1047,14 +1115,12 @@ STATIONS.forEach(function(data, idx) {
   var dm  = new THREE.MeshStandardMaterial({color:0x0d1e2e,roughness:0.5,metalness:0.6});
   var acc = new THREE.MeshStandardMaterial({color:data.color,emissive:data.color,emissiveIntensity:0.55,roughness:0.3,metalness:0.7});
 
-  // Hexagonal pedestal
   var ped = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.48,0.1,6), dm);
   ped.castShadow=true; ped.receiveShadow=true;
   group.add(ped);
   var ring = new THREE.Mesh(new THREE.TorusGeometry(0.4,0.018,8,32),acc);
   ring.rotation.x=Math.PI/2; ring.position.y=0.05; group.add(ring);
 
-  // Second smaller ring
   var ring2 = new THREE.Mesh(new THREE.TorusGeometry(0.24,0.008,8,32),acc);
   ring2.rotation.x=Math.PI/2; ring2.position.y=0.06; ring2.material=ring2.material.clone();
   ring2.material.emissiveIntensity=0.3; group.add(ring2);
@@ -1063,28 +1129,23 @@ STATIONS.forEach(function(data, idx) {
   var extras = { fGroup:fGroup, seed:idx*1.3, rings:[], nnNodes:[], nnLines:[] };
 
   if (data.id==='about') {
-    // Monitor with glow
     var pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,0.55,8),dm); pole.position.y=0.275;
     var back = new THREE.Mesh(new THREE.BoxGeometry(0.68,0.48,0.055),dm); back.position.y=0.65;
-    // Bezel trim
     var bezel = new THREE.Mesh(new THREE.BoxGeometry(0.72,0.52,0.04),acc.clone());
     bezel.material.emissiveIntensity=0.15; bezel.position.y=0.65;
     var screen = new THREE.Mesh(new THREE.BoxGeometry(0.58,0.38,0.03),
       new THREE.MeshStandardMaterial({color:data.color,emissive:data.color,emissiveIntensity:0.7,transparent:true,opacity:0.88}));
     screen.position.set(0,0.65,0.04);
-    // Keyboard
     var kb = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.03,0.2),dm); kb.position.set(0,0.08,0.1);
     extras.screen=screen;
     fGroup.add(pole,bezel,back,screen,kb);
 
   } else if (data.id==='research') {
-    // Neural network visualization
     var layers = [
       [{x:-0.28,y:0.35},{x:-0.28,y:0.68},{x:-0.28,y:1.01}],
       [{x:0,y:0.2},{x:0,y:0.54},{x:0,y:0.88},{x:0,y:1.22}],
       [{x:0.28,y:0.45},{x:0.28,y:0.88}]
     ];
-    var nodeMats = [];
     layers.forEach(function(layer) {
       layer.forEach(function(n) {
         var mat = new THREE.MeshStandardMaterial({color:data.color,emissive:data.color,emissiveIntensity:0.5,transparent:true,opacity:0.9});
@@ -1092,10 +1153,8 @@ STATIONS.forEach(function(data, idx) {
         node.position.set(n.x,n.y,0);
         fGroup.add(node);
         extras.nnNodes.push(node);
-        nodeMats.push(mat);
       });
     });
-    // Connections
     for (var li=0; li<layers.length-1; li++) {
       layers[li].forEach(function(from) {
         layers[li+1].forEach(function(to) {
@@ -1110,7 +1169,6 @@ STATIONS.forEach(function(data, idx) {
     }
 
   } else if (data.id==='industry') {
-    // Animated robotic arm
     extras.armBase=new THREE.Group(); extras.armBase.position.y=0.1;
     var ab=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,0.22,12),dm); ab.position.y=0.11;
     extras.armSeg1=new THREE.Group(); extras.armSeg1.position.set(0,0.22,0);
@@ -1133,7 +1191,6 @@ STATIONS.forEach(function(data, idx) {
     fGroup.add(extras.armBase);
 
   } else if (data.id==='projects') {
-    // Three orbiting screens
     extras.screens=[];
     for (var si=0; si<3; si++) {
       var sm=new THREE.Mesh(new THREE.PlaneGeometry(0.28,0.2),
@@ -1146,13 +1203,11 @@ STATIONS.forEach(function(data, idx) {
     }
 
   } else if (data.id==='contact') {
-    // Satellite dish + signal rings
     var pole3=new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.022,0.5,8),dm); pole3.position.y=0.25;
     extras.dish=new THREE.Mesh(new THREE.ConeGeometry(0.28,0.09,16,1,true),
       new THREE.MeshStandardMaterial({color:data.color,emissive:data.color,emissiveIntensity:0.45,side:THREE.DoubleSide}));
     extras.dish.position.y=0.68; extras.dish.rotation.x=Math.PI*0.38;
     fGroup.add(pole3,extras.dish);
-    // Signal rings
     for (var ri=0; ri<4; ri++) {
       var rGeo=new THREE.RingGeometry(0.05,0.1,32);
       var rMat=new THREE.MeshBasicMaterial({color:data.color,side:THREE.DoubleSide,transparent:true,opacity:0.7});
@@ -1162,11 +1217,9 @@ STATIONS.forEach(function(data, idx) {
     }
   }
 
-  // Point light
   var ptL=new THREE.PointLight(data.color,1.1,5);
   ptL.position.y=1.2; group.add(ptL); extras.ptLight=ptL;
 
-  // DOM label
   var labelEl=document.createElement('div');
   labelEl.className='slabel'; labelEl.style.color=data.hex; labelEl.style.borderColor=data.hex+'55';
   labelEl.textContent=data.label; labelEl.dataset.idx=idx;
@@ -1198,11 +1251,9 @@ var hoveredSt = null;
 var allClickable = [];
 stationObjs.forEach(function(st){allClickable=allClickable.concat(st.clickMeshes);});
 
-// Collect robot meshes for click-to-wave
 var robotMeshes = [];
 robot.root.traverse(function(o){ if(o.isMesh) robotMeshes.push(o); });
 
-// Wave animation state
 var waving = false, waveT = 0;
 
 renderer.domElement.addEventListener('click', function(e) {
@@ -1210,10 +1261,10 @@ renderer.domElement.addEventListener('click', function(e) {
   mouse2d.y=-(e.clientY/window.innerHeight)*2+1;
   raycaster.setFromCamera(mouse2d,camera);
 
-  // Check robot first
   var robotHit = raycaster.intersectObjects(robotMeshes);
   if (robotHit.length && robot.state === 'idle') {
     waving = true; waveT = 0;
+    robotSay(WAVE_LINES[Math.floor(Math.random()*WAVE_LINES.length)], 2.4);
     return;
   }
 
@@ -1226,6 +1277,7 @@ renderer.domElement.addEventListener('click', function(e) {
 });
 
 renderer.domElement.addEventListener('mousemove', function(e) {
+  if (IS_TOUCH) return;
   mouse2d.x=(e.clientX/window.innerWidth)*2-1;
   mouse2d.y=-(e.clientY/window.innerHeight)*2+1;
   raycaster.setFromCamera(mouse2d,camera);
@@ -1233,7 +1285,6 @@ renderer.domElement.addEventListener('mousemove', function(e) {
   var nh=hits.length?hits[0].object.userData.stIdx:null;
   if(nh!==hoveredSt){ hoveredSt=nh; renderer.domElement.style.cursor=nh!==null?'pointer':'default'; }
 
-  // Robot head tracking (look at cursor on ground plane)
   if(robot.state==='idle'){
     var fp2=new THREE.Vector3(); raycaster.ray.intersectPlane(floorPlane,fp2);
     if(fp2){
@@ -1250,14 +1301,16 @@ renderer.domElement.addEventListener('mousemove', function(e) {
 // ─── Navigation ───────────────────────────────────────────────────────────────
 
 var activeIdx=null, cameraXShift=0, panelOpen=false;
+var panelEl=document.getElementById('panel');
 
 function navigateTo(idx) {
   activeIdx=idx; panelOpen=true;
-  document.getElementById('panel').classList.remove('open');
+  panelEl.classList.remove('open');
   document.querySelectorAll('.nav-dot').forEach(function(d,i){d.classList.toggle('active',i===idx);});
   document.getElementById('hint').style.opacity='0';
   var st=stationObjs[idx], px=st.data.px, pz=st.data.pz;
   var len=Math.sqrt(px*px+pz*pz), nx=-px/len, nz=-pz/len;
+  robotSay('NAVIGATING → ' + st.data.label + ' ...', 6);
   robot.moveTo(px+nx*1.25, pz+nz*1.25, px, pz, function(){openPanel(st.data);});
 }
 
@@ -1266,14 +1319,17 @@ function openPanel(data) {
   document.getElementById('panel-eyebrow').style.color=data.hex;
   document.getElementById('panel-title').textContent=data.title;
   document.getElementById('panel-body').innerHTML=data.body;
-  document.getElementById('panel').classList.add('open');
+  panelEl.scrollTop=0;
+  panelEl.classList.add('open');
   cameraXShift=-2;
+  robotSay(STATION_LINES[data.id] || 'ARRIVED.', 3.5);
 }
 
 function closePanel() {
-  document.getElementById('panel').classList.remove('open');
+  panelEl.classList.remove('open');
   document.querySelectorAll('.nav-dot').forEach(function(d){d.classList.remove('active');});
   cameraXShift=0; activeIdx=null; panelOpen=false;
+  robotSay('RETURNING TO BASE.', 1.8);
   robot.goHome(null);
 }
 
@@ -1283,13 +1339,89 @@ document.querySelectorAll('.nav-dot').forEach(function(dot){
   dot.addEventListener('click',function(){navigateTo(parseInt(dot.dataset.station));});
 });
 
-// Keyboard navigation
 document.addEventListener('keydown', function(e) {
   if(e.key>='1'&&e.key<='5') navigateTo(parseInt(e.key)-1);
   else if(e.key==='Escape') { if(panelOpen) closePanel(); }
   else if(e.key==='ArrowRight'&&activeIdx!==null) navigateTo((activeIdx+1)%5);
   else if(e.key==='ArrowLeft'&&activeIdx!==null)  navigateTo((activeIdx+4)%5);
 });
+
+// Swipe the bottom sheet down to close it (phones)
+(function(){
+  var y0=null, dy=0;
+  panelEl.addEventListener('touchstart',function(e){
+    if(!isMobileLayout() || panelEl.scrollTop>0){ y0=null; return; }
+    y0=e.touches[0].clientY; dy=0;
+  },{passive:true});
+  panelEl.addEventListener('touchmove',function(e){
+    if(y0===null) return;
+    dy=Math.max(0,e.touches[0].clientY-y0);
+    if(dy>0){ panelEl.style.transition='none'; panelEl.style.transform='translateY('+dy+'px)'; }
+  },{passive:true});
+  panelEl.addEventListener('touchend',function(){
+    if(y0===null) return;
+    panelEl.style.transition=''; panelEl.style.transform='';
+    if(dy>90) closePanel();
+    y0=null; dy=0;
+  });
+})();
+
+// ─── Robot dialogue (typewriter speech bubble) ────────────────────────────────
+
+var sayEl = document.getElementById('robot-say');
+var sayTextEl = document.getElementById('say-text');
+var say = {full:'', n:0, acc:0, hold:0, active:false};
+var booted = false, idleWait = 999, idleIdx = 0;
+var _sv = new THREE.Vector3();
+
+var TAP = IS_TOUCH ? 'TAP' : 'CLICK';
+var IDLE_LINES = [
+  TAP + ' ANY STATION TO EXPLORE.',
+  'I WILL ESCORT YOU. WALKING SUBROUTINE: READY.',
+  IS_TOUCH ? 'TAP A GLOWING LABEL TO START.' : 'TIP: PRESS KEYS 1–5 TO TELEPORT ME.',
+  TAP + ' ME. I AM PROGRAMMED TO WAVE.',
+  TAP + ' THE FLOOR. IT RIPPLES. VERY SCIENTIFIC.',
+  'RESEARCH STATION RECOMMENDED. PROBABILITY OF INTEREST: 0.97',
+  'STATUS: ALL SYSTEMS NOMINAL. AWAITING INPUT.'
+];
+var STATION_LINES = {
+  about:    'LOADING PROFILE: ELLIE.EXE ... DONE.',
+  research: 'SCANNING NEURAL PATHWAYS... FASCINATING.',
+  industry: 'DEPLOYING TO PRODUCTION. FINGERS CROSSED.',
+  projects: 'COMPILING BUILDS... 3 ARTIFACTS FOUND.',
+  contact:  'OPENING COMMS CHANNEL. SAY HELLO!'
+};
+var WAVE_LINES = ['HELLO, HUMAN. \\(^_^)/', 'GREETINGS. HANDSHAKE PROTOCOL COMPLETE.', 'BEEP BOOP. THAT TICKLES.', 'WAVE.EXE EXECUTED SUCCESSFULLY.'];
+
+function robotSay(text, hold) {
+  say.full = text; say.n = 0; say.acc = 0; say.hold = hold || 3.2; say.active = true;
+  sayTextEl.textContent = '';
+  sayEl.classList.add('show');
+}
+
+function updateSpeech(dt) {
+  if (say.active) {
+    if (say.n < say.full.length) {
+      say.acc += dt * 42;                              // typing speed (chars/sec)
+      var k = Math.floor(say.acc);
+      if (k > 0) { say.acc -= k; say.n = Math.min(say.full.length, say.n + k); sayTextEl.textContent = say.full.slice(0, say.n); }
+    } else {
+      say.hold -= dt;
+      if (say.hold <= 0) {
+        say.active = false; sayEl.classList.remove('show');
+        idleWait = idleIdx === 0 ? 0.6 : 6 + Math.random() * 4;
+      }
+    }
+  } else if (booted && !panelOpen && robot.state === 'idle') {
+    idleWait -= dt;
+    if (idleWait <= 0) { robotSay(IDLE_LINES[idleIdx % IDLE_LINES.length], 3.8); idleIdx++; }
+  }
+  // Follow the robot's head on screen
+  _sv.copy(robot.root.position); _sv.y += 1.95; _sv.project(camera);
+  sayEl.style.left = ((_sv.x + 1) / 2 * window.innerWidth) + 'px';
+  sayEl.style.top  = ((-_sv.y + 1) / 2 * window.innerHeight) + 'px';
+  sayEl.style.visibility = _sv.z > 1 ? 'hidden' : '';
+}
 
 // ─── Label projection ─────────────────────────────────────────────────────────
 
@@ -1309,7 +1441,9 @@ function updateLabels() {
 // ─── Camera ───────────────────────────────────────────────────────────────────
 
 var camT=new THREE.Vector3(), mouseParallax={x:0,y:0};
+var camZoom=1, viewShift=0;
 document.addEventListener('mousemove',function(e){
+  if (IS_TOUCH) return;
   mouseParallax.x=(e.clientX/window.innerWidth-0.5)*2;
   mouseParallax.y=(e.clientY/window.innerHeight-0.5)*2;
 });
@@ -1318,6 +1452,7 @@ document.addEventListener('mousemove',function(e){
 
 window.addEventListener('resize',function(){
   camera.aspect=window.innerWidth/window.innerHeight;
+  camera.fov=camFov();
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth,window.innerHeight);
 });
@@ -1333,14 +1468,13 @@ function animate() {
 
   robot.update(dt);
 
-  // Wave animation (overrides idle arm when active)
   if (waving) {
     waveT += dt;
-    var wp = waveT / 1.2; // 1.2 s duration
+    var wp = waveT / 1.2;
     if (wp >= 1) { waving = false; robot.rightArm.rotation.x = 0; robot.rightArm.rotation.z = 0; }
     else {
-      robot.rightArm.rotation.z = -Math.sin(wp * Math.PI) * 1.1; // raise arm
-      robot.rightArm.rotation.x = Math.sin(waveT * 14) * 0.35;   // wiggle
+      robot.rightArm.rotation.z = -Math.sin(wp * Math.PI) * 1.1;
+      robot.rightArm.rotation.x = Math.sin(waveT * 14) * 0.35;
     }
   }
 
@@ -1348,20 +1482,16 @@ function animate() {
     var ex=st.extras, t=gt, seed=ex.seed;
     var isHov=(si===hoveredSt);
 
-    // Float group
     ex.fGroup.position.y=0.2+Math.sin(t*1.4+seed)*0.055;
     var tScale=isHov?1.12:1;
     ex.fGroup.scale.x+=(tScale-ex.fGroup.scale.x)*0.1;
     ex.fGroup.scale.y+=(tScale-ex.fGroup.scale.y)*0.1;
     ex.fGroup.scale.z+=(tScale-ex.fGroup.scale.z)*0.1;
 
-    // Light
     ex.ptLight.intensity=(isHov?2.8:1.0)+Math.sin(t*2.2+seed)*0.25;
 
-    // About: screen pulse
     if(ex.screen) ex.screen.material.emissiveIntensity=0.6+Math.sin(t*0.9+seed)*0.18;
 
-    // Research: neural net pulse
     if(ex.nnNodes.length){
       ex.nnNodes.forEach(function(n,ni){
         n.material.emissiveIntensity=0.25+Math.abs(Math.sin(t*2+ni*0.6))*0.9;
@@ -1372,14 +1502,12 @@ function animate() {
       });
     }
 
-    // Industry: animated arm
     if(ex.armSeg1){
       ex.armSeg1.rotation.z=Math.sin(t*0.7+seed)*0.5;
       ex.armSeg2.rotation.z=Math.sin(t*0.9+seed+1)*0.4;
       if(ex.claw){ ex.claw.rotation.y=t*1.2; ex.claw.children[0].position.x=0.055+Math.sin(t*1.5)*0.02; ex.claw.children[1].position.x=-0.055-Math.sin(t*1.5)*0.02; }
     }
 
-    // Projects: orbiting screens
     if(ex.screens){
       ex.screens.forEach(function(s){
         var ang=s.userData.baseAngle+t*0.5;
@@ -1389,7 +1517,6 @@ function animate() {
       });
     }
 
-    // Contact: expanding rings
     if(ex.rings.length){
       ex.rings.forEach(function(r){
         var rp=((t*0.55)+r.userData.phase)%1;
@@ -1398,9 +1525,7 @@ function animate() {
     }
   });
 
-  // Sky rotate
   scene.traverse(function(o){ if(o.userData.isSky) o.rotation.y=gt*0.0012; });
-  // Star twinkle (each layer breathes at its own rate)
   if(starLayers.length){
     starLayers[0].opacity = 0.78 + Math.sin(gt*0.28)*0.06;
     starLayers[1].opacity = 0.84 + Math.sin(gt*0.41+1.2)*0.08;
@@ -1408,37 +1533,32 @@ function animate() {
     starLayers[3].opacity = 0.68 + Math.sin(gt*0.33+0.8)*0.08;
     starLayers[4].opacity = 0.64 + Math.sin(gt*0.45+3.1)*0.07;
   }
-  // Nebula clouds drift
   nebulaCloud.forEach(function(nc){
     nc.pts.rotation.y += nc.spd * dt;
     nc.mat.opacity = 0.055 + Math.abs(Math.sin(gt*0.22+nc.seed))*0.055;
   });
 
-  // Planets orbit + slow self-rotation
   planets.forEach(function(p){
     p.ang += p.spd * dt;
     p.obj.g.position.set(Math.cos(p.ang)*p.R, p.Y, Math.sin(p.ang)*p.R);
     p.obj.sphere.rotation.y += dt * 0.06;
   });
+  moons.forEach(function(m){ m.pivot.rotation.y += m.spd * dt; });
 
-  // Hub ring spin
   hubRings.forEach(function(hr){
     if(hr.spin==='y' && hr.m) hr.m.rotation.y += hr.speed*dt;
     if(hr.topLight) hr.topLight.intensity=0.55+Math.sin(gt*2)*0.25;
   });
 
-  // Beacon
   beaconRing.material.opacity=0.12+Math.sin(gt*2.5)*0.09;
   edgeRing.material.opacity=0.55+Math.sin(gt*0.8)*0.12;
 
-  // Particles
   for(var pi=0;pi<PC;pi++){
     pPos[pi*3]+=pVel[pi][0]; pPos[pi*3+1]+=pVel[pi][1]; pPos[pi*3+2]+=pVel[pi][2];
     if(pPos[pi*3+1]>7){pPos[pi*3+1]=0;pPos[pi*3]=(Math.random()-0.5)*17;pPos[pi*3+2]=(Math.random()-0.5)*17;}
   }
   pGeo.attributes.position.needsUpdate=true;
 
-  // Ripples
   ripples=ripples.filter(function(r){
     r.t+=dt; var p=r.t/r.life;
     if(p>=1){scene.remove(r.mesh);return false;}
@@ -1446,15 +1566,28 @@ function animate() {
     return true;
   });
 
-  // Camera follow + parallax
+  // Camera follow + parallax (adapts to screen shape)
+  var mobile = isMobileLayout();
+  var cb = camBase();
+  var zoomTarget = (mobile && panelOpen) ? 0.62 : 1;   // zoom in on the robot when the sheet is up
+  camZoom += (zoomTarget - camZoom) * 0.05;
   camT.lerp(robot.root.position,0.06);
-  var tx=camT.x+cameraXShift+mouseParallax.x*0.5;
-  var ty=camT.y+8;
-  var tz=camT.z+10-mouseParallax.y*0.5;
+  var tx=camT.x+(mobile?0:cameraXShift)+mouseParallax.x*0.5;
+  var ty=camT.y+cb.y*camZoom;
+  var tz=camT.z+cb.z*camZoom-mouseParallax.y*0.5;
   camera.position.x+=(tx-camera.position.x)*0.055;
   camera.position.y+=(ty-camera.position.y)*0.055;
   camera.position.z+=(tz-camera.position.z)*0.055;
   camera.lookAt(camT.x,camT.y+0.5,camT.z);
+
+  // On phones, shift the rendered view up so the robot sits above the bottom sheet
+  var vsTarget = (mobile && panelOpen) ? window.innerHeight*0.3 : 0;
+  viewShift += (vsTarget - viewShift) * 0.08;
+  if (Math.abs(viewShift) > 0.5) {
+    camera.setViewOffset(window.innerWidth, window.innerHeight, 0, viewShift, window.innerWidth, window.innerHeight);
+  } else if (camera.view && camera.view.enabled) {
+    camera.clearViewOffset();
+  }
 
   // ── Mini robots ──────────────────────────────────────────────────────────
   miniRobots.forEach(function(mr) {
@@ -1472,7 +1605,6 @@ function animate() {
       m.armLG.rotation.x=-sw*0.45; m.armRG.rotation.x=sw*0.45;
 
     } else if (mr.type === 'franka') {
-      // 5-second pick-and-place cycle
       var ph = (mr.t % 5.0) / 5.0;
       mr.fPivot.rotation.x = Math.sin(ph*Math.PI*2)*0.55 - 0.05;
       mr.fSeg2.rotation.x = -Math.abs(Math.sin(ph*Math.PI*2+0.3))*0.45;
@@ -1484,7 +1616,6 @@ function animate() {
       mr.pickCube.position.y = 0.05 + liftAmt;
       m.headG.rotation.x = -0.12;
       m.armLG.rotation.x = 0.15 + Math.sin(mr.t*0.7)*0.1;
-      // sparks from gripper when gripping
       mr.sparkTimer -= dt;
       if (gripping && mr.sparkTimer <= 0) {
         mr.sparkTimer = 0.14 + Math.random()*0.22;
@@ -1509,7 +1640,6 @@ function animate() {
       m.armRG.rotation.x = -0.18 + Math.sin(mr.t*0.6)*0.08;
 
     } else if (mr.type === 'sam') {
-      // Bright beam sweeps up and down
       var scanY = 0.26 + Math.sin(mr.t*0.9)*0.24;
       mr.scanLine.position.y = scanY;
       mr.slMat.opacity = 0.75 + Math.abs(Math.sin(mr.t*0.9))*0.22;
@@ -1526,7 +1656,6 @@ function animate() {
       m.armRG.rotation.x = -0.55 + Math.sin(mr.t*0.55+1.0)*0.2;
 
     } else if (mr.type === 'rl') {
-      // Tiny agent runs laps
       mr.agentAngle += mr.agentSpeed * dt;
       mr.agentMesh.position.set(
         Math.sin(mr.agentAngle)*0.55,
@@ -1535,12 +1664,10 @@ function animate() {
       );
       mr.agentL.position.copy(mr.agentMesh.position);
       var lapFrac = (mr.agentAngle%(Math.PI*2))/(Math.PI*2);
-      // Bot nods when agent completes a lap
       m.headG.rotation.x = lapFrac < 0.06 ? -0.22 : Math.sin(mr.t*0.35)*0.04;
       m.headG.rotation.y = Math.sin(mr.t*0.3)*0.18;
     }
 
-    // Universal: antenna + halo pulse
     m.antBall.emissiveIntensity = 2.5 + Math.sin(mr.t*3.5)*1;
     m.antLight.intensity = 0.18 + Math.sin(mr.t*3.5)*0.1;
     m.eyeL.emissiveIntensity = m.eyeR.emissiveIntensity = 3 + Math.sin(mr.t*2)*0.5;
@@ -1589,6 +1716,7 @@ function animate() {
 
   renderer.render(scene,camera);
   updateLabels();
+  updateSpeech(dt);
 }
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
@@ -1601,6 +1729,8 @@ setTimeout(function(){
   document.getElementById('header').classList.add('show');
   document.getElementById('nav').classList.add('show');
   document.getElementById('hint').classList.add('show');
+  // First words after booting
+  setTimeout(function(){ booted = true; if(!say.active && !panelOpen) robotSay('BEEP BOOP. HELLO, HUMAN.', 1.8); }, 900);
 },1400);
 </script>
 </body>
