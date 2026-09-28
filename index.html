@@ -115,6 +115,113 @@
     }
     #panel.open { transform:translateY(0); }
 
+    /* ── Guide (bottom-left) ─────────────────────────────── */
+    #hint { display:none !important; }
+    #guide {
+      position:fixed; left:28px; bottom:calc(28px + env(safe-area-inset-bottom)); z-index:42; width:312px;
+      padding:14px 16px 12px; border-radius:10px; background:rgba(4,12,24,0.82); border:1px solid #13324a;
+      box-shadow:0 0 24px -10px #00d4ff; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+      font-family:'Courier New',ui-monospace,Menlo,monospace; color:#b9d8ee;
+      opacity:0; transform:translateY(8px); transition:opacity 0.5s, transform 0.5s;
+    }
+    #guide.show { opacity:1; transform:translateY(0); }
+    #guide.away, #guide.min { opacity:0; transform:translateY(8px); pointer-events:none; }
+    #guide .g-head { font-size:0.66rem; letter-spacing:2.5px; color:#3f95b5; margin-bottom:9px; }
+    #guide .g-head span { color:#8eeaff; }
+    #guide ul { list-style:none; display:flex; flex-direction:column; gap:7px; }
+    #guide li { display:flex; gap:10px; align-items:baseline; font-size:0.8rem; line-height:1.4; letter-spacing:0.3px; }
+    #guide li b { font-weight:400; width:12px; flex:none; text-align:center; }
+    #guide em { font-style:normal; color:#e4f4ff; }
+    #guide .g-foot { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:11px;
+      padding-top:9px; border-top:1px solid #10283c; font-size:0.66rem; letter-spacing:1.5px; color:#4f7a98; }
+    #g-sound { margin-left:auto; background:none; border:1px solid #1d4a66; border-radius:12px; color:#8eeaff;
+      font:inherit; letter-spacing:1.5px; padding:3px 9px; cursor:pointer; }
+    #g-sound.off { color:#5a7a90; border-color:#16303f; }
+    #g-min { position:absolute; top:8px; right:10px; width:22px; height:22px; border-radius:50%; background:none;
+      border:1px solid #16384f; color:#5a86a8; cursor:pointer; font-size:0.85rem; line-height:1; }
+    #g-min:hover, #g-sound:hover { border-color:#00d4ff; color:#00d4ff; }
+    #g-chip {
+      position:fixed; left:28px; bottom:calc(28px + env(safe-area-inset-bottom)); z-index:42;
+      padding:7px 13px; border-radius:16px; background:rgba(4,12,24,0.82); border:1px solid #1d4a66; color:#8eeaff;
+      font-family:'Courier New',ui-monospace,monospace; font-size:0.72rem; letter-spacing:2px; cursor:pointer;
+      opacity:0; pointer-events:none; transition:opacity 0.4s;
+    }
+    #g-chip.show { opacity:1; pointer-events:auto; }
+    @media (max-width:768px) {
+      #guide { left:12px; right:12px; width:auto; bottom:calc(50px + env(safe-area-inset-bottom)); padding:11px 13px 10px; }
+      #guide li { font-size:0.72rem; }
+      #g-chip { left:12px; bottom:calc(46px + env(safe-area-inset-bottom)); font-size:0.64rem; padding:6px 11px; }
+    }
+
+    /* ── Piano ──────────────────────────────────────────── */
+    #piano-edge {
+      position:fixed; left:0; top:0; z-index:41; width:40px; height:40px; margin:-20px 0 0 -20px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center; font-size:1.25rem; color:#ffe2a8;
+      background:rgba(30,20,8,0.88); border:1.5px solid #ffcf7a; box-shadow:0 0 16px -2px #ffb850;
+      cursor:pointer; opacity:0; pointer-events:none; transition:opacity 0.4s; animation:edgeBob 2.4s ease-in-out infinite;
+    }
+    #piano-edge.show { opacity:1; pointer-events:auto; }
+    @keyframes edgeBob { 50% { transform:translateY(-5px); box-shadow:0 0 26px 0 #ffb850; } }
+    #piano-ui {
+      position:fixed; left:50%; bottom:0; z-index:62; width:min(960px,100vw);
+      transform:translate(-50%,110%); transition:transform 0.55s cubic-bezier(0.16,1,0.3,1);
+      background:linear-gradient(180deg, rgba(18,13,8,0.96), rgba(7,6,5,0.98));
+      border:1px solid #3d2e18; border-bottom:none; border-radius:18px 18px 0 0;
+      padding:14px 18px calc(14px + env(safe-area-inset-bottom));
+      box-shadow:0 -12px 44px -12px rgba(255,190,110,0.28);
+      font-family:'Courier New',ui-monospace,Menlo,monospace; color:#f3dcb4;
+      user-select:none; -webkit-user-select:none; touch-action:none;
+    }
+    #piano-ui.open { transform:translate(-50%,0); }
+    .pu-bar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+    .pu-title { font-size:0.9rem; letter-spacing:3px; color:#ffd89a; margin-right:auto; text-shadow:0 0 10px rgba(255,200,120,0.4); }
+    .pu-btn {
+      background:rgba(255,216,154,0.06); border:1px solid #5a4424; color:#f3dcb4; border-radius:14px;
+      padding:6px 12px; font:inherit; font-size:0.74rem; letter-spacing:1.2px; cursor:pointer; white-space:nowrap;
+      transition:background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .pu-btn:hover, .pu-btn.on { background:rgba(255,200,120,0.18); border-color:#ffcf7a; color:#fff3dc; }
+    #pu-pedal.on { box-shadow:0 0 12px -3px #ffcf7a; }
+    .pu-octs { display:flex; align-items:center; gap:6px; }
+    .pu-octs .pu-btn { padding:4px 10px; }
+    #pu-oct { font-size:0.74rem; min-width:2.2em; text-align:center; color:#ffd89a; }
+    .pu-x { padding:5px 10px; }
+    #pu-say { height:1.2rem; font-size:0.72rem; letter-spacing:1.5px; color:#8eeaff; text-shadow:0 0 6px #00d4ff88;
+      opacity:0; transition:opacity 0.3s; margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #pu-say.show { opacity:1; }
+    #pu-keys {
+      position:relative; display:flex; height:clamp(118px,22vh,190px); padding:0 1px;
+      background:#0a0806; border-top:4px solid #6a1620; border-radius:3px 3px 8px 8px;
+      box-shadow:inset 0 8px 10px -6px rgba(0,0,0,0.8);
+    }
+    #pu-keys .wk {
+      flex:1; position:relative; margin:0 1px; cursor:pointer;
+      background:linear-gradient(180deg,#e6e0d4 0%,#fbf8f1 55%,#efe9dd 92%,#d9d1c1 100%);
+      border-radius:0 0 6px 6px; box-shadow:inset 0 -7px 0 rgba(0,0,0,0.07), 0 2px 3px rgba(0,0,0,0.55);
+      transition:transform 0.06s, background 0.06s, box-shadow 0.12s;
+    }
+    #pu-keys .wk.on {
+      transform:translateY(2px);
+      background:linear-gradient(180deg,#f3ede2 0%,#fff 45%,var(--kc) 130%);
+      box-shadow:inset 0 -3px 0 rgba(0,0,0,0.08), 0 0 22px -2px var(--kc);
+    }
+    #pu-keys .bk {
+      position:absolute; top:0; height:62%; z-index:2; cursor:pointer;
+      background:linear-gradient(180deg,#2c2c31 0%,#0b0b0d 80%,#232328 100%);
+      border-radius:0 0 4px 4px; box-shadow:inset 0 -6px 0 rgba(255,255,255,0.07), 0 3px 5px rgba(0,0,0,0.65);
+      transition:height 0.06s, box-shadow 0.12s;
+    }
+    #pu-keys .bk.on { height:61%; background:linear-gradient(180deg,#141416 0%,var(--kc) 140%); box-shadow:0 0 18px -2px var(--kc); }
+    #pu-keys .kl { position:absolute; left:0; right:0; bottom:9px; text-align:center; font-size:0.66rem; color:#a6957a; pointer-events:none; }
+    #pu-keys .bk .kl { bottom:7px; font-size:0.58rem; color:#8a8a92; }
+    .pu-hint { margin-top:9px; font-size:0.64rem; letter-spacing:2px; color:#9c8661; text-align:center; }
+    @media (max-width:768px) {
+      #piano-ui { padding:12px 10px calc(12px + env(safe-area-inset-bottom)); }
+      .pu-title { width:100%; font-size:0.8rem; }
+      .pu-btn { font-size:0.66rem; padding:6px 9px; }
+      #pu-keys { height:clamp(120px,21vh,170px); }
+    }
+
     /* ── Reading veil: blurs + dims the scene while a panel is open ── */
     #reading-veil {
       position:fixed; inset:0; z-index:38;          /* above labels & bubbles, below nav/header */
@@ -330,6 +437,18 @@
   <span class="touch-only">TAP A STATION &nbsp;·&nbsp; TAP THE ROBOT TO SAY HI</span>
 </div>
 <div id="labels"></div>
+<div id="guide">
+  <button id="g-min" aria-label="Hide tips">–</button>
+  <div class="g-head">UNIT-E:// <span>HOW TO EXPLORE</span></div>
+  <ul>
+    <li><b style="color:#00d4ff">◉</b><span><em class="tap">Click</em> a station to see my journey</span></li>
+    <li><b style="color:#ffdd00">◆</b><span><em class="tap">Click</em> a little robot to see what it's working on</span></li>
+    <li><b style="color:#ff7ac8">♥</b><span><em class="tap">Click</em> UNIT-E, the big one. It knows 7 moves</span></li>
+    <li><b style="color:#ffcf7a">♪</b><span><em class="tap">Click</em> the piano to play it</span></li>
+  </ul>
+  <div class="g-foot"><span class="desktop-only">keys 1–5 · esc to go back</span><button id="g-sound">♪ SOUND ON</button></div>
+</div>
+<button id="g-chip" aria-label="Show tips">? TIPS</button>
 <div id="rl-hud"><canvas id="rl-hud-c" width="512" height="300"></canvas></div>
 <button id="zoom-out">← BACK TO UNIT-E</button>
 <div id="mini-say"><span class="say-tag" id="mini-tag"></span><span id="mini-text"></span></div>
@@ -337,6 +456,20 @@
 <div id="robot-say"><span class="say-tag">UNIT-E://</span><span id="say-text"></span><span class="say-caret">█</span></div>
 
 <div id="reading-veil"></div>
+<div id="piano-edge" aria-label="Open the piano">♪</div>
+<div id="piano-ui">
+  <div class="pu-bar">
+    <div class="pu-title">♪ ELLIE'S PIANO</div>
+    <button class="pu-btn pu-song" data-song="canon">▶ Canon in D</button>
+    <button class="pu-btn pu-song" data-song="passacaglia">▶ Passacaglia</button>
+    <button class="pu-btn" id="pu-pedal">PEDAL</button>
+    <div class="pu-octs"><button class="pu-btn" id="pu-down" aria-label="Octave down">−</button><span id="pu-oct">C4</span><button class="pu-btn" id="pu-up" aria-label="Octave up">+</button></div>
+    <button class="pu-btn pu-x" id="pu-close" aria-label="Close piano">✕</button>
+  </div>
+  <div id="pu-say"></div>
+  <div id="pu-keys"></div>
+  <div class="pu-hint"><span class="desktop-only">PLAY WITH A W S E D … ' &nbsp;·&nbsp; Z / X OCTAVE &nbsp;·&nbsp; HOLD SPACE FOR PEDAL</span><span class="touch-only">SLIDE ACROSS THE KEYS &nbsp;·&nbsp; TAP PEDAL TO LET NOTES RING</span></div>
+</div>
 <div id="panel">
   <div id="panel-handle"></div>
   <button id="panel-close" aria-label="Close">×</button>
@@ -1870,6 +2003,601 @@ function updateDock(dt) {
 }
 
 
+// (piano: see below)
+
+// ─── Ellie's piano ─────────────────────────────────────────────────────────────
+// A little black grand at the edge of the platform. Click it: the camera glides
+// over and a playable keyboard slides up (mouse / touch glissando, computer keys,
+// sustain pedal). Sound is synthesized: inharmonic partials, hammer noise,
+// brightness that fades as the note rings, unison-string beating, warm reverb.
+
+var PIANO_LO = 36, PIANO_HI = 84;                    // 3D keys: C2 … C6 (49 keys)
+var piano = (function(){
+  var S = 0.75;
+  var g = new THREE.Group();
+  g.position.set(-0.35, 0, 5.0);          // front-centre, between SAM and the RL bot
+  g.rotation.y = -Math.PI/2;              // keyboard on the left, open lid facing the viewer
+  g.scale.setScalar(S);
+  scene.add(g);
+
+  function env(m, k){ if (SKY_ENV) { m.envMap = SKY_ENV; m.envMapIntensity = k||1; } return m; }
+  var lacquer = env(new THREE.MeshStandardMaterial({color:0x08080b, roughness:0.14, metalness:0.35, emissive:0x05060a, emissiveIntensity:0.5}), 1.1);
+  var satin   = env(new THREE.MeshStandardMaterial({color:0x121218, roughness:0.45, metalness:0.3}), 0.5);
+  var gold    = env(new THREE.MeshStandardMaterial({color:0xcaa24e, roughness:0.32, metalness:0.95, emissive:0x2a1a04, emissiveIntensity:0.6}), 1.2);
+  var felt    = new THREE.MeshStandardMaterial({color:0x6a1620, roughness:0.9, metalness:0});
+  var ivoryM  = new THREE.MeshStandardMaterial({color:0xf4efe4, roughness:0.35, metalness:0.05, emissive:0x2a2620, emissiveIntensity:0.4});
+  var ebonyM  = new THREE.MeshStandardMaterial({color:0x0c0c0f, roughness:0.3, metalness:0.2});
+
+  // grand piano outline (x across, y = distance back from the keyboard)
+  function outline(sc, cx, cy){
+    sc = sc||1; cx = cx||0; cy = cy||0.95;
+    function P(x,y){ return [cx+(x-cx)*sc, cy+(y-cy)*sc]; }
+    var s = new THREE.Shape(), p;
+    p=P(-0.75,0);   s.moveTo(p[0],p[1]);
+    p=P(0.75,0);    s.lineTo(p[0],p[1]);
+    p=P(0.75,0.42); s.lineTo(p[0],p[1]);
+    var c1=P(0.74,1.0), e1=P(0.08,1.28); s.quadraticCurveTo(c1[0],c1[1],e1[0],e1[1]);
+    var c2=P(-0.22,1.42), e2=P(-0.3,1.82); s.quadraticCurveTo(c2[0],c2[1],e2[0],e2[1]);
+    var c3=P(-0.45,2.02), e3=P(-0.75,1.86); s.quadraticCurveTo(c3[0],c3[1],e3[0],e3[1]);
+    p=P(-0.75,0); s.lineTo(p[0],p[1]);
+    return s;
+  }
+  var TOP = 0.8;
+  var caseGeo = new THREE.ExtrudeGeometry(outline(), {depth:0.28, bevelEnabled:true, bevelThickness:0.012, bevelSize:0.012, bevelSegments:2, curveSegments:28});
+  var body = new THREE.Mesh(caseGeo, lacquer); body.rotation.x = -Math.PI/2; body.position.y = TOP-0.28; body.castShadow = true; g.add(body);
+  // gold plate + strings + dampers visible under the open lid
+  var plate = new THREE.Mesh(new THREE.ExtrudeGeometry(outline(0.9,-0.02,0.98), {depth:0.004, bevelEnabled:false, curveSegments:28}), gold);
+  plate.rotation.x = -Math.PI/2; plate.position.y = TOP+0.004; g.add(plate);
+  var sp = [];
+  for (var sx=-0.62; sx<=0.64; sx+=0.028) {
+    var back = 1.72 - (sx+0.62)*0.9; if (sx > 0.35) back = Math.max(0.55, back - (sx-0.35)*0.6);
+    sp.push(new THREE.Vector3(sx, TOP+0.012, -0.16), new THREE.Vector3(sx*0.97 - 0.02, TOP+0.012, -back));
+  }
+  g.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(sp),
+    new THREE.LineBasicMaterial({color:0xe8d7a8, transparent:true, opacity:0.55})));
+  var damp_ = new THREE.Mesh(new THREE.BoxGeometry(1.3,0.018,0.05), felt); damp_.position.set(0, TOP+0.015, -0.12); g.add(damp_);
+
+  // lid (hinged along the straight bass side) + prop stick
+  var LID_ANG = 0.52;
+  var lidPivot = new THREE.Group(); lidPivot.position.set(-0.75, TOP+0.012, 0); lidPivot.rotation.z = LID_ANG; g.add(lidPivot);
+  var lidMat = lacquer.clone(); lidMat.side = THREE.DoubleSide;           // the audience sees its underside
+  var lid = new THREE.Mesh(new THREE.ExtrudeGeometry(outline(), {depth:0.02, bevelEnabled:false, curveSegments:28}), lidMat);
+  lid.rotation.x = -Math.PI/2; lid.position.x = 0.75; lidPivot.add(lid);
+  var a0 = new THREE.Vector3(0.52, TOP, -0.78);
+  var a1 = new THREE.Vector3(-0.75 + 1.27*Math.cos(LID_ANG), TOP+0.012 + 1.27*Math.sin(LID_ANG), -0.78);
+  var stick = new THREE.Mesh(new THREE.CylinderGeometry(0.011,0.011,a0.distanceTo(a1),8), gold);
+  stick.position.copy(a0).add(a1).multiplyScalar(0.5);
+  stick.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), a1.clone().sub(a0).normalize()); g.add(stick);
+
+  // keybed, cheek blocks, fallboard with a gold nameplate
+  var keybed = new THREE.Mesh(new THREE.BoxGeometry(1.5,0.07,0.36), lacquer); keybed.position.set(0, TOP-0.215, 0.17); g.add(keybed);
+  [-1,1].forEach(function(s){ var ck=new THREE.Mesh(new THREE.BoxGeometry(0.07,0.1,0.36), lacquer); ck.position.set(s*0.715, TOP-0.14, 0.17); g.add(ck); });
+  var fall = new THREE.Mesh(new THREE.BoxGeometry(1.36,0.1,0.03), lacquer); fall.position.set(0, TOP-0.1, 0.012); g.add(fall);
+  var nameTex = (function(){
+    var c=document.createElement('canvas'); c.width=512; c.height=64; var x=c.getContext('2d');
+    x.fillStyle='#08080b'; x.fillRect(0,0,512,64);
+    var gr=x.createLinearGradient(0,10,0,54); gr.addColorStop(0,'#f5dc9a'); gr.addColorStop(0.5,'#c9a04a'); gr.addColorStop(1,'#f0d28a');
+    x.fillStyle=gr; x.font='italic 600 36px Georgia, "Times New Roman", serif'; x.textAlign='center'; x.textBaseline='middle';
+    x.fillText('Ellie  &  Sons', 256, 34);
+    return new THREE.CanvasTexture(c);
+  })();
+  var namePl = new THREE.Mesh(new THREE.PlaneGeometry(0.46,0.058), new THREE.MeshBasicMaterial({map:nameTex})); namePl.position.set(0, TOP-0.1, 0.028); g.add(namePl);
+
+  // music stand with a little sheet of music
+  var sheetTex = (function(){
+    var c=document.createElement('canvas'); c.width=320; c.height=220; var x=c.getContext('2d');
+    x.fillStyle='#f6f0e2'; x.fillRect(0,0,320,220);
+    x.fillStyle='#3a2f24'; x.font='italic 18px Georgia, serif'; x.textAlign='center'; x.fillText("Canon in D", 160, 26);
+    x.font='11px Georgia, serif'; x.fillText('J. Pachelbel', 160, 42);
+    x.strokeStyle='#5a4c3c'; x.lineWidth=1;
+    for (var st=0; st<3; st++){ var y0=64+st*52;
+      for (var l=0;l<5;l++){ x.beginPath(); x.moveTo(18,y0+l*7); x.lineTo(302,y0+l*7); x.stroke(); }
+      for (var n=0;n<10;n++){ var nx=40+n*26, ny=y0+((n*5+st*3)%9)*3.5;
+        x.fillStyle='#2a221a'; x.beginPath(); x.ellipse(nx,ny,4.2,3,-0.4,0,Math.PI*2); x.fill();
+        x.beginPath(); x.moveTo(nx+4,ny); x.lineTo(nx+4,ny-20); x.stroke(); } }
+    return new THREE.CanvasTexture(c);
+  })();
+  var standG = new THREE.Group(); standG.position.set(0, TOP+0.02, -0.3); standG.rotation.x = -0.28; g.add(standG);
+  var standB = new THREE.Mesh(new THREE.BoxGeometry(0.74,0.26,0.014), lacquer); standB.position.y = 0.13; standG.add(standB);
+  var sheet = new THREE.Mesh(new THREE.PlaneGeometry(0.34,0.23), new THREE.MeshBasicMaterial({map:sheetTex, color:0xd8d2c4})); sheet.position.set(0,0.135,0.009); standG.add(sheet);
+
+  // legs, pedal lyre, bench
+  [[-0.64,-0.12],[0.64,-0.16],[-0.5,-1.62]].forEach(function(p){
+    var leg=new THREE.Mesh(new THREE.CylinderGeometry(0.055,0.035,TOP-0.3,12), lacquer); leg.position.set(p[0], (TOP-0.3)/2+0.02, p[1]); leg.castShadow=true; g.add(leg);
+    var cap=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.045,0.03,12), gold); cap.position.set(p[0],0.02,p[1]); g.add(cap);
+  });
+  var lyre = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.42,0.04), lacquer); lyre.position.set(0,0.3,-0.22); g.add(lyre);
+  [-0.045,0,0.045].forEach(function(px){ var pd=new THREE.Mesh(new THREE.BoxGeometry(0.028,0.012,0.1), gold); pd.position.set(px,0.07,-0.16); g.add(pd); });
+  var bench = new THREE.Group(); bench.position.set(0,0,0.78); g.add(bench);
+  var seat = new THREE.Mesh(new THREE.BoxGeometry(0.72,0.06,0.3), lacquer); seat.position.y = 0.44; seat.castShadow=true; bench.add(seat);
+  var cushion = new THREE.Mesh(new THREE.BoxGeometry(0.68,0.035,0.26), satin); cushion.position.y = 0.485; bench.add(cushion);
+  [[-0.31,-0.11],[0.31,-0.11],[-0.31,0.11],[0.31,0.11]].forEach(function(p){ var bl=new THREE.Mesh(new THREE.BoxGeometry(0.04,0.42,0.04), lacquer); bl.position.set(p[0],0.21,p[1]); bench.add(bl); });
+
+  // playable 3D keys C2..C6
+  var keys = {}, nWhite = 0, m;
+  for (m=PIANO_LO; m<=PIANO_HI; m++) if ([1,3,6,8,10].indexOf(m%12) < 0) nWhite++;
+  var KW = 1.34/nWhite, X0 = -0.67, wi = 0;
+  var KY = TOP-0.165;
+  for (m=PIANO_LO; m<=PIANO_HI; m++) {
+    var black = [1,3,6,8,10].indexOf(m%12) >= 0, km, x;
+    if (!black) { x = X0 + (wi+0.5)*KW; km = new THREE.Mesh(new THREE.BoxGeometry(KW*0.94,0.028,0.28), ivoryM.clone()); km.position.set(x, KY, 0.17); wi++; }
+    else { x = X0 + wi*KW; km = new THREE.Mesh(new THREE.BoxGeometry(KW*0.58,0.03,0.17), ebonyM.clone()); km.position.set(x, KY+0.026, 0.11); }
+    km.userData.pianoKey = m; g.add(km);
+    keys[m] = {mesh:km, y0:km.position.y, black:black, glow:0, col:new THREE.Color().setHSL((m%12)/12, 0.85, 0.6)};
+  }
+
+  // warm pool of light + glow so it feels like a little stage
+  var pool = new THREE.Mesh(new THREE.CircleGeometry(1.6,40), new THREE.MeshBasicMaterial({color:0xffc27a, transparent:true, opacity:0.1, depthWrite:false, blending:THREE.AdditiveBlending}));
+  pool.rotation.x = -Math.PI/2; pool.position.set(0,0.012,-0.5); g.add(pool);
+  var lamp = new THREE.PointLight(0xffd29a, 1.3, 4.5); lamp.position.set(0.2, 1.9, 0.3); g.add(lamp);
+
+  g.updateMatrixWorld(true);
+  var meshes = []; g.traverse(function(o){ if (o.isMesh) { o.userData.piano = true; meshes.push(o); } });
+  var focus = {type:'piano', focusPt:g.localToWorld(new THREE.Vector3(0, 0.62, 0.12)), baseRot:g.rotation.y,
+               zoom:function(){ return (window.innerWidth/window.innerHeight) < 0.75 ? 0.19 : 0.2; }};
+  var centre = g.localToWorld(new THREE.Vector3(0, 0.8, -0.6));
+  return {g:g, keys:keys, meshes:meshes, focus:focus, centre:centre, lamp:lamp, pool:pool,
+          noteSpot:g.localToWorld(new THREE.Vector3(0.1, 1.25, -0.7)), ambientT:4};
+})();
+
+// ─── Piano sound engine (Web Audio) ───────────────────────────────────────────
+var AC = null, pianoMaster = null, NOISE = null;
+function makeImpulse(ctx, dur, decay) {
+  var len = Math.floor(ctx.sampleRate*dur), buf = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (var ch=0; ch<2; ch++) {
+    var d = buf.getChannelData(ch), y = 0;
+    for (var i=0; i<len; i++) {
+      var x = (Math.random()*2-1) * Math.pow(1 - i/len, decay);
+      y += 0.3*(x - y);                          // gentle low-pass: warm, not hissy
+      d[i] = i < ctx.sampleRate*0.012 ? 0 : y;   // small pre-delay
+    }
+  }
+  return buf;
+}
+function buildPianoBus(ctx, dest) {
+  var comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -18; comp.knee.value = 10; comp.ratio.value = 5; comp.attack.value = 0.003; comp.release.value = 0.25;
+  var limit = ctx.createDynamicsCompressor();                     // safety limiter: big pedalled chords never distort
+  limit.threshold.value = -3; limit.knee.value = 0; limit.ratio.value = 20; limit.attack.value = 0.001; limit.release.value = 0.1;
+  var master = ctx.createGain(); master.gain.value = 0.8;
+  var rev = ctx.createConvolver(); rev.buffer = makeImpulse(ctx, 2.8, 2.6);
+  var wet = ctx.createGain(); wet.gain.value = 0.32;
+  master.connect(comp); master.connect(rev); rev.connect(wet); wet.connect(comp); comp.connect(limit); limit.connect(dest);
+  var nb = ctx.createBuffer(1, Math.floor(ctx.sampleRate*0.08), ctx.sampleRate), nd = nb.getChannelData(0);
+  for (var i=0; i<nd.length; i++) nd[i] = Math.random()*2-1;
+  return {master:master, noise:nb};
+}
+function audioInit() {
+  if (!AC) {
+    var C = window.AudioContext || window.webkitAudioContext; if (!C) return false;
+    AC = new C();
+    var bus = buildPianoBus(AC, AC.destination); pianoMaster = bus.master; NOISE = bus.noise;
+  }
+  if (AC.state === 'suspended') AC.resume();
+  return true;
+}
+var PARTIALS = [1, 0.5, 0.26, 0.15, 0.085, 0.05, 0.03];
+function makeVoice(ctx, dest, noise, midi, vel, t0) {
+  var f = 440*Math.pow(2, (midi-69)/12);
+  var out = ctx.createGain(); out.gain.value = 1;
+  var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.4;
+  lp.frequency.setValueAtTime(Math.min(15000, f*(2.5 + vel*8) + 900*vel), t0);
+  lp.frequency.exponentialRampToValueAtTime(Math.max(f*1.5, 380), t0 + 1.8);
+  var kill = ctx.createGain(); kill.gain.value = 1;
+  lp.connect(out); out.connect(kill); kill.connect(dest);
+  var dec = Math.max(0.8, 7.5*Math.pow(2, -(midi-40)/15));          // low notes ring longer
+  var amp = 0.15 * Math.pow(vel, 1.4) * (midi > 76 ? 1 - (midi-76)*0.012 : 1);
+  var np = f < 500 ? 7 : f < 1100 ? 5 : 3, oscs = [];
+  function partial(freq, a, n) {
+    if (freq > 15000) return;
+    var o = ctx.createOscillator(); o.frequency.value = freq;
+    var gg = ctx.createGain();
+    gg.gain.setValueAtTime(0, t0);
+    gg.gain.linearRampToValueAtTime(a, t0 + 0.003);
+    gg.gain.setTargetAtTime(a*0.42, t0 + 0.004, 0.09 + 0.06/n);        // quick initial drop…
+    gg.gain.setTargetAtTime(0.00001, t0 + 0.22, dec/Math.pow(n, 0.75)); // …then the long after-ring
+    o.connect(gg); gg.connect(lp); o.start(t0); oscs.push(o);
+  }
+  for (var n=1; n<=np; n++) partial(f*n*Math.sqrt(1 + 0.00032*n*n), amp*PARTIALS[n-1], n);
+  partial(f*1.0011, amp*0.45, 1);            // second string, slightly detuned → gentle beating
+  if (midi < 60) partial(f*0.5*1.0005, amp*0.08, 1);   // a touch of body in the bass
+  var nb = ctx.createBufferSource(); nb.buffer = noise;           // hammer
+  var bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = Math.min(f*4, 5000); bp.Q.value = 0.7;
+  var ng = ctx.createGain(); ng.gain.setValueAtTime(amp*1.3*vel, t0); ng.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.035);
+  nb.connect(bp); bp.connect(ng); ng.connect(out); nb.start(t0); nb.stop(t0 + 0.07);
+  var end = t0 + Math.min(14, dec*4.5 + 0.3);
+  oscs.forEach(function(o){ o.stop(end); });
+  return {out:out, kill:kill, oscs:oscs, end:end, released:false, killed:false, midi:midi};
+}
+function killVoice(v) {
+  if (!v || v.killed) return;
+  v.killed = true;
+  var t = AC.currentTime;
+  v.kill.gain.setTargetAtTime(0, t, 0.03);
+  v.oscs.forEach(function(o){ try { o.stop(t + 0.25); } catch(e){} });
+}
+function releaseVoice(v, t, tau) {
+  if (!v || v.released) return;
+  v.released = true;
+  t = Math.max(t || 0, AC.currentTime);
+  v.out.gain.cancelScheduledValues(t);
+  v.out.gain.setValueAtTime(1, t);
+  v.out.gain.setTargetAtTime(0, t, tau || 0.1);          // the damper comes down
+  var stopAt = Math.min(v.end, t + (tau || 0.1)*8);
+  v.oscs.forEach(function(o){ try { o.stop(stopAt); } catch(e){} });
+}
+
+// ─── Playing ──────────────────────────────────────────────────────────────────
+var pianoOpen = false, pianoBase = 60, sustainHeld = false, sustainLatch = false;
+var held = {}, sustained = [], allVoices = [];
+var PIANO_KEYMAP = {a:0,w:1,s:2,e:3,d:4,f:5,t:6,g:7,y:8,h:9,u:10,j:11,k:12,o:13,l:14,p:15,';':16,"'":17};
+function sustainOn(){ return sustainHeld || sustainLatch; }
+function trackVoice(v) {
+  allVoices.push(v);
+  if (allVoices.length > 56) { var old = allVoices.shift(); killVoice(old); }
+  allVoices = allVoices.filter(function(x){ return x.end > AC.currentTime; });
+}
+function noteOn(midi, vel) {
+  if (!audioInit()) return;
+  if (held[midi]) releaseVoice(held[midi], 0, 0.05);
+  var v = makeVoice(AC, pianoMaster, NOISE, midi, vel, AC.currentTime + 0.005);
+  held[midi] = v; trackVoice(v);
+  keyVisual(midi, true, vel);
+}
+function noteOff(midi) {
+  var v = held[midi]; if (!v) return;
+  delete held[midi];
+  keyVisual(midi, false);
+  if (sustainOn()) sustained.push(v); else releaseVoice(v);
+}
+function pedalChanged() {
+  document.getElementById('pu-pedal').classList.toggle('on', sustainOn());
+  if (!sustainOn()) { sustained.forEach(function(v){ releaseVoice(v, 0, 0.14); }); sustained = []; }
+}
+function allNotesOff() {
+  Object.keys(held).forEach(function(m){ releaseVoice(held[m], 0, 0.06); keyVisual(+m, false); });
+  held = {}; sustained.forEach(function(v){ releaseVoice(v, 0, 0.06); }); sustained = [];
+}
+
+// visuals: UI key + 3D key + floating notes
+var lastFloat = 0;
+function keyVisual(midi, on, vel) {
+  var el = document.querySelector('#pu-keys [data-m="'+midi+'"]');
+  if (el) el.classList.toggle('on', on);
+  var k = piano.keys[midi];
+  if (k) { k.down = on; if (on) k.glow = 1; }
+  if (on) {
+    piano.lampKick = 1;
+    if (gt - lastFloat > 0.11) {
+      lastFloat = gt;
+      var hue = (midi%12)/12, c = new THREE.Color().setHSL(hue, 0.85, 0.72);
+      var pos = piano.noteSpot.clone().add(new THREE.Vector3((Math.random()-0.5)*0.9, Math.random()*0.2, (Math.random()-0.5)*0.9));
+      spawnFloater(Math.random() < 0.5 ? '♪' : '♫', '#' + c.getHexString(), pos, 0.15 + (vel||0.6)*0.08);
+    }
+  }
+}
+function updatePiano(dt) {
+  Object.keys(piano.keys).forEach(function(m){
+    var k = piano.keys[m];
+    var ty = k.y0 - (k.down ? 0.014 : 0);
+    k.mesh.position.y += (ty - k.mesh.position.y) * Math.min(1, dt*30);
+    if (!k.down) k.glow = Math.max(0, k.glow - dt*2.2);
+    k.mesh.material.emissive.copy(k.col).multiplyScalar(k.glow*0.9);
+    if (!k.black) k.mesh.material.emissive.addScalar(0.16*(1-k.glow));
+  });
+  piano.lampKick = Math.max(0, (piano.lampKick||0) - dt*2);
+  piano.lamp.intensity = 1.2 + Math.sin(gt*1.3)*0.15 + piano.lampKick*1.4;
+  piano.pool.material.opacity = 0.09 + piano.lampKick*0.08;
+  // a stray note now and then, so curious visitors notice it
+  if (!pianoOpen) {
+    piano.ambientT -= dt;
+    if (piano.ambientT <= 0) { piano.ambientT = 5 + Math.random()*4;
+      spawnFloater(Math.random()<0.5?'♪':'♫', '#ffd89a', piano.noteSpot.clone().add(new THREE.Vector3((Math.random()-0.5)*0.6,0,(Math.random()-0.5)*0.6)), 0.2); }
+  }
+  updateSongs();
+  updatePianoEdge();
+}
+
+// ─── Autoplay pieces ──────────────────────────────────────────────────────────
+// Both are public domain.
+//  • Canon in D (Pachelbel, c. 1680–1706): the 8-note ground bass loops while the
+//    melody enters as a true canon: three voices, each starting 8 beats later.
+//  • Passacaglia in G minor (Handel, Suite HWV 432, 1720): Handel's descending
+//    progression played three times, building from grand chords to
+//    flowing arpeggios to running sixteenths.
+function hum(s) { return (Math.random()-0.5)*(s || 0.02); }
+
+function buildCanon() {
+  var u = 0.9, ev = [];
+  var BASS  = [50,45,47,42,43,38,43,45];          // D  A  B  F#  G  D  G  A
+  var FIFTH = [57,52,54,49,50,45,50,52];
+  var V1 = [78,76,74,73,71,69,71,73];             // F# E  D  C#  B  A  B  C#
+  var V2 = [74,73,71,69,67,66,67,64];             // D  C# B  A   G  F# G  E
+  var V3 = [74,78, 81,79, 78,74, 78,76, 74,71, 74,69, 67,71, 69,67];   // D F# A G F# D F# E D B D A G B A G
+  var CYC = 6, LAST = CYC*8;
+  function sec(x) { return x*u + (x > LAST-8 ? 0.45*u*(x-(LAST-8))*(x-(LAST-8))/16 : 0); }   // gentle ritardando
+  for (var c=0; c<CYC; c++) for (var k=0; k<8; k++) {
+    var x = c*8 + k;
+    ev.push({t:sec(x)+hum(), m:BASS[k], d:sec(x+1)-sec(x)+0.05, v:0.52});
+    ev.push({t:sec(x)+0.03+hum(), m:FIFTH[k], d:sec(x+1)-sec(x), v:0.3});
+  }
+  function voice(startCyc, shift, vel) {
+    [V1, V2, V3].forEach(function(V, i){
+      var per = V.length/8, c0 = (startCyc + i)*8;
+      V.forEach(function(m, j){
+        var x = c0 + j/per, x2 = c0 + (j+1)/per;
+        ev.push({t:sec(x)+hum(), m:m+shift, d:(sec(x2)-sec(x))*1.04, v:vel + Math.random()*0.05});
+      });
+    });
+  }
+  voice(1, 0, 0.62);      // first violin
+  voice(2, 0, 0.47);      // second enters 8 beats later
+  voice(3, -12, 0.42);    // third, an octave lower
+  [38,45,50,54,57,62,66,69,74].forEach(function(m, i){ ev.push({t:sec(LAST)+i*0.045, m:m, d:4.5, v:i < 3 ? 0.5 : 0.45}); });
+  return ev;
+}
+
+function buildPassacaglia() {
+  var B = 60/80, ev = [];
+  var CH = [                      // [bass, [triad around octave 4, voice-led]]
+    [43,[67,70,74]],   // G minor
+    [48,[67,72,75]],   // C minor
+    [41,[65,69,72]],   // F
+    [46,[65,70,74]],   // B♭
+    [39,[63,67,70]],   // E♭
+    [48,[63,67,72]],   // C minor
+    [38,[62,66,69]],   // D
+    [38,[66,69,74]]    // D
+  ];
+  var TOTAL = 24*4;
+  function sec(b) { return b*B + (b > TOTAL-8 ? 0.55*B*(b-(TOTAL-8))*(b-(TOTAL-8))/16 : 0); }
+  function note(b, m, len, v) { ev.push({t:sec(b)+hum(), m:m, d:sec(b+len)-sec(b)+0.03, v:v}); }
+  for (var bar=0; bar<24; bar++) {
+    var ch = CH[bar%8], root = ch[0], tri = ch[1], b0 = bar*4, varn = Math.floor(bar/8);
+    if (varn === 0) {
+      // I. grand, stately chords: long chord, then a dotted "da-dum" into the next bar
+      note(b0, root, 2, 0.55); note(b0, root+12, 2, 0.45);
+      tri.forEach(function(m, i){ note(b0, m, 2, i === 2 ? 0.64 : 0.5); });
+      note(b0+2, root+12, 1.5, 0.4);
+      tri.forEach(function(m, i){ note(b0+2, m, 1.5, i === 2 ? 0.58 : 0.44); });
+      tri.forEach(function(m, i){ note(b0+3.5, m, 0.5, i === 2 ? 0.5 : 0.38); });
+    } else if (varn === 1) {
+      // II. flowing eighth-note arpeggios over the ground
+      note(b0, root, 2, 0.5); note(b0, root+7, 2, 0.32);
+      note(b0+2, root+12, 2, 0.4);
+      var t4 = [tri[0], tri[1], tri[2], tri[0]+12];
+      [0,1,2,3,2,1,0,1].forEach(function(ix, i){ note(b0 + i*0.5, t4[ix], 0.6, (i === 0 ? 0.6 : 0.48) + Math.random()*0.05); });
+    } else {
+      // III. sweeping sixteenth-note runs, up and back down
+      note(b0, root-12 >= 28 ? root-12 : root, 2, 0.55); note(b0, root, 2, 0.45);
+      note(b0+2, root, 2, 0.45); note(b0+2, root+12, 2, 0.35);
+      var a = tri.map(function(m){ return m-12; });
+      var arr = [a[0],a[1],a[2],a[0]+12,a[1]+12,a[2]+12,a[0]+24,a[1]+24,a[2]+24];
+      var up = arr.slice(0,8), down = [arr[8],arr[7],arr[6],arr[5],arr[4],arr[3],arr[2],arr[1]];
+      up.concat(down).forEach(function(m, i){ note(b0 + i*0.25, m, 0.4, (i%4 === 0 ? 0.56 : 0.44) + Math.random()*0.05); });
+    }
+  }
+  [31,43,50,55,58,62,67,70,74,79].forEach(function(m, i){ ev.push({t:sec(TOTAL)+i*0.05, m:m, d:5, v:i < 3 ? 0.55 : 0.5}); });   // final G minor
+  return ev;
+}
+
+var SONGS = {canon:{name:'Canon in D', build:buildCanon}, passacaglia:{name:'Passacaglia', build:buildPassacaglia}};
+var soundOn = true;
+// Schedules a list of {t,m,d,v} events on the real clock (so tempo stays steady even
+// if frames drop, and keys still animate with sound off) and on the audio clock when it can.
+function nowS() { return performance.now()/1000; }
+function makePlayer(ev, gainMul) {
+  ev = ev.slice().sort(function(a,b){ return a.t - b.t; });
+  var P = {ev:ev, i:0, t0:nowS() + 0.2, timers:[], voices:[], endT:0, done:false, gain:gainMul || 1};
+  ev.forEach(function(e){ P.endT = Math.max(P.endT, e.t + e.d); });
+  P.update = function() {
+    if (P.done) return;
+    var now = nowS() - P.t0, audio = AC && soundOn && AC.state === 'running';
+    while (P.i < ev.length && ev[P.i].t < now + 0.15) {
+      var e = ev[P.i++], lead = Math.max(0, e.t - now);
+      if (audio) {
+        var when = AC.currentTime + lead;
+        var v = makeVoice(AC, pianoMaster, NOISE, e.m, e.v*P.gain, when);
+        releaseVoice(v, when + e.d, 0.12);
+        P.voices.push(v); trackVoice(v);
+      }
+      (function(e, ms){
+        P.timers.push(setTimeout(function(){ keyVisual(e.m, true, e.v); }, ms));
+        P.timers.push(setTimeout(function(){ keyVisual(e.m, false); }, ms + Math.min(e.d, 0.45)*1000));
+      })(e, lead*1000);
+    }
+    if (P.i >= ev.length && now > P.endT + 0.3) P.stop();
+  };
+  P.stop = function() {
+    if (P.done) return; P.done = true;
+    P.timers.forEach(clearTimeout);
+    if (AC) P.voices.forEach(killVoice);
+    ev.forEach(function(e){ keyVisual(e.m, false); });
+  };
+  return P;
+}
+var song = null;
+function songButtons(id) {
+  document.querySelectorAll('.pu-song').forEach(function(b){ var on = b.dataset.song === id; b.classList.toggle('on', on); b.textContent = (on ? '■ ' : '▶ ') + SONGS[b.dataset.song].name; });
+}
+function playSong(id) {
+  var same = song && song.id === id;
+  stopSong();
+  if (same) return;
+  audioInit();
+  song = makePlayer(SONGS[id].build(), 1); song.id = id;
+  songButtons(id);
+  pianoSay(id === 'canon' ? 'PACHELBEL. EIGHT BASS NOTES, ON LOOP, FOREVER. RELATABLE.' : 'HANDEL, G MINOR. DRAMATIC MODE: ON.');
+}
+function stopSong() {
+  if (!song) return;
+  song.stop(); song = null; songButtons(null);
+}
+function updateSongs() {
+  if (song) {
+    song.update();
+    if (song.done) { var fin = song.id; song = null; songButtons(null);
+      pianoSay(fin === 'canon' ? 'CANON COMPLETE. ALL THREE VOICES CONVERGED.' : 'BRAVO. ENCORE? PRESS PLAY AGAIN.'); }
+  }
+  if (botConcert) botConcert.update();
+}
+
+// Short pieces the little robots practise when nobody's at the piano
+var botConcert = null;
+function botPiece() {
+  function cut(ev, a, b) { return ev.filter(function(e){ return e.t >= a - 0.03 && e.t < b; }).map(function(e){ return {t:Math.max(0, e.t-a), m:e.m, d:e.d, v:e.v}; }); }
+  var r = Math.random();
+  if (r < 0.5) return cut(buildCanon(), 7.2, 21.6);               // the canon as the melody enters, then the second voice joins
+  if (r < 0.75) return cut(buildPassacaglia(), 0, 12);            // Passacaglia: the grand opening chords
+  return cut(buildPassacaglia(), 24, 36);                          // Passacaglia: the flowing arpeggios
+}
+
+// ─── Keyboard UI ──────────────────────────────────────────────────────────────
+var pianoEl = document.getElementById('piano-ui'), puKeys = document.getElementById('pu-keys');
+var KEYLABEL = {};
+Object.keys(PIANO_KEYMAP).forEach(function(k){ KEYLABEL[PIANO_KEYMAP[k]] = k.toUpperCase(); });
+function buildPianoKeys() {
+  var n = window.innerWidth < 600 ? 17 : 25;       // C…E (phone) or C…C two octaves
+  puKeys.innerHTML = '';
+  var whites = []; for (var i=0;i<n;i++) if ([1,3,6,8,10].indexOf((pianoBase+i)%12) < 0) whites.push(i);
+  var nW = whites.length, wIdx = 0;
+  for (var j=0; j<n; j++) {
+    var m = pianoBase + j, black = [1,3,6,8,10].indexOf(m%12) >= 0;
+    var el = document.createElement('div');
+    el.className = black ? 'bk' : 'wk';
+    el.dataset.m = m;
+    el.style.setProperty('--kc', 'hsl(' + Math.round((m%12)/12*360) + ',90%,64%)');
+    if (black) { el.style.left = (wIdx/nW*100) + '%'; el.style.width = (0.6/nW*100) + '%'; el.style.marginLeft = (-0.3/nW*100) + '%'; }
+    else wIdx++;
+    var lab = document.createElement('span'); lab.className = 'kl';
+    lab.textContent = (!IS_TOUCH && KEYLABEL[j] !== undefined) ? KEYLABEL[j] : (!black && m%12 === 0 ? 'C' + (Math.floor(m/12)-1) : '');
+    el.appendChild(lab);
+    puKeys.appendChild(el);
+  }
+  document.getElementById('pu-oct').textContent = 'C' + (Math.floor(pianoBase/12)-1);
+}
+function shiftOctave(d) {
+  var nb = Math.max(36, Math.min(72, pianoBase + d*12));
+  if (nb === pianoBase) return;
+  allNotesOff(); pianoBase = nb; buildPianoKeys();
+}
+var pointerKey = {};
+function keyFromEvent(e) { var t = document.elementFromPoint(e.clientX, e.clientY); return t && t.closest ? t.closest('#pu-keys .wk, #pu-keys .bk') : null; }
+function velFromY(e, el) { var r = el.getBoundingClientRect(); return Math.max(0.35, Math.min(1, 0.4 + 0.6*(e.clientY - r.top)/r.height)); }
+puKeys.addEventListener('pointerdown', function(e){
+  var k = keyFromEvent(e); if (!k) return;
+  e.preventDefault();
+  try { if (e.target.releasePointerCapture) e.target.releasePointerCapture(e.pointerId); } catch(_) {}
+  pointerKey[e.pointerId] = k;
+  noteOn(+k.dataset.m, velFromY(e, k));
+});
+window.addEventListener('pointermove', function(e){
+  if (!(e.pointerId in pointerKey)) return;
+  var k = keyFromEvent(e), prev = pointerKey[e.pointerId];
+  if (k === prev) return;
+  if (prev) noteOff(+prev.dataset.m);
+  pointerKey[e.pointerId] = k;
+  if (k) noteOn(+k.dataset.m, velFromY(e, k));             // glissando
+});
+function pointerUp(e){ if (!(e.pointerId in pointerKey)) return; var k = pointerKey[e.pointerId]; delete pointerKey[e.pointerId]; if (k) noteOff(+k.dataset.m); }
+window.addEventListener('pointerup', pointerUp);
+window.addEventListener('pointercancel', pointerUp);
+
+var downKeys = {};
+document.addEventListener('keydown', function(e){
+  if (!pianoOpen || e.metaKey || e.ctrlKey || e.altKey) return;
+  var k = e.key.toLowerCase();
+  if (k === ' ') { e.preventDefault(); if (!sustainHeld) { sustainHeld = true; pedalChanged(); } return; }
+  if (e.repeat) { if (k in PIANO_KEYMAP) e.preventDefault(); return; }
+  if (k === 'z') { shiftOctave(-1); return; }
+  if (k === 'x') { shiftOctave(1); return; }
+  if (k in PIANO_KEYMAP) { e.preventDefault(); var m = pianoBase + PIANO_KEYMAP[k]; downKeys[k] = m; noteOn(m, 0.72 + Math.random()*0.08); }
+});
+document.addEventListener('keyup', function(e){
+  var k = e.key.toLowerCase();
+  if (k === ' ' && sustainHeld) { sustainHeld = false; pedalChanged(); return; }
+  if (k in downKeys) { noteOff(downKeys[k]); delete downKeys[k]; }
+});
+
+var puSayEl = document.getElementById('pu-say'), puSayT = null;
+function pianoSay(txt) {
+  puSayEl.textContent = 'UNIT-E:// ' + txt; puSayEl.classList.add('show');
+  clearTimeout(puSayT); puSayT = setTimeout(function(){ puSayEl.classList.remove('show'); }, 4200);
+}
+var PIANO_OPEN_LINES = ['OH! YOU FOUND THE PIANO. PLAY SOMETHING?', 'ELLIE PLAYS THIS WHEN NOBODY IS WATCHING.', 'I CAN ONLY PLAY WHAT I AM TRAINED ON. YOU TRY.'];
+function setSound(on) {
+  soundOn = on;
+  if (pianoMaster) pianoMaster.gain.setTargetAtTime(on ? 0.8 : 0, AC.currentTime, 0.05);
+  var b = document.getElementById('g-sound'); if (b) { b.textContent = on ? '♪ SOUND ON' : '♪ SOUND OFF'; b.classList.toggle('off', !on); }
+}
+['pointerdown','keydown'].forEach(function(ev){ document.addEventListener(ev, function(){ audioInit(); }, {passive:true}); });
+
+function openPiano() {
+  if (panelOpen) closePanel();
+  if (typeof camFocus !== 'undefined' && camFocus) unfocusCam();
+  if (emote) endEmote();
+  camFocus = piano.focus; pianoOpen = true;
+  if (!soundOn) setSound(true);            // you came to play: sound on
+  document.getElementById('hint').style.opacity = '0';
+  buildPianoKeys();
+  pianoEl.classList.add('open');
+  audioInit();
+  pianoSay(pick(PIANO_OPEN_LINES));
+}
+function closePianoUI() {
+  if (!pianoOpen) return;
+  pianoOpen = false;
+  stopSong(); allNotesOff();
+  sustainLatch = false; sustainHeld = false; pedalChanged();
+  pianoEl.classList.remove('open');
+}
+document.getElementById('pu-close').addEventListener('click', function(){ unfocusCam(); });
+document.getElementById('pu-down').addEventListener('click', function(){ shiftOctave(-1); });
+document.getElementById('pu-up').addEventListener('click', function(){ shiftOctave(1); });
+document.getElementById('pu-pedal').addEventListener('click', function(){ sustainLatch = !sustainLatch; pedalChanged(); });
+document.querySelectorAll('.pu-song').forEach(function(b){ b.addEventListener('click', function(){ playSong(b.dataset.song); }); });
+window.addEventListener('resize', function(){ if (pianoOpen) buildPianoKeys(); });
+
+// click helpers: the piano is easy to hit (mesh or anywhere near it on screen)
+var _pc = new THREE.Vector3();
+function pianoScreenPos() { _pc.copy(piano.centre).project(camera); return {x:(_pc.x+1)/2*window.innerWidth, y:(-_pc.y+1)/2*window.innerHeight, behind:_pc.z > 1}; }
+function pianoNear(cx, cy) {
+  var p = pianoScreenPos(); if (p.behind) return false;
+  if (Math.hypot(p.x - cx, p.y - cy) < (IS_TOUCH ? 70 : 58)) return true;
+  return raycaster.intersectObjects(piano.meshes).length > 0;
+}
+
+// On narrow screens the piano sits off-screen, so a little ♪ at the edge points to it
+var edgeEl = document.getElementById('piano-edge');
+edgeEl.addEventListener('click', function(e){ e.stopPropagation(); openPiano(); });
+function updatePianoEdge() {
+  var show = false;
+  if (booted && !pianoOpen && !panelOpen && !camFocus) {
+    var p = pianoScreenPos(), W = window.innerWidth, H = window.innerHeight;
+    if (p.behind || p.x < 8 || p.x > W - 8 || p.y < 8 || p.y > H - 8) {
+      show = true;
+      // hug the screen edge, a little below where the piano is so it never sits on a station label
+      var x = p.behind ? W - 24 : Math.max(24, Math.min(W - 24, p.x)), y = Math.max(90, Math.min(H - 150, p.y + 72));
+      edgeEl.style.left = x + 'px'; edgeEl.style.top = y + 'px';
+    }
+  }
+  edgeEl.classList.toggle('show', show);
+}
+
+var canvasKey = {};
+renderer.domElement.addEventListener('pointerdown', function(e){
+  if (!pianoOpen) return;
+  mouse2d.x = (e.clientX/window.innerWidth)*2-1; mouse2d.y = -(e.clientY/window.innerHeight)*2+1;
+  raycaster.setFromCamera(mouse2d, camera);
+  var h = raycaster.intersectObjects(piano.meshes);
+  if (h.length && h[0].object.userData.pianoKey !== undefined) {
+    var m = h[0].object.userData.pianoKey; canvasKey[e.pointerId] = m; noteOn(m, 0.72);
+  }
+});
+function canvasUp(e){ if (e.pointerId in canvasKey) { noteOff(canvasKey[e.pointerId]); delete canvasKey[e.pointerId]; } }
+window.addEventListener('pointerup', canvasUp);
+window.addEventListener('pointercancel', canvasUp);
+
 // ─── Stations ─────────────────────────────────────────────────────────────────
 
 var stationObjs = [];
@@ -2115,7 +2843,7 @@ function updateMiniSpeech(dt) {
   var mw = miniSayEl.offsetWidth, mh = miniSayEl.offsetHeight, W = window.innerWidth, H = window.innerHeight;
   miniSayEl.style.left = Math.max(mw/2 + 10, Math.min(W - mw/2 - 10, (_mv.x + 1) / 2 * W)) + 'px';
   miniSayEl.style.top  = Math.max(mh + 20, Math.min(H - 10, (-_mv.y + 1) / 2 * H)) + 'px';
-  miniSayEl.style.visibility = _mv.z > 1 ? 'hidden' : '';
+  miniSayEl.style.visibility = (_mv.z > 1 || pianoOpen) ? 'hidden' : '';
 }
 var miniHits = [];
 miniRobots.forEach(function(mr,i){
@@ -2168,11 +2896,12 @@ function updateMeetings(dt) {
   if (patrols.length === 2) {
     var a = patrols[0], b = patrols[1];
     var dx = a.m.g.position.x - b.m.g.position.x, dz = a.m.g.position.z - b.m.g.position.z;
-    if (a.greetT<=0 && b.greetT<=0 && a.greetCd<=0 && b.greetCd<=0 && dx*dx+dz*dz < 1.3*1.3) startMeet(a, b);
+    var onRoute = (!a.pState || a.pState === 'orbit') && (!b.pState || b.pState === 'orbit');
+    if (onRoute && a.greetT<=0 && b.greetT<=0 && a.greetCd<=0 && b.greetCd<=0 && dx*dx+dz*dz < 1.3*1.3) startMeet(a, b);
   }
   patrols.forEach(function(p){
     p.wave = Math.max(0, p.wave - dt*1.5);
-    if (p.greetT > 0) return;
+    if (p.greetT > 0 || (p.pState && p.pState !== 'orbit')) return;
     obstacles.forEach(function(o){
       var dx = p.m.g.position.x - o.m.g.position.x, dz = p.m.g.position.z - o.m.g.position.z;
       if (dx*dx+dz*dz < 1.9*1.9) {
@@ -2186,8 +2915,104 @@ function updateMeetings(dt) {
   });
 }
 
+// ── Piano visits: now and then a patrol bot walks over, hops onto the bench and plays ──
+var pianoBusy = null;
+var PV = null;   // world-space waypoints, computed once the piano exists
+function pianoVisitPoints() {
+  if (PV) return PV;
+  var stand = piano.g.localToWorld(new THREE.Vector3(0, 0, 0.7));
+  var seatY = 0.5025*0.75;
+  PV = {stand:stand, seatY:seatY, hopFrom:new THREE.Vector3(stand.x, 0, stand.z + 0.48),
+        wp:new THREE.Vector3(stand.x - 0.2, 0, stand.z + 1.05)};
+  PV.wpAng = Math.atan2(PV.wp.x, PV.wp.z);
+  PV.faceKeys = piano.g.rotation.y + Math.PI;   // facing the keyboard
+  return PV;
+}
+var CONCERT_LINES = ['PRACTICE TIME ♪', 'ELLIE SAID I COULD PLAY WHEN SHE IS NOT LOOKING.', 'TAKING A LITTLE BREAK FROM PATROLLING.', 'I LEARNED THIS BY BACKPROPAGATION.'];
+var BOW_LINES = ['THANK YOU, THANK YOU.', 'BACK TO WORK.', 'NAILED IT. MOSTLY.'];
+function walkTo(mr, target, dt, speed) {
+  var dx = target.x - mr.px, dz = target.z - mr.pz, d = Math.sqrt(dx*dx + dz*dz);
+  if (d < 0.02) return true;
+  var step = Math.min(d, speed*dt);
+  mr.px += dx/d*step; mr.pz += dz/d*step;
+  mr.yaw += angDiff(mr.yaw, Math.atan2(dx, dz)) * (1 - Math.exp(-10*dt));
+  mr.phase += step*16;
+  return false;
+}
+function startPianoVisit(mr) {
+  var V = pianoVisitPoints();
+  pianoBusy = mr; mr.pState = 'go'; mr.pPath = [V.wp.clone(), V.hopFrom.clone()]; mr.pT = 0;
+  mr.leaveR = mr.orbitR + mr.off;
+}
+function updatePianoVisit(mr, dt) {
+  var m = mr.m, V = pianoVisitPoints();
+  var y = 0, walking = false;
+  mr.pT += dt;
+  if (mr.pState === 'go' || mr.pState === 'back') {
+    walking = true;
+    if (walkTo(mr, mr.pPath[0], dt, 0.75)) {
+      mr.pPath.shift();
+      if (!mr.pPath.length) {
+        if (mr.pState === 'go') { mr.pState = 'hop'; mr.pT = 0; }
+        else { mr.pState = 'orbit'; pianoBusy = null; mr.pCd = 50 + Math.random()*40; mr.off = mr.leaveR - mr.orbitR; }
+      }
+    }
+  } else if (mr.pState === 'hop' || mr.pState === 'hopDown') {
+    var k = Math.min(1, mr.pT/0.55), s = smooth(k), up = mr.pState === 'hop';
+    var a = up ? V.hopFrom : V.stand, b = up ? V.stand : V.hopFrom;
+    mr.px = a.x + (b.x - a.x)*s; mr.pz = a.z + (b.z - a.z)*s;
+    y = (up ? s : 1 - s)*V.seatY + Math.sin(k*Math.PI)*0.22;
+    mr.yaw += angDiff(mr.yaw, up ? V.faceKeys : Math.atan2(V.wp.x - mr.px, V.wp.z - mr.pz)) * (1 - Math.exp(-10*dt));
+    if (k >= 1) {
+      if (up) {
+        mr.pState = 'play'; mr.pT = 0;
+        botConcert = makePlayer(botPiece(), 0.55);
+        miniSpeak(mr, pick(CONCERT_LINES));
+      } else { mr.pState = 'back'; mr.pT = 0;
+        var ra = Math.atan2(V.wp.x, V.wp.z);
+        mr.orbitAngle = ra; mr.pPath = [V.wp.clone(), new THREE.Vector3(Math.sin(ra)*mr.leaveR, 0, Math.cos(ra)*mr.leaveR)]; }
+    }
+  } else if (mr.pState === 'play') {
+    y = V.seatY;
+    mr.px = V.stand.x; mr.pz = V.stand.z;
+    mr.yaw += angDiff(mr.yaw, V.faceKeys) * (1 - Math.exp(-10*dt));
+    var finished = !botConcert || botConcert.done || pianoOpen;
+    if (finished) {
+      if (botConcert) { botConcert.stop(); botConcert = null; }
+      if (!pianoOpen && !miniSay.active) miniSpeak(mr, pick(BOW_LINES));
+      mr.pState = 'hopDown'; mr.pT = 0;
+    }
+  }
+  m.g.position.set(mr.px, y, mr.pz);
+  m.g.rotation.y = mr.yaw;
+  m.headG.rotation.z = 0;
+  if (mr.pState === 'play') {
+    // both hands on the keys, bouncing to the music, head nodding along
+    miniWalkPose(m, 0, 0);
+    m.armLG.rotation.x = -1.15 + Math.sin(mr.pT*9.5)*0.22;
+    m.armRG.rotation.x = -1.15 + Math.sin(mr.pT*9.5 + 2.1)*0.22;
+    m.armLG.rotation.z = 0.12; m.armRG.rotation.z = -0.12;
+    m.headG.rotation.x = 0.25 + Math.sin(mr.pT*4.7)*0.08;
+    m.headG.rotation.y = Math.sin(mr.pT*0.9)*0.25;
+    m.bodyG.rotation.z = Math.sin(mr.pT*2.35)*0.06;
+  } else {
+    m.armLG.rotation.z = 0; m.armRG.rotation.z = 0; m.bodyG.rotation.z = 0; m.headG.rotation.x = 0;
+    miniWalkPose(m, mr.phase, walking ? 1 : 0.3);
+    m.headG.rotation.y = 0;
+  }
+}
+
 function updatePatrol(mr, dt) {
   var m = mr.m;
+  mr.pCd = Math.max(0, (mr.pCd === undefined ? 12 + Math.random()*20 : mr.pCd) - dt);
+  if (mr.pState && mr.pState !== 'orbit') { updatePianoVisit(mr, dt); return; }
+  if (!mr.greetT || mr.greetT <= 0) {
+    var V = pianoVisitPoints();
+    if (!pianoBusy && !pianoOpen && mr.pCd <= 0 && Math.abs(angDiff(mr.orbitAngle, V.wpAng)) < 0.05) {
+      if (Math.random() < 0.6) { startPianoVisit(mr); updatePianoVisit(mr, dt); return; }
+      mr.pCd = 20;                                 // skipped this lap; maybe next time
+    }
+  }
   if (mr.greetT > 0) {
     // stopped: face the other bot and wave
     mr.greetT -= dt;
@@ -2271,6 +3096,7 @@ function unfocusCam() {
   if (!camFocus) return;
   camFocus = null;
   zoomBtn.classList.remove('show');
+  closePianoUI();
   document.getElementById('rl-hud').classList.remove('show');
   miniRobots.forEach(function(o){ if (o.R) o.R.chart.visible = true; });
 }
@@ -2793,14 +3619,19 @@ renderer.domElement.addEventListener('click', function(e) {
   mouse2d.y=-(e.clientY/window.innerHeight)*2+1;
   raycaster.setFromCamera(mouse2d,camera);
 
+  // piano open: clicks on the piano play it (pointerdown), anywhere else steps back
+  if (pianoOpen) { if (!pianoNear(e.clientX, e.clientY)) unfocusCam(); return; }
+
   var robotHit = raycaster.intersectObjects(robotMeshes);
   if (robotHit.length && robot.state === 'idle') {
     if (!emote) startEmote();
     return;
   }
 
+  if (raycaster.intersectObjects(piano.meshes).length) { openPiano(); return; }
   var near = pickMiniScreen(e.clientX, e.clientY);
   if (near) { pokeMini(near); return; }
+  if (pianoNear(e.clientX, e.clientY)) { openPiano(); return; }
 
   var hits=raycaster.intersectObjects(interactiveList());
   if(hits.length){
@@ -2827,7 +3658,7 @@ renderer.domElement.addEventListener('mousemove', function(e) {
   var hits=raycaster.intersectObjects(interactiveList());
   var hu=hits.length?hits[0].object.userData:null;
   hoveredSt=(hu&&hu.stIdx!==undefined)?hu.stIdx:null;
-  renderer.domElement.style.cursor=(hits.length||pickMiniScreen(e.clientX,e.clientY))?'pointer':'default';
+  renderer.domElement.style.cursor=(hits.length||pickMiniScreen(e.clientX,e.clientY)||pianoNear(e.clientX,e.clientY))?'pointer':'default';
 
   if(robot.state==='idle'){
     var fp2=new THREE.Vector3(); raycaster.ray.intersectPlane(floorPlane,fp2);
@@ -2926,6 +3757,7 @@ var IDLE_LINES = [
   TAP + ' ME. I KNOW SEVEN MOVES.',
   TAP + ' THE FLOOR. IT RIPPLES. VERY SCIENTIFIC.',
   'THE PLANETS ARE CLICKABLE. I CHECKED.',
+  'THAT PIANO IS REAL. GO ON, PLAY SOMETHING.',
   'SHOOTING STARS CAN BE CAUGHT. I BELIEVE IN YOU.',
   TAP + ' EMPTY SKY TO PLOT YOUR OWN STARS.',
   TAP + ' A LITTLE BOT TO ZOOM IN ON ITS WORK.',
@@ -3277,6 +4109,8 @@ function animate() {
   moons.forEach(function(m){ m.pivot.rotation.y += m.spd * dt; });
 
   updateDock(dt);
+  updatePiano(dt);
+  updateGuide();
   edgeRing.material.opacity=0.55+Math.sin(gt*0.8)*0.12;
 
   for(var pi=0;pi<PC;pi++){
@@ -3295,7 +4129,7 @@ function animate() {
   // Camera follow + parallax
   var cb = camBase();
   // Focused on a bot: fly in close and look at it from in front of its workstation
-  var zoomTarget = camFocus ? ((window.innerWidth/window.innerHeight) < 0.75 ? 0.16 : 0.14) : (panelOpen ? 0.62 : 1);
+  var zoomTarget = camFocus ? (camFocus.zoom ? camFocus.zoom() : ((window.innerWidth/window.innerHeight) < 0.75 ? 0.16 : 0.14)) : (panelOpen ? 0.62 : 1);
   camZoom += (zoomTarget - camZoom) * 0.05;
   var focusPos = camFocus ? (camFocus.focusPt || camFocus.m.g.position) : robot.root.position;
   var yawTarget = camFocus ? (camFocus.type === 'patrol' ? camFocus.yaw : camFocus.baseRot) : 0;
@@ -3310,7 +4144,7 @@ function animate() {
   camera.position.z+=(tz-camera.position.z)*0.055;
   camera.lookAt(camT.x, camT.y + (camFocus ? 0.25 : 0.5), camT.z);
 
-  var vsTarget = panelOpen ? window.innerHeight*0.3 : 0;
+  var vsTarget = panelOpen ? window.innerHeight*0.3 : (pianoOpen ? pianoEl.offsetHeight*0.5 : 0);
   viewShift += (vsTarget - viewShift) * 0.08;
   if (Math.abs(viewShift) > 0.5) {
     camera.setViewOffset(window.innerWidth, window.innerHeight, 0, viewShift, window.innerWidth, window.innerHeight);
@@ -3375,6 +4209,19 @@ function animate() {
   updateSpeech(dt);
 }
 
+// ─── Guide ────────────────────────────────────────────────────────────────────
+var guideEl = document.getElementById('guide'), chipEl = document.getElementById('g-chip'), guideMin = false;
+if (IS_TOUCH) document.querySelectorAll('#guide .tap').forEach(function(e){ e.textContent = 'Tap'; });
+function setGuideMin(on) { guideMin = on; guideEl.classList.toggle('min', on); }
+document.getElementById('g-min').addEventListener('click', function(e){ e.stopPropagation(); setGuideMin(true); });
+chipEl.addEventListener('click', function(e){ e.stopPropagation(); setGuideMin(false); });
+document.getElementById('g-sound').addEventListener('click', function(e){ e.stopPropagation(); audioInit(); setSound(!soundOn); });
+function updateGuide() {
+  var busy = panelOpen || !!camFocus;
+  guideEl.classList.toggle('away', busy);
+  chipEl.classList.toggle('show', guideMin && !busy);
+}
+
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 
 animate();
@@ -3385,6 +4232,8 @@ setTimeout(function(){
   document.getElementById('header').classList.add('show');
   document.getElementById('nav').classList.add('show');
   document.getElementById('hint').classList.add('show');
+  guideEl.classList.add('show');
+  if (isMobileLayout()) setTimeout(function(){ if (!guideMin) setGuideMin(true); }, 9000);   // phones: tuck it away so the stage is visible
   setTimeout(function(){ booted = true; if(!say.active && !panelOpen) robotSay('BEEP BOOP. HELLO, HUMAN.', 1.8); }, 900);
 },1400);
 </script>
