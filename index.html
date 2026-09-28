@@ -200,6 +200,17 @@
     #robot-say.side.left { transform:translate(-100%,-50%); margin-left:-44px; }
     #robot-say.side.left::after { left:auto; right:-6px; transform:translateY(-50%) rotate(-45deg); }
 
+    /* ── RL reward card (shown while zoomed in on the RL bot) ── */
+    #rl-hud {
+      position:fixed; right:28px; top:calc(76px + env(safe-area-inset-top)); z-index:44;
+      width:min(340px, 72vw); border-radius:8px; overflow:hidden; pointer-events:none;
+      box-shadow:0 0 26px -8px #ffdd00; opacity:0; transform:translateY(-8px); transition:opacity 0.35s, transform 0.35s;
+    }
+    #rl-hud.show { opacity:1; transform:translateY(0); }
+    #rl-hud canvas { display:block; width:100%; height:auto; }
+    @media (max-width:768px) { #rl-hud { right:auto; left:50%; top:auto; bottom:calc(98px + env(safe-area-inset-bottom)); width:min(280px, 76vw); transform:translate(-50%,8px); }
+      #rl-hud.show { transform:translate(-50%,0); } }
+
     /* ── Zoom-out button (shown while focused on a bot) ─── */
     #zoom-out {
       position:fixed; left:50%; bottom:calc(64px + env(safe-area-inset-bottom)); z-index:45;
@@ -310,6 +321,7 @@
   <span class="touch-only">TAP A STATION &nbsp;·&nbsp; TAP THE ROBOT TO SAY HI</span>
 </div>
 <div id="labels"></div>
+<div id="rl-hud"><canvas id="rl-hud-c" width="512" height="300"></canvas></div>
 <button id="zoom-out">← BACK TO UNIT-E</button>
 <div id="mini-say"><span class="say-tag" id="mini-tag"></span><span id="mini-text"></span></div>
 <div id="stars">★ <span id="star-count">0</span> CAUGHT</div>
@@ -1053,6 +1065,7 @@ var miniRobots = [];
 // accent-coloured ear discs + belt, and legs with real knees so they can walk.
 function buildMini(col) {
   var g = new THREE.Group();
+  var bot = new THREE.Group(); g.add(bot);   // the robot itself (hops); workstation props go on g
   var shell  = new THREE.MeshStandardMaterial({color:0xe8eff6, emissive:0xb8c8d8, emissiveIntensity:0.38, roughness:0.35, metalness:0.3});
   var joint  = new THREE.MeshStandardMaterial({color:0x34414f, emissive:0x1a2633, emissiveIntensity:0.5, roughness:0.45, metalness:0.65});
   var accent = new THREE.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:1.1, roughness:0.3, metalness:0.3});
@@ -1066,7 +1079,7 @@ function buildMini(col) {
     knee.add(new THREE.Mesh(new THREE.SphereGeometry(0.034,10,8),joint));
     var shin=new THREE.Mesh(new THREE.BoxGeometry(0.072,0.06,0.072),shell); shin.position.y=-0.03; knee.add(shin);
     var foot=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.03,0.125),shell); foot.position.set(0,-0.065,0.015); knee.add(foot);
-    g.add(hip); return {hip:hip, knee:knee};
+    bot.add(hip); return {hip:hip, knee:knee};
   }
   var legL = leg(-0.06), legR = leg(0.06);
 
@@ -1076,14 +1089,14 @@ function buildMini(col) {
   var chest = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.05,0.02), glowM); chest.position.set(0,0.03,0.11); bodyG.add(chest);
   var pack = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.12,0.05), joint); pack.position.set(0,0.01,-0.11); bodyG.add(pack);
   var neck = new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.04,0.05,10), joint); neck.position.y=0.12; bodyG.add(neck);
-  g.add(bodyG);
+  bot.add(bodyG);
 
   function arm(x){
     var a=new THREE.Group(); a.position.set(x,0.36,0);
     a.add(new THREE.Mesh(new THREE.SphereGeometry(0.036,10,8),joint));
     var up=new THREE.Mesh(new THREE.BoxGeometry(0.048,0.1,0.048),shell); up.position.y=-0.06; a.add(up);
     var hand=new THREE.Mesh(new THREE.SphereGeometry(0.03,10,8),joint); hand.position.y=-0.125; a.add(hand);
-    g.add(a); return a;
+    bot.add(a); return a;
   }
   var armLG = arm(-0.145), armRG = arm(0.145);
 
@@ -1101,11 +1114,11 @@ function buildMini(col) {
   var antPole = new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,0.09,6),joint);
   antPole.position.set(0,0.125,0); headG.add(antPole);
   var antBall = new THREE.Mesh(new THREE.SphereGeometry(0.02,10,8),glowM); antBall.position.set(0,0.18,0); headG.add(antBall);
-  g.add(headG);
+  bot.add(headG);
 
-  var halo = new THREE.PointLight(col,1.8,3.2); halo.position.y=0.45; g.add(halo);
+  var halo = new THREE.PointLight(col,1.8,3.2); halo.position.y=0.45; bot.add(halo);
 
-  return {g:g, bodyG:bodyG, headG:headG, armLG:armLG, armRG:armRG, legL:legL, legR:legR,
+  return {g:g, bot:bot, bodyG:bodyG, headG:headG, armLG:armLG, armRG:armRG, legL:legL, legR:legR,
           eyes:[eyeL,eyeR], antBall:antBall, halo:halo};
 }
 
@@ -1284,7 +1297,7 @@ function makeBBox(w,h,d,col){
   R.plus=makeLabelSprite('+1',null,'#ffe066',0.1); R.plus.material.opacity=0; m6.g.add(R.plus); R.plusT=1;
   R.minus=makeLabelSprite('-1',null,'#ff5544',0.1); R.minus.material.opacity=0; m6.g.add(R.minus); R.minusT=1;
   // reward-curve hologram (canvas sprite, redrawn once per episode)
-  R.chartC=document.createElement('canvas'); R.chartC.width=256; R.chartC.height=150;
+  R.chartC=document.createElement('canvas'); R.chartC.width=512; R.chartC.height=300;
   R.chartTex=new THREE.CanvasTexture(R.chartC); R.chartTex.minFilter=THREE.LinearFilter; R.chartTex.generateMipmaps=false;
   R.chart=new THREE.Sprite(new THREE.SpriteMaterial({map:R.chartTex,transparent:true,depthWrite:false,fog:false,opacity:0.92}));
   R.chart.scale.set(0.52,0.3,1); R.chart.position.set(0,0.98,-0.35); m6.g.add(R.chart);
@@ -1297,30 +1310,45 @@ function makeBBox(w,h,d,col){
 function drawRLChart(R) {
   var c=R.chartC, x=c.getContext('2d'), W=c.width, H=c.height;
   x.clearRect(0,0,W,H);
-  x.fillStyle='rgba(3,14,24,0.85)'; x.fillRect(0,0,W,H);
-  x.strokeStyle='rgba(255,221,0,0.6)'; x.lineWidth=2; x.strokeRect(1,1,W-2,H-2);
-  x.fillStyle='#ffdd00'; x.font='bold 18px "Courier New", monospace'; x.textBaseline='top';
-  x.fillText('REWARD  EP '+R.ep, 12, 8);
-  var eps=Math.max(0.05, 0.8*Math.pow(0.82,R.ep));
-  x.fillStyle='rgba(255,221,0,0.6)'; x.font='14px "Courier New", monospace';
-  x.fillText('ε='+eps.toFixed(2), W-80, 11);
-  var L=14, T=38, PW=W-28, PH=H-52;
-  x.strokeStyle='rgba(255,221,0,0.2)'; x.lineWidth=1;
-  x.beginPath(); x.moveTo(L,T+PH/2); x.lineTo(L+PW,T+PH/2); x.stroke();
+  x.fillStyle='rgba(3,14,24,0.9)'; x.fillRect(0,0,W,H);
+  x.strokeStyle='rgba(255,221,0,0.7)'; x.lineWidth=3; x.strokeRect(2,2,W-4,H-4);
   var r=R.rewards, n=r.length;
-  if (n) {
-    x.strokeStyle='#ffdd00'; x.lineWidth=2.5; x.beginPath();
-    for (var i=0;i<n;i++){
-      var px=L+(n===1?PW/2:i/(Math.max(n,2)-1)*PW), py=T+PH*(1-(r[i]+1)/2);
-      if(i===0) x.moveTo(px,py); else x.lineTo(px,py);
-    }
-    x.stroke();
-    for (var k=0;k<n;k++){
-      var qx=L+(n===1?PW/2:k/(Math.max(n,2)-1)*PW), qy=T+PH*(1-(r[k]+1)/2);
-      x.fillStyle=r[k]>0?'#ffee88':'#ff5544'; x.beginPath(); x.arc(qx,qy,3,0,Math.PI*2); x.fill();
-    }
+  var wins=0, last=r.slice(-10); last.forEach(function(v){ if(v>0) wins++; });
+  var eps=Math.max(0.05, 0.8*Math.pow(0.82,R.ep));
+  x.textBaseline='top';
+  x.fillStyle='#ffdd00'; x.font='bold 30px "Courier New", monospace'; x.fillText('REWARD CURVE', 20, 16);
+  x.fillStyle='rgba(255,230,120,0.85)'; x.font='bold 22px "Courier New", monospace';
+  x.fillText('EP '+R.ep+'   ε='+eps.toFixed(2)+'   WIN '+(last.length?Math.round(wins/last.length*100):0)+'%', 20, 54);
+  var L=56, T=96, PW=W-80, PH=H-128;
+  // axes + gridlines at +1, 0, -1
+  x.font='18px "Courier New", monospace'; x.textBaseline='middle';
+  [1,0,-1].forEach(function(v){
+    var y=T+PH*(1-(v+1)/2);
+    x.strokeStyle=v===0?'rgba(255,221,0,0.35)':'rgba(255,221,0,0.14)'; x.lineWidth=v===0?2:1.5;
+    x.beginPath(); x.moveTo(L,y); x.lineTo(L+PW,y); x.stroke();
+    x.fillStyle='rgba(255,221,0,0.6)'; x.fillText((v>0?'+':'')+v, 14, y);
+  });
+  if (!n) {
+    x.fillStyle='rgba(255,230,150,0.7)'; x.font='italic 22px "Courier New", monospace'; x.textBaseline='middle';
+    x.fillText('collecting episodes…', L+PW/2-130, T+PH/2-28);
+  } else {
+    function px(i){ return L + (n===1 ? PW/2 : i/(n-1)*PW); }
+    function py(v){ return T + PH*(1-(v+1)/2); }
+    // rolling average (the "learning" trend)
+    x.strokeStyle='rgba(255,255,255,0.75)'; x.lineWidth=3; x.setLineDash([10,8]); x.beginPath();
+    for (var i=0;i<n;i++){ var s=0,k=0; for(var j=Math.max(0,i-3);j<=i;j++){s+=r[j];k++;} var ya=py(s/k); if(i===0)x.moveTo(px(i),ya); else x.lineTo(px(i),ya); }
+    x.stroke(); x.setLineDash([]);
+    // raw rewards, glowing
+    x.shadowColor='#ffdd00'; x.shadowBlur=12;
+    x.strokeStyle='#ffdd00'; x.lineWidth=5; x.lineJoin='round'; x.beginPath();
+    for (var q=0;q<n;q++){ if(q===0) x.moveTo(px(q),py(r[q])); else x.lineTo(px(q),py(r[q])); }
+    x.stroke(); x.shadowBlur=0;
+    for (var d=0;d<n;d++){ x.fillStyle=r[d]>0?'#fff3a0':'#ff5544'; x.beginPath(); x.arc(px(d),py(r[d]),7,0,Math.PI*2); x.fill(); }
   }
   R.chartTex.needsUpdate=true;
+  // mirror onto the on-screen card shown while zoomed in on the RL bot
+  var hud=document.getElementById('rl-hud-c');
+  if (hud) { var hx=hud.getContext('2d'); hx.clearRect(0,0,hud.width,hud.height); hx.drawImage(c,0,0,hud.width,hud.height); }
 }
 
 // ─── Shooting stars ───────────────────────────────────────────────────────────
@@ -2224,12 +2252,16 @@ function focusMini(mr) {
   if (panelOpen) closePanel();
   camFocus = mr;
   zoomBtn.classList.add('show');
+  document.getElementById('rl-hud').classList.toggle('show', mr.type === 'rl');
+  miniRobots.forEach(function(o){ if (o.R) o.R.chart.visible = (o !== mr); });
   document.getElementById('hint').style.opacity = '0';
 }
 function unfocusCam() {
   if (!camFocus) return;
   camFocus = null;
   zoomBtn.classList.remove('show');
+  document.getElementById('rl-hud').classList.remove('show');
+  miniRobots.forEach(function(o){ if (o.R) o.R.chart.visible = true; });
 }
 zoomBtn.addEventListener('click', function(e){ e.stopPropagation(); unfocusCam(); });
 
@@ -3151,10 +3183,10 @@ function animate() {
     if (mr.hop > 0) {
       mr.hop = Math.max(0, mr.hop - dt/0.75);
       var hk = 1 - mr.hop;
-      m.g.position.y += Math.sin(hk*Math.PI)*0.5;
-      m.g.rotation.y += hk*Math.PI*2;
+      m.bot.position.y = Math.sin(hk*Math.PI)*0.5;
+      m.bot.rotation.y = hk*Math.PI*2;
       m.halo.intensity += Math.sin(hk*Math.PI)*3;
-    }
+    } else { m.bot.position.y = 0; m.bot.rotation.y = 0; }
   });
 
   // ── Shooting stars ────────────────────────────────────────────────────────
