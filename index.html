@@ -38,60 +38,78 @@
       box-shadow:0 0 14px #00d4ff; animation:loadBlink 2.5s ease-in-out infinite; }
     @keyframes loadBob  { to { transform:translateY(-9px); } }
     @keyframes loadBlink { 0%,88%,100%{transform:scaleY(1)} 93%{transform:scaleY(0.08)} }
-    .load-text { margin-top:22px; font-size:0.68rem; letter-spacing:5px; color:#00d4ff; opacity:0.7; }
+    .load-text { margin-top:22px; font-size:0.8rem; letter-spacing:5px; color:#00d4ff; opacity:0.8; }
     .load-bar  { margin-top:14px; width:110px; height:2px; background:#0d2035; border-radius:2px; overflow:hidden; }
     .load-fill { height:100%; width:0; background:#00d4ff; animation:loadBar 1.3s ease forwards; }
     @keyframes loadBar { to { width:100%; } }
 
     /* ── Header ──────────────────────────────────────────── */
-    #header { position:fixed; top:28px; left:28px; z-index:40; pointer-events:none; opacity:0; transition:opacity 1s 0.4s; }
+    #header { position:fixed; top:28px; left:32px; z-index:40; pointer-events:none; opacity:0; transition:opacity 1s 0.4s; }
     #header.show { opacity:1; }
-    #header h1 { font-size:1.35rem; font-weight:500; letter-spacing:6px; color:#ffffff; text-shadow:0 0 18px rgba(0,212,255,0.45); }
-    #header p  { font-size:0.78rem; letter-spacing:4px; color:#cce8ff; margin-top:5px; }
+    #header h1 { font-size:1.8rem; font-weight:500; letter-spacing:7px; color:#ffffff; text-shadow:0 0 20px rgba(0,212,255,0.5); }
+    #header p  { font-size:0.95rem; letter-spacing:4px; color:#cce8ff; margin-top:6px; }
 
     /* ── Hint ────────────────────────────────────────────── */
     #hint { position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
-      font-size:0.62rem; letter-spacing:3px; color:#243a52;
+      font-size:0.8rem; letter-spacing:3px; color:#5a86a8;
       pointer-events:none; opacity:0; transition:opacity 1s 0.6s, color 0.4s; z-index:40; white-space:nowrap; }
     #hint.show { opacity:1; }
     .touch-only { display:none; }
 
     /* ── Nav dots ─────────────────────────────────────────── */
-    #nav { position:fixed; left:28px; top:50%; transform:translateY(-50%);
-      display:flex; flex-direction:column; gap:14px; z-index:40;
+    #nav { position:fixed; left:32px; top:50%; transform:translateY(-50%);
+      display:flex; flex-direction:column; gap:18px; z-index:40;
       opacity:0; transition:opacity 1s 0.5s; }
     #nav.show { opacity:1; }
-    .nav-dot { width:7px; height:7px; border-radius:50%; border:1px solid #1a3550;
+    .nav-dot { width:10px; height:10px; border-radius:50%; border:1.5px solid #2a5070;
       cursor:pointer; transition:all 0.25s; position:relative; }
-    .nav-dot::before { content:''; position:absolute; inset:-8px; } /* bigger tap target */
-    .nav-dot:hover,.nav-dot.active { background:#00d4ff; border-color:#00d4ff; box-shadow:0 0 10px #00d4ff88; }
-    .nav-dot::after { content:attr(data-label); position:absolute; left:18px; top:50%; transform:translateY(-50%);
-      font-size:0.6rem; letter-spacing:2px; color:#2a5070; white-space:nowrap; opacity:0; transition:opacity 0.2s; }
-    .nav-dot:hover::after { opacity:1; color:#5090b0; }
+    .nav-dot::before { content:''; position:absolute; inset:-9px; } /* bigger tap target */
+    .nav-dot:hover,.nav-dot.active { background:#00d4ff; border-color:#00d4ff; box-shadow:0 0 12px #00d4ff; }
+    .nav-dot::after { content:attr(data-label); position:absolute; left:22px; top:50%; transform:translateY(-50%);
+      font-size:0.75rem; letter-spacing:2px; color:#3f6f94; white-space:nowrap; opacity:0.75; transition:opacity 0.2s, color 0.2s; }
+    .nav-dot:hover::after { opacity:1; color:#8cc4e6; }
     .nav-dot.active::after { opacity:1; color:#00d4ff; }
 
     /* ── Station labels (DOM-projected) ─────────────────── */
     #labels { position:fixed; inset:0; pointer-events:none; z-index:30; }
     .slabel {
       position:absolute; transform:translate(-50%,-100%);
-      padding:5px 13px; background:rgba(4,12,24,0.88); border:1px solid currentColor;
-      border-radius:20px; font-size:0.63rem; letter-spacing:3px;
+      display:flex; align-items:center; gap:10px;
+      padding:7px 18px 7px 8px; background:rgba(4,12,24,0.9); border:1.5px solid currentColor;
+      border-radius:22px; font-size:0.85rem; font-weight:600; letter-spacing:3px;
       cursor:pointer; pointer-events:auto;
-      transition:background 0.2s, opacity 0.2s, box-shadow 0.2s;
-      white-space:nowrap; backdrop-filter:blur(8px); opacity:0.85;
-      margin-top:-8px; user-select:none;
+      transition:background 0.2s, transform 0.2s;
+      white-space:nowrap; backdrop-filter:blur(8px);
+      margin-top:-16px; user-select:none;
+      animation:slPulse 2.8s ease-in-out infinite;
     }
-    .slabel:hover { background:rgba(255,255,255,0.06); opacity:1; box-shadow:0 0 16px -4px currentColor; }
+    .slabel .sl-num {
+      display:inline-flex; align-items:center; justify-content:center;
+      min-width:26px; height:22px; padding:0 6px; border-radius:11px;
+      background:var(--c); color:#04080f; font-size:0.7rem; letter-spacing:1px; font-weight:700;
+    }
+    .slabel::after { /* stem pointing down to the station */
+      content:''; position:absolute; left:50%; top:100%; width:1.5px; height:16px;
+      background:linear-gradient(currentColor, transparent); transform:translateX(-50%);
+    }
+    .slabel:hover, .slabel.hot {
+      background:rgba(20,34,52,0.95); transform:translate(-50%,-100%) scale(1.1);
+      animation:none; box-shadow:0 0 26px -2px currentColor;
+    }
+    @keyframes slPulse {
+      0%,100% { box-shadow:0 0 10px -5px currentColor; }
+      50%     { box-shadow:0 0 22px -3px currentColor; }
+    }
 
     /* ── Content panel (bottom sheet on every screen size) ── */
     #panel {
       position:fixed; left:0; right:0; bottom:0; margin:0 auto;
-      width:min(760px,100vw);
-      height:62vh; height:62dvh;
+      width:min(800px,100vw);
+      height:64vh; height:64dvh;
       background:rgba(4,8,16,0.97);
       border:1px solid #0e2030; border-bottom:none; border-radius:18px 18px 0 0;
       backdrop-filter:blur(24px);
-      padding:40px 36px calc(32px + env(safe-area-inset-bottom));
+      padding:44px 40px calc(34px + env(safe-area-inset-bottom));
       overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
       transform:translateY(100%); transition:transform 0.55s cubic-bezier(0.16,1,0.3,1); z-index:60;
     }
@@ -101,30 +119,30 @@
     #panel-handle { display:block; position:absolute; top:10px; left:50%; transform:translateX(-50%);
       width:40px; height:4px; border-radius:2px; background:#1a3550; }
 
-    #panel-close { position:absolute; top:20px; right:20px; width:30px; height:30px;
-      border:1px solid #0e2030; border-radius:50%; background:transparent;
-      color:#2a5070; cursor:pointer; font-size:1rem;
+    #panel-close { position:absolute; top:20px; right:20px; width:36px; height:36px;
+      border:1px solid #1a3550; border-radius:50%; background:transparent;
+      color:#5a86a8; cursor:pointer; font-size:1.2rem;
       display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
     #panel-close:hover { border-color:#00d4ff; color:#00d4ff; }
 
-    #panel-eyebrow { font-size:0.6rem; letter-spacing:4px; margin-bottom:8px; }
-    #panel-title   { font-size:1.85rem; font-weight:300; line-height:1.15; margin-bottom:24px; }
-    #panel-body    { font-size:0.86rem; line-height:1.8; color:#6888a0; }
-    #panel-body strong { color:#d0e8ff; font-weight:500; }
-    #panel-body p  { margin-bottom:0.8rem; }
+    #panel-eyebrow { font-size:0.75rem; letter-spacing:4px; margin-bottom:10px; }
+    #panel-title   { font-size:2.3rem; font-weight:300; line-height:1.15; margin-bottom:26px; }
+    #panel-body    { font-size:1.02rem; line-height:1.8; color:#8aa8c0; }
+    #panel-body strong { color:#e4f2ff; font-weight:500; }
+    #panel-body p  { margin-bottom:0.9rem; }
     #panel-body .tag {
-      display:inline-block; padding:2px 10px; border:1px solid #0e2030; border-radius:12px;
-      font-size:0.63rem; letter-spacing:1px; color:#4080a0; margin:2px 2px 2px 0;
+      display:inline-block; padding:3px 12px; border:1px solid #16304a; border-radius:12px;
+      font-size:0.78rem; letter-spacing:1px; color:#6aa6c8; margin:3px 3px 3px 0;
       transition:border-color 0.2s;
     }
-    #panel-body .entry { margin-bottom:2rem; }
-    #panel-body .edate  { font-size:0.63rem; letter-spacing:2px; margin-bottom:5px; }
-    #panel-body .etitle { color:#d0e8ff; font-weight:500; font-size:0.95rem; margin-bottom:7px; }
-    #panel-body .eorg   { font-size:0.72rem; color:#4a6a85; margin:-4px 0 8px; }
+    #panel-body .entry { margin-bottom:2.2rem; }
+    #panel-body .edate  { font-size:0.75rem; letter-spacing:2px; margin-bottom:6px; }
+    #panel-body .etitle { color:#e4f2ff; font-weight:500; font-size:1.15rem; margin-bottom:7px; }
+    #panel-body .eorg   { font-size:0.85rem; color:#6a8aa5; margin:-4px 0 8px; }
     #panel-body .gh-btn {
       display:inline-flex; align-items:center; gap:7px;
-      padding:8px 16px; border:1px solid #1a3050; border-radius:8px;
-      text-decoration:none; color:#7098b8; font-size:0.72rem; letter-spacing:1px;
+      padding:9px 18px; border:1px solid #1a3050; border-radius:8px;
+      text-decoration:none; color:#7098b8; font-size:0.85rem; letter-spacing:1px;
       margin-top:10px; transition:all 0.2s;
     }
     #panel-body .gh-btn:hover { border-color:currentColor; color:#d0e8ff; background:rgba(255,255,255,0.04); }
@@ -136,24 +154,24 @@
     #panel-body .proj-img { width:100%; border-radius:6px; border:1px solid #0e2030; margin:14px 0; background:#0a1525; }
     #panel-body .lrow {
       display:flex; align-items:center; gap:12px;
-      padding:12px 16px; border:1px solid #0e2030; border-radius:8px;
+      padding:14px 18px; border:1px solid #0e2030; border-radius:8px;
       text-decoration:none; color:#d0e8ff; margin-bottom:10px; transition:border-color 0.2s;
-      word-break:break-all;
+      word-break:break-all; font-size:1rem;
     }
     #panel-body .lrow:hover { border-color:#00d4ff44; }
 
     /* ── Keyboard badge ──────────────────────────────────── */
-    .kbd { display:inline-block; padding:1px 6px; background:#0d1e2e; border:1px solid #1a3050;
-      border-radius:4px; font-size:0.6rem; color:#4080a0; margin:0 2px; }
+    .kbd { display:inline-block; padding:1px 7px; background:#0d1e2e; border:1px solid #1a3050;
+      border-radius:4px; font-size:0.74rem; color:#5a9ac0; margin:0 2px; }
 
     /* ── Robot speech bubble ─────────────────────────────── */
     #robot-say {
       position:fixed; left:0; top:0; z-index:35; pointer-events:none;
       transform:translate(-50%,-100%); margin-top:-14px;
-      max-width:min(270px,70vw); width:max-content;
-      padding:8px 12px 9px; background:rgba(3,14,24,0.92);
+      max-width:min(320px,72vw); width:max-content;
+      padding:9px 14px 10px; background:rgba(3,14,24,0.92);
       border:1px solid #00d4ff66; border-radius:4px;
-      font-family:'Courier New',ui-monospace,Menlo,monospace; font-size:0.66rem; line-height:1.55;
+      font-family:'Courier New',ui-monospace,Menlo,monospace; font-size:0.82rem; line-height:1.55;
       letter-spacing:1.5px; color:#8eeaff; text-shadow:0 0 6px #00d4ff88;
       box-shadow:0 0 18px -6px #00d4ff, inset 0 0 12px -8px #00d4ff;
       opacity:0; transition:opacity 0.3s;
@@ -164,7 +182,7 @@
       background:rgba(3,14,24,0.92); border-right:1px solid #00d4ff66; border-bottom:1px solid #00d4ff66;
       transform:translateX(-50%) rotate(45deg);
     }
-    #robot-say .say-tag { display:block; font-size:0.52rem; letter-spacing:2.5px; color:#2f7f9c; margin-bottom:2px; }
+    #robot-say .say-tag { display:block; font-size:0.62rem; letter-spacing:2.5px; color:#3f95b5; margin-bottom:2px; }
     #robot-say .say-caret { display:inline-block; margin-left:2px; animation:caret 0.9s steps(1) infinite; }
     #robot-say::before { /* corner brackets */
       content:''; position:absolute; inset:-4px; pointer-events:none;
@@ -182,10 +200,10 @@
       --c:#00d4ff;
       position:fixed; left:0; top:0; z-index:34; pointer-events:none;
       transform:translate(-50%,-100%); margin-top:-12px;
-      max-width:min(230px,62vw); width:max-content;
-      padding:6px 10px 7px; background:rgba(3,14,24,0.92);
+      max-width:min(260px,64vw); width:max-content;
+      padding:7px 12px 8px; background:rgba(3,14,24,0.92);
       border:1px solid var(--c); border-radius:4px;
-      font-family:'Courier New',ui-monospace,Menlo,monospace; font-size:0.6rem; line-height:1.5;
+      font-family:'Courier New',ui-monospace,Menlo,monospace; font-size:0.74rem; line-height:1.5;
       letter-spacing:1.2px; color:var(--c); text-shadow:0 0 6px var(--c);
       box-shadow:0 0 14px -6px var(--c);
       opacity:0; transition:opacity 0.25s;
@@ -196,14 +214,14 @@
       background:rgba(3,14,24,0.92); border-right:1px solid var(--c); border-bottom:1px solid var(--c);
       transform:translateX(-50%) rotate(45deg);
     }
-    #mini-say .say-tag { display:block; font-size:0.5rem; letter-spacing:2px; opacity:0.6; margin-bottom:1px; }
+    #mini-say .say-tag { display:block; font-size:0.58rem; letter-spacing:2px; opacity:0.65; margin-bottom:1px; }
 
     /* ── Star counter HUD ────────────────────────────────── */
     #stars {
       position:fixed; top:calc(28px + env(safe-area-inset-top)); right:28px; z-index:40; pointer-events:none;
-      font-family:'Courier New',ui-monospace,Menlo,monospace; font-size:0.66rem; letter-spacing:2.5px;
+      font-family:'Courier New',ui-monospace,Menlo,monospace; font-size:0.8rem; letter-spacing:2.5px;
       color:#ffe9a8; text-shadow:0 0 8px #ffcc5588;
-      padding:6px 12px; border:1px solid #ffcc5544; border-radius:4px; background:rgba(3,14,24,0.7);
+      padding:7px 14px; border:1px solid #ffcc5544; border-radius:4px; background:rgba(3,14,24,0.7);
       opacity:0; transform:translateY(-6px); transition:opacity 0.4s, transform 0.4s;
     }
     #stars.show { opacity:1; transform:translateY(0); }
@@ -219,27 +237,29 @@
     /* ── Phones / narrow screens ─────────────────────────── */
     @media (max-width:768px) {
       #header { top:calc(18px + env(safe-area-inset-top)); left:18px; }
-      #header h1 { font-size:1.02rem; letter-spacing:4px; }
-      #header p  { font-size:0.58rem; letter-spacing:2.5px; margin-top:4px; }
+      #header h1 { font-size:1.25rem; letter-spacing:4px; }
+      #header p  { font-size:0.7rem; letter-spacing:2.5px; margin-top:4px; }
 
       #nav { left:50%; top:auto; bottom:calc(24px + env(safe-area-inset-bottom));
-        transform:translateX(-50%); flex-direction:row; gap:20px; }
-      .nav-dot { width:10px; height:10px; }
+        transform:translateX(-50%); flex-direction:row; gap:22px; }
+      .nav-dot { width:12px; height:12px; }
       .nav-dot::before { inset:-12px; }
       .nav-dot::after { display:none; }
 
-      #hint { bottom:calc(56px + env(safe-area-inset-bottom)); font-size:0.55rem; letter-spacing:2px; }
+      #hint { bottom:calc(58px + env(safe-area-inset-bottom)); font-size:0.66rem; letter-spacing:2px; }
 
-      .slabel { font-size:0.55rem; letter-spacing:2px; padding:4px 10px; }
-      #robot-say { font-size:0.58rem; letter-spacing:1.2px; max-width:64vw; padding:7px 10px 8px; }
-      #mini-say { font-size:0.54rem; letter-spacing:1px; max-width:58vw; padding:5px 8px 6px; }
-      #stars { top:calc(18px + env(safe-area-inset-top)); right:18px; font-size:0.56rem; letter-spacing:1.5px; padding:5px 9px; }
+      .slabel { font-size:0.68rem; letter-spacing:2px; padding:5px 12px 5px 6px; gap:7px; }
+      .slabel .sl-num { min-width:21px; height:18px; font-size:0.6rem; }
+      #robot-say { font-size:0.7rem; letter-spacing:1.2px; max-width:66vw; padding:7px 10px 8px; }
+      #mini-say { font-size:0.64rem; letter-spacing:1px; max-width:60vw; padding:6px 9px 7px; }
+      #stars { top:calc(18px + env(safe-area-inset-top)); right:18px; font-size:0.66rem; letter-spacing:1.5px; padding:5px 9px; }
 
-      #panel { padding:36px 22px calc(28px + env(safe-area-inset-bottom)); }
-      #panel-close { top:14px; right:14px; width:36px; height:36px; }
-      #panel-title { font-size:1.45rem; margin-bottom:18px; }
-      #panel-body  { font-size:0.84rem; line-height:1.7; }
-      #panel-body .entry { margin-bottom:1.6rem; }
+      #panel { padding:38px 22px calc(28px + env(safe-area-inset-bottom)); }
+      #panel-close { top:14px; right:14px; width:38px; height:38px; }
+      #panel-title { font-size:1.75rem; margin-bottom:18px; }
+      #panel-body  { font-size:0.95rem; line-height:1.7; }
+      #panel-body .etitle { font-size:1.05rem; }
+      #panel-body .entry { margin-bottom:1.8rem; }
     }
   </style>
 </head>
@@ -315,6 +335,11 @@ function camBase(){
 }
 function camFov(){ return (window.innerWidth / window.innerHeight) < 0.75 ? 60 : 52; }
 
+// Small shared helpers
+function angDiff(a,b){ var d=b-a; while(d>Math.PI)d-=Math.PI*2; while(d<-Math.PI)d+=Math.PI*2; return d; }
+function damp(cur,tgt,k,dt){ return cur+(tgt-cur)*(1-Math.exp(-k*dt)); }
+function smooth(x){ x = Math.max(0, Math.min(1, x)); return x*x*(3-2*x); }
+
 // ─── Station data ─────────────────────────────────────────────────────────────
 
 var STATIONS = [
@@ -323,7 +348,7 @@ var STATIONS = [
     eyebrow:'01 · ABOUT', title:"Hi, I'm Ellie.",
     body:`<p>Third-year at the <strong>University of Toronto</strong> studying Computer Science and Data Science.</p>
 <p>I research how deep neural networks process visual information and how that compares to human perception — Gestalt grouping, fixation patterns, behavioral cues. I also love building things: robots, 3D worlds.</p>
-<p style="margin-top:1.2rem;font-size:0.62rem;letter-spacing:3px;color:#00d4ff">SKILLS</p>
+<p style="margin-top:1.2rem;font-size:0.75rem;letter-spacing:3px;color:#00d4ff">SKILLS</p>
 <div style="margin-top:8px">
 <span class="tag">Python</span><span class="tag">C++</span><span class="tag">Java</span><span class="tag">R</span><span class="tag">SQL</span><span class="tag">JavaScript</span>
 <span class="tag">PyTorch</span><span class="tag">Scikit-learn</span><span class="tag">OpenCV</span><span class="tag">Isaac Sim</span>
@@ -404,9 +429,9 @@ var STATIONS = [
     eyebrow:'05 · CONTACT', title:"Let's Talk.",
     body:`<p>Open to research collaborations, internships, and conversations about ML, robotics, and vision.</p>
 <div style="margin-top:24px;display:flex;flex-direction:column;gap:10px">
-<a class="lrow" href="mailto:ellie.chang@mail.utoronto.ca"><span style="color:#ff3080;font-size:1rem">✉</span><span>ellie.chang@mail.utoronto.ca</span></a>
+<a class="lrow" href="mailto:ellie.chang@mail.utoronto.ca"><span style="color:#ff3080;font-size:1.1rem">✉</span><span>ellie.chang@mail.utoronto.ca</span></a>
 <a class="lrow" href="https://github.com/0507ellie" target="_blank"><span style="color:#ff3080">⌥</span><span>github.com/0507ellie</span></a>
-<a class="lrow" href="https://www.linkedin.com/in/yi-ting-chang" target="_blank"><span style="color:#ff3080;font-weight:600;font-size:0.8rem">in</span><span>Yi-Ting Chang</span></a>
+<a class="lrow" href="https://www.linkedin.com/in/yi-ting-chang" target="_blank"><span style="color:#ff3080;font-weight:600;font-size:0.9rem">in</span><span>Yi-Ting Chang</span></a>
 </div>`
   }
 ];
@@ -437,10 +462,8 @@ camera.lookAt(0, 0, 0);
   var c = document.createElement('canvas'); c.width = c.height = S;
   var x = c.getContext('2d');
 
-  // Near-black space base
   x.fillStyle = '#000106'; x.fillRect(0,0,S,S);
 
-  // Milky way band — dense star region diagonal
   var mw = x.createLinearGradient(0,S*0.7,S,S*0.3);
   mw.addColorStop(0,'transparent');
   mw.addColorStop(0.3,'rgba(60,40,120,0.10)');
@@ -449,7 +472,6 @@ camera.lookAt(0, 0, 0);
   mw.addColorStop(1,'transparent');
   x.fillStyle=mw; x.fillRect(0,0,S,S);
 
-  // ── Hubble palette nebula clouds ──────────────────────────────────────────
   [{cx:900,cy:800,r:700,col:'rgba(180,10,80,0.55)'},
    {cx:400,cy:600,r:600,col:'rgba(140,0,60,0.45)'},
    {cx:1600,cy:400,r:550,col:'rgba(160,20,100,0.40)'},
@@ -474,14 +496,12 @@ camera.lookAt(0, 0, 0);
     x.fillStyle=g; x.fillRect(0,0,S,S);
   });
 
-  // Dark dust lanes
   [{cx:600,cy:700,r:220,op:0.22},{cx:1100,cy:500,r:180,op:0.18},{cx:400,cy:1000,r:160,op:0.15}].forEach(function(d){
     var g=x.createRadialGradient(d.cx,d.cy,0,d.cx,d.cy,d.r);
     g.addColorStop(0,'rgba(0,1,6,'+d.op+')'); g.addColorStop(1,'transparent');
     x.fillStyle=g; x.fillRect(0,0,S,S);
   });
 
-  // Dense micro-star field
   var rng=function(s){s=Math.sin(s*127.1)*43758.5453;return s-Math.floor(s);};
   var starCols=['rgba(255,255,255,','rgba(180,215,255,','rgba(255,220,170,','rgba(255,180,180,','rgba(180,255,230,'];
   for(var si=0;si<1800;si++){
@@ -490,7 +510,6 @@ camera.lookAt(0, 0, 0);
     x.fillStyle=starCols[sc]+(0.5+sb*0.5)+')'; x.fill();
   }
 
-  // Bright "giant" stars with halos + diffraction spikes
   var giantPos=[[320,280],[1050,180],[1750,580],[480,1100],[1600,1500],[820,1700],[1300,400],[200,600],[1900,900]];
   giantPos.forEach(function(p,i){
     var br=0.4+rng(i*13.7)*0.6, sz=14+br*18;
@@ -625,16 +644,18 @@ var edgeRing = new THREE.Mesh(
 edgeRing.rotation.x=Math.PI/2; edgeRing.position.y=0.01; scene.add(edgeRing);
 
 // ── Station platforms ─────────────────────────────────────────────────────────
+var stationRims = [], stationGlows = [];
 STATIONS.forEach(function(data){
-  var pad=new THREE.Mesh(new THREE.CylinderGeometry(0.85,0.88,0.07,6),
+  var pad=new THREE.Mesh(new THREE.CylinderGeometry(0.95,0.98,0.07,6),
     new THREE.MeshStandardMaterial({color:0x0b1a28,roughness:0.35,metalness:0.8}));
   pad.position.set(data.px,0.035,data.pz); scene.add(pad);
-  var rim=new THREE.Mesh(new THREE.TorusGeometry(0.87,0.025,8,36),
-    new THREE.MeshStandardMaterial({color:data.color,emissive:data.color,emissiveIntensity:0.7}));
+  var rim=new THREE.Mesh(new THREE.TorusGeometry(0.97,0.03,8,40),
+    new THREE.MeshStandardMaterial({color:data.color,emissive:data.color,emissiveIntensity:0.9}));
   rim.rotation.x=Math.PI/2; rim.position.set(data.px,0.07,data.pz); scene.add(rim);
-  var glow=new THREE.Mesh(new THREE.CircleGeometry(0.7,32),
-    new THREE.MeshBasicMaterial({color:data.color,transparent:true,opacity:0.08,side:THREE.DoubleSide}));
+  var glow=new THREE.Mesh(new THREE.CircleGeometry(1.5,40),
+    new THREE.MeshBasicMaterial({color:data.color,transparent:true,opacity:0.1,side:THREE.DoubleSide,depthWrite:false}));
   glow.rotation.x=-Math.PI/2; glow.position.set(data.px,0.005,data.pz); scene.add(glow);
+  stationRims.push(rim.material); stationGlows.push(glow.material);
 });
 
 // ── Central hub ─────────────────────────────────────────────────────────────
@@ -670,9 +691,25 @@ var starSpriteTex = (function(){
   return new THREE.CanvasTexture(sc);
 })();
 
+// Text label sprite (used for YOLO class labels, RL rewards, …)
+function makeLabelSprite(text, bg, fg, h) {
+  var c=document.createElement('canvas'), x=c.getContext('2d');
+  var font='bold 40px "Courier New", ui-monospace, monospace';
+  x.font=font;
+  var w=Math.ceil(x.measureText(text).width)+28;
+  c.width=w; c.height=60;
+  x.font=font;
+  if (bg) { x.fillStyle=bg; x.fillRect(0,0,w,60); }
+  x.fillStyle=fg; x.textBaseline='middle'; x.fillText(text,14,32);
+  var tex=new THREE.CanvasTexture(c); tex.minFilter=THREE.LinearFilter; tex.generateMipmaps=false;
+  var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false,fog:false}));
+  sp.scale.set(h*w/60, h, 1);
+  return sp;
+}
+
 var starLayers = [];
 (function() {
-  var k = LOW_POWER ? 0.5 : 1; // fewer stars on phones
+  var k = LOW_POWER ? 0.5 : 1;
   function mkStars(count,r0,r1,col,sz,op){
     count = Math.round(count*k);
     var g=new THREE.BufferGeometry(), p=[];
@@ -729,7 +766,6 @@ var nebulaCloud = [];
 
 var planets = [], moons = [];
 (function(){
-  // ── Procedural textures (3D value noise sampled on the sphere → no seams, no pole pinch)
   var TW = LOW_POWER ? 256 : 512, TH = TW/2;
   function hash(ix,iy,iz,seed){
     var h = (Math.imul(ix,374761393) + Math.imul(iy,668265263) + Math.imul(iz,1440662683) + Math.imul(seed,1274126177))|0;
@@ -860,7 +896,7 @@ var planets = [], moons = [];
       if (q<innerFrac || q>1){ d[k+3]=0; continue; }
       var rr=(q-innerFrac)/(1-innerFrac);
       var band=0.55+0.22*Math.sin(rr*70)+0.18*Math.sin(rr*23+1)+0.35*(vnoise(rr*90,0.5,0.5,seed)-0.5);
-      if (rr>0.62 && rr<0.68) band*=0.08;                       // Cassini-style gap
+      if (rr>0.62 && rr<0.68) band*=0.08;
       var edge=sstep(0,0.06,rr)*sstep(1,0.9,rr);
       var col=grad(stops,rr);
       d[k]=col[0]; d[k+1]=col[1]; d[k+2]=col[2]; d[k+3]=Math.max(0,Math.min(1,band))*edge*230;
@@ -869,8 +905,6 @@ var planets = [], moons = [];
     return new THREE.CanvasTexture(c);
   }
 
-  // ── Shaders: textured sphere lit by one distant star, with a soft terminator,
-  //    atmospheric rim, ocean glint and (for lava) glowing cracks on the night side
   var LIGHT = new THREE.Vector3(-0.75, 0.35, 0.45).normalize();
   var VS = [
     'varying vec2 vUv; varying vec3 vN; varying vec3 vV;',
@@ -959,7 +993,6 @@ var planets = [], moons = [];
     moons.push({pivot:pivot, spd:spd});
   }
 
-  // ── Textures
   var moonTex = rockyTex([[0,[70,70,74]],[0.5,[132,130,127]],[1,[196,194,188]]], 21, makeCraters(70,21,0.04,0.3), 0);
   var T = {
     jupiter: gasTex([[0,[120,72,42]],[0.22,[196,138,88]],[0.45,[236,212,172]],[0.62,[184,106,58]],[0.82,[242,224,196]],[1,[150,92,56]]], 3, 5,
@@ -974,16 +1007,15 @@ var planets = [], moons = [];
     lava:    crackTex([[0,[22,16,14]],[1,[74,58,52]]], 19, [255,110,20], [255,236,140], 0.9)
   };
 
-  // [texture opts, orbitX, orbitZ, height, startAngle, speed]
   var CFG = [
-    [{tex:T.jupiter, r:2.1,  rim:[1.0,0.72,0.45], atm:0.8, tilt:0.05}, 22,6,-3.6, 0.8, 0.012],   // OVERFIT-1
-    [{tex:T.saturn,  r:1.55, rim:[1.0,0.9,0.62],  atm:0.7, tilt:0.35, ring:[[0,[150,130,100]],[0.5,[226,208,170]],[1,[190,170,135]]], seed:4}, 26,7,-1.8, 2.9, 0.009], // TRANSFORMER
-    [{tex:T.mars,    r:0.75, rim:[1.0,0.55,0.35], atm:0.5, tilt:0.44}, 12,4,-2.2, 4.4, 0.026],   // RELU
-    [{tex:T.neptune, r:1.35, rim:[0.45,0.6,1.0],  atm:1.1, tilt:0.5},  24,6,-5.0, 5.6, 0.010],   // LATENT SPACE
-    [{tex:T.earth,   r:1.35, rim:[0.4,0.7,1.0],   atm:1.4, tilt:0.41, spec:0.9, clouds:T.clouds}, 18,5,-1.2, 1.9, 0.015], // GRADIENT
-    [{tex:T.ice,     r:0.95, rim:[1.0,0.62,0.85], atm:0.9, tilt:0.2},  15,5,-4.6, 3.6, 0.018],   // ATTENTION
-    [{tex:T.lava,    r:0.62, rim:[1.0,0.4,0.12],  atm:0.9, tilt:0.1, glow:1.6}, 9,3,-3.0, 0.1, 0.030], // LR=10
-    [{tex:moonTex,   r:0.45, rim:[0.3,0.3,0.34],  atm:0.3, tilt:0.0},  7,3,-0.9, 2.4, 0.035]     // EPSILON
+    [{tex:T.jupiter, r:2.1,  rim:[1.0,0.72,0.45], atm:0.8, tilt:0.05}, 22,6,-3.6, 0.8, 0.012],
+    [{tex:T.saturn,  r:1.55, rim:[1.0,0.9,0.62],  atm:0.7, tilt:0.35, ring:[[0,[150,130,100]],[0.5,[226,208,170]],[1,[190,170,135]]], seed:4}, 26,7,-1.8, 2.9, 0.009],
+    [{tex:T.mars,    r:0.75, rim:[1.0,0.55,0.35], atm:0.5, tilt:0.44}, 12,4,-2.2, 4.4, 0.026],
+    [{tex:T.neptune, r:1.35, rim:[0.45,0.6,1.0],  atm:1.1, tilt:0.5},  24,6,-5.0, 5.6, 0.010],
+    [{tex:T.earth,   r:1.35, rim:[0.4,0.7,1.0],   atm:1.4, tilt:0.41, spec:0.9, clouds:T.clouds}, 18,5,-1.2, 1.9, 0.015],
+    [{tex:T.ice,     r:0.95, rim:[1.0,0.62,0.85], atm:0.9, tilt:0.2},  15,5,-4.6, 3.6, 0.018],
+    [{tex:T.lava,    r:0.62, rim:[1.0,0.4,0.12],  atm:0.9, tilt:0.1, glow:1.6}, 9,3,-3.0, 0.1, 0.030],
+    [{tex:moonTex,   r:0.45, rim:[0.3,0.3,0.34],  atm:0.3, tilt:0.0},  7,3,-0.9, 2.4, 0.035]
   ];
   var made = CFG.map(function(c){
     var pl = mkPlanet(c[0]);
@@ -1011,53 +1043,79 @@ scene.add(pMesh);
 
 // ─── Background mini-robots (ML-themed) ───────────────────────────────────────
 
-var miniRobots = [], sparks = [];
+var miniRobots = [];
 
+// A cute little helper bot: barrel torso, dark visor with glowing eyes,
+// accent-coloured ear discs + belt, and legs with real knees so they can walk.
 function buildMini(col) {
   var g = new THREE.Group();
-  var bMat = new THREE.MeshStandardMaterial({color:0xddeaf4, emissive:0xddeaf4, emissiveIntensity:0.65, roughness:0.25, metalness:0.45});
-  var dMat = new THREE.MeshStandardMaterial({color:0xb0c8d8, emissive:0xb0c8d8, emissiveIntensity:0.40, roughness:0.3,  metalness:0.45});
-  var eM   = new THREE.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:3.5});
+  var shell  = new THREE.MeshStandardMaterial({color:0xe8eff6, emissive:0xb8c8d8, emissiveIntensity:0.38, roughness:0.35, metalness:0.3});
+  var joint  = new THREE.MeshStandardMaterial({color:0x34414f, emissive:0x1a2633, emissiveIntensity:0.5, roughness:0.45, metalness:0.65});
+  var accent = new THREE.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:1.1, roughness:0.3, metalness:0.3});
+  var glowM  = new THREE.MeshBasicMaterial({color:col});
+  var visorM = new THREE.MeshStandardMaterial({color:0x04070c, roughness:0.12, metalness:0.9});
 
-  var legLG = new THREE.Group(); legLG.position.set(-0.075,0.16,0);
-  var legRG = new THREE.Group(); legRG.position.set( 0.075,0.16,0);
-  var legGeo = new THREE.BoxGeometry(0.075,0.16,0.075);
-  var legLM=new THREE.Mesh(legGeo,dMat.clone()); legLM.position.set(0,-0.08,0); legLG.add(legLM);
-  var legRM=new THREE.Mesh(legGeo,dMat.clone()); legRM.position.set(0,-0.08,0); legRG.add(legRM);
-  g.add(legLG,legRG);
+  function leg(x){
+    var hip=new THREE.Group(); hip.position.set(x,0.17,0);
+    var thigh=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.09,0.06),joint); thigh.position.y=-0.045; hip.add(thigh);
+    var knee=new THREE.Group(); knee.position.y=-0.09; hip.add(knee);
+    knee.add(new THREE.Mesh(new THREE.SphereGeometry(0.034,10,8),joint));
+    var shin=new THREE.Mesh(new THREE.BoxGeometry(0.072,0.06,0.072),shell); shin.position.y=-0.03; knee.add(shin);
+    var foot=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.03,0.125),shell); foot.position.set(0,-0.065,0.015); knee.add(foot);
+    g.add(hip); return {hip:hip, knee:knee};
+  }
+  var legL = leg(-0.06), legR = leg(0.06);
 
-  var bodyG = new THREE.Group(); bodyG.position.y=0.28;
-  bodyG.add(new THREE.Mesh(new THREE.BoxGeometry(0.23,0.25,0.16), bMat));
-  var cp = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.08,0.03),eM.clone()); cp.material.emissiveIntensity=1.2;
-  cp.position.set(0,0.02,0.085); bodyG.add(cp);
-  var cpL = new THREE.PointLight(col,0.9,0.9); cpL.position.set(0,0,0.14); bodyG.add(cpL);
+  var bodyG = new THREE.Group(); bodyG.position.y=0.29;
+  bodyG.add(new THREE.Mesh(new THREE.CylinderGeometry(0.115,0.1,0.2,20), shell));
+  var belt = new THREE.Mesh(new THREE.TorusGeometry(0.104,0.012,8,28), accent); belt.rotation.x=Math.PI/2; belt.position.y=-0.075; bodyG.add(belt);
+  var chest = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.05,0.02), glowM); chest.position.set(0,0.03,0.11); bodyG.add(chest);
+  var pack = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.12,0.05), joint); pack.position.set(0,0.01,-0.11); bodyG.add(pack);
+  var neck = new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.04,0.05,10), joint); neck.position.y=0.12; bodyG.add(neck);
   g.add(bodyG);
 
-  var armLG = new THREE.Group(); armLG.position.set(-0.165,0.34,0);
-  var armRG = new THREE.Group(); armRG.position.set( 0.165,0.34,0);
-  var armGeo = new THREE.BoxGeometry(0.065,0.18,0.065);
-  [armLG,armRG].forEach(function(ag){
-    var am=new THREE.Mesh(armGeo,dMat.clone()); am.position.set(0,-0.09,0); ag.add(am);
-    g.add(ag);
-  });
+  function arm(x){
+    var a=new THREE.Group(); a.position.set(x,0.36,0);
+    a.add(new THREE.Mesh(new THREE.SphereGeometry(0.036,10,8),joint));
+    var up=new THREE.Mesh(new THREE.BoxGeometry(0.048,0.1,0.048),shell); up.position.y=-0.06; a.add(up);
+    var hand=new THREE.Mesh(new THREE.SphereGeometry(0.03,10,8),joint); hand.position.y=-0.125; a.add(hand);
+    g.add(a); return a;
+  }
+  var armLG = arm(-0.145), armRG = arm(0.145);
 
-  var headG = new THREE.Group(); headG.position.y=0.47;
-  headG.add(new THREE.Mesh(new THREE.BoxGeometry(0.19,0.15,0.16), bMat.clone()));
-  var eGeo = new THREE.BoxGeometry(0.034,0.027,0.02);
-  var eyeL = new THREE.Mesh(eGeo,eM.clone()); eyeL.position.set(-0.046,0.015,0.085);
-  var eyeR = new THREE.Mesh(eGeo,eM.clone()); eyeR.position.set( 0.046,0.015,0.085);
+  var headG = new THREE.Group(); headG.position.y=0.49;
+  headG.add(new THREE.Mesh(new THREE.BoxGeometry(0.22,0.16,0.17), shell));
+  var visor = new THREE.Mesh(new THREE.BoxGeometry(0.18,0.09,0.012), visorM); visor.position.set(0,0.004,0.086); headG.add(visor);
+  var eGeo = new THREE.BoxGeometry(0.036,0.024,0.01);
+  var eyeL = new THREE.Mesh(eGeo,glowM); eyeL.position.set(-0.042,0.008,0.094);
+  var eyeR = new THREE.Mesh(eGeo,glowM); eyeR.position.set( 0.042,0.008,0.094);
   headG.add(eyeL,eyeR);
-  var eyeLight = new THREE.PointLight(col,1.6,1.4); eyeLight.position.set(0,0.015,0.18); headG.add(eyeLight);
-  var antPole = new THREE.Mesh(new THREE.CylinderGeometry(0.007,0.007,0.1,6),dMat.clone());
+  [-1,1].forEach(function(s){
+    var ear=new THREE.Mesh(new THREE.CylinderGeometry(0.032,0.032,0.02,14),accent);
+    ear.rotation.z=Math.PI/2; ear.position.set(s*0.118,0,0); headG.add(ear);
+  });
+  var antPole = new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,0.09,6),joint);
   antPole.position.set(0,0.125,0); headG.add(antPole);
-  var antBall = new THREE.Mesh(new THREE.SphereGeometry(0.02,6,6),eM.clone()); antBall.position.set(0,0.185,0); headG.add(antBall);
-  var antLight = new THREE.PointLight(col,0.25,0.7); antLight.position.set(0,0.2,0); headG.add(antLight);
+  var antBall = new THREE.Mesh(new THREE.SphereGeometry(0.02,10,8),glowM); antBall.position.set(0,0.18,0); headG.add(antBall);
   g.add(headG);
 
-  var halo = new THREE.PointLight(col,2.8,5.5); halo.position.y=0.4; g.add(halo);
+  var halo = new THREE.PointLight(col,1.8,3.2); halo.position.y=0.45; g.add(halo);
 
-  return {g:g,bodyG:bodyG,headG:headG,armLG:armLG,armRG:armRG,legLG:legLG,legRG:legRG,
-          eyeL:eyeL.material,eyeR:eyeR.material,antBall:antBall.material,antLight:antLight,eyeLight:eyeLight,halo:halo,cpL:cpL};
+  return {g:g, bodyG:bodyG, headG:headG, armLG:armLG, armRG:armRG, legL:legL, legR:legR,
+          eyes:[eyeL,eyeR], antBall:antBall, halo:halo};
+}
+
+// Walk cycle shared by the patrol bots: swinging hips, bending knees,
+// counter-swinging arms, a little bob and side-to-side sway.
+function miniWalkPose(m, p, g) {
+  var s=Math.sin(p), c=Math.cos(p);
+  m.legL.hip.rotation.x = -s*0.6*g;  m.legR.hip.rotation.x = s*0.6*g;
+  m.legL.knee.rotation.x = Math.max(0,c)*0.95*g;  m.legR.knee.rotation.x = Math.max(0,-c)*0.95*g;
+  m.armLG.rotation.x = s*0.6*g;  m.armRG.rotation.x = -s*0.6*g;
+  m.bodyG.rotation.y = s*0.12*g;
+  m.headG.rotation.z = -s*0.05*g;
+  m.g.position.y += (1-Math.cos(2*p))*0.014*g;
+  m.g.rotation.z = s*0.05*g;
 }
 
 function makeBBox(w,h,d,col){
@@ -1071,104 +1129,200 @@ function makeBBox(w,h,d,col){
     pts.push(new THREE.Vector3(c[e[1]][0],c[e[1]][1],c[e[1]][2]));
   });
   return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),
-    new THREE.LineBasicMaterial({color:col,transparent:true,opacity:0.85}));
+    new THREE.LineBasicMaterial({color:col,transparent:true,opacity:0}));
 }
 
 (function(){
   // 1. Patroller A
   var m1 = buildMini(0x00d4ff);
-  m1.g.position.set(6.5,0.08,0); scene.add(m1.g);
-  miniRobots.push({type:'patrol',m:m1,t:0,orbitR:6.5,orbitAngle:0,orbitSpeed:0.13});
+  m1.g.position.set(6.5,0,0); scene.add(m1.g);
+  miniRobots.push({type:'patrol',m:m1,t:0,orbitR:6.5,orbitAngle:0,orbitSpeed:0.13,phase:0});
 
   // 2. Patroller B
   var m2 = buildMini(0xff3080);
-  m2.g.position.set(-7.2,0.08,0); scene.add(m2.g);
-  miniRobots.push({type:'patrol',m:m2,t:4.5,orbitR:7.2,orbitAngle:Math.PI,orbitSpeed:-0.1});
+  m2.g.position.set(-7.2,0,0); scene.add(m2.g);
+  miniRobots.push({type:'patrol',m:m2,t:4.5,orbitR:7.2,orbitAngle:Math.PI,orbitSpeed:-0.1,phase:1.3});
 
-  // 3. Franka grasper
-  var m3 = buildMini(0xb8c8d8);
-  var aMat = new THREE.MeshStandardMaterial({color:0xc8d8e8,emissive:0xc8d8e8,emissiveIntensity:0.45,roughness:0.2,metalness:0.7});
-  var fPivot = new THREE.Group(); fPivot.position.set(0.24,0.34,0); m3.g.add(fPivot);
-  var fSeg1 = new THREE.Group();
-  var fs1m = new THREE.Mesh(new THREE.BoxGeometry(0.065,0.2,0.065),aMat.clone()); fs1m.position.y=-0.1; fSeg1.add(fs1m);
-  fPivot.add(fSeg1);
-  var fSeg2 = new THREE.Group(); fSeg2.position.y=-0.2; fSeg1.add(fSeg2);
-  var fs2m = new THREE.Mesh(new THREE.BoxGeometry(0.05,0.16,0.05),aMat.clone()); fs2m.position.y=-0.08; fSeg2.add(fs2m);
-  var gGrip = new THREE.Group(); gGrip.position.y=-0.17; fSeg2.add(gGrip);
-  var gf1=new THREE.Mesh(new THREE.BoxGeometry(0.025,0.07,0.025),aMat.clone()); gf1.position.set(0.032,0,0); gGrip.add(gf1);
-  var gf2=new THREE.Mesh(new THREE.BoxGeometry(0.025,0.07,0.025),aMat.clone()); gf2.position.set(-0.032,0,0); gGrip.add(gf2);
-  var gripL=new THREE.PointLight(0xffffff,2.0,2.5); gripL.position.set(0.24,0.1,0); m3.g.add(gripL);
-  var frankFill=new THREE.PointLight(0x88aacc,1.0,3.5); frankFill.position.set(0,1.2,0.5); m3.g.add(frankFill);
-  var pickCube=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.1,0.1),
-    new THREE.MeshStandardMaterial({color:0xff7744,emissive:0xff8855,emissiveIntensity:1.3}));
-  pickCube.position.set(0.52,0.05,0.0); m3.g.add(pickCube);
-  m3.armRG.visible=false;
-  m3.g.position.set(-5.0,0.04,-4.2); m3.g.rotation.y=0.9; scene.add(m3.g);
-  miniRobots.push({type:'franka',m:m3,t:0,fPivot:fPivot,fSeg1:fSeg1,fSeg2:fSeg2,gf1:gf1,gf2:gf2,gripL:gripL,pickCube:pickCube,sparkTimer:0});
+  // 3. Franka pick-and-place: a little 3-joint arm (solved with 2-link IK)
+  //    moves a cube between two target pads while the bot supervises on a tablet
+  var m3 = buildMini(0xdde8ff);
+  var F = {bx:0.42, bz:0.3, S:0.26, L1:0.24, L2:0.22, G:0.06, yawA:-0.9, yawB:0.9, lastPlaced:-1, padGlow:[0,0]};
+  var armW=new THREE.MeshStandardMaterial({color:0xf2f5f8,emissive:0xc8d4e0,emissiveIntensity:0.4,roughness:0.3,metalness:0.2});
+  var armJ=new THREE.MeshStandardMaterial({color:0x2a323c,emissive:0x101820,emissiveIntensity:0.5,roughness:0.4,metalness:0.7});
+  var mat=new THREE.Mesh(new THREE.PlaneGeometry(0.62,0.9), new THREE.MeshStandardMaterial({color:0x0b1a28,roughness:0.6,metalness:0.4}));
+  mat.rotation.x=-Math.PI/2; mat.position.set(F.bx+0.16,0.004,F.bz); m3.g.add(mat);
+  var matEdge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.62,0.9)),
+    new THREE.LineBasicMaterial({color:0x88aacc,transparent:true,opacity:0.55}));
+  matEdge.rotation.x=-Math.PI/2; matEdge.position.set(F.bx+0.16,0.006,F.bz); m3.g.add(matEdge);
+  F.pads=[]; F.padPos=[];
+  [F.yawA,F.yawB].forEach(function(y){
+    var pm=new THREE.MeshBasicMaterial({color:0xff7744,transparent:true,opacity:0.35,side:THREE.DoubleSide,depthWrite:false});
+    var pad=new THREE.Mesh(new THREE.RingGeometry(0.068,0.085,32),pm);
+    var px=F.bx+0.3*Math.cos(y), pz=F.bz-0.3*Math.sin(y);
+    pad.rotation.x=-Math.PI/2; pad.position.set(px,0.008,pz); m3.g.add(pad);
+    F.pads.push(pm); F.padPos.push({x:px,z:pz});
+  });
+  var base=new THREE.Group(); base.position.set(F.bx,0,F.bz); m3.g.add(base);
+  var b0=new THREE.Mesh(new THREE.CylinderGeometry(0.085,0.1,0.05,20),armJ); b0.position.y=0.025; base.add(b0);
+  F.yawG=new THREE.Group(); F.yawG.position.y=0.05; base.add(F.yawG);
+  var col1=new THREE.Mesh(new THREE.CylinderGeometry(0.052,0.062,0.16,16),armW); col1.position.y=0.08; F.yawG.add(col1);
+  F.sh=new THREE.Group(); F.sh.position.y=F.S-0.05; F.yawG.add(F.sh);
+  F.sh.add(new THREE.Mesh(new THREE.SphereGeometry(0.058,14,10),armJ));
+  var l1=new THREE.Mesh(new THREE.BoxGeometry(0.058,F.L1,0.058),armW); l1.position.y=F.L1/2; F.sh.add(l1);
+  F.el=new THREE.Group(); F.el.position.y=F.L1; F.sh.add(F.el);
+  var ej=new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.045,0.08,14),armJ); ej.rotation.x=Math.PI/2; F.el.add(ej);
+  var l2=new THREE.Mesh(new THREE.BoxGeometry(0.05,F.L2,0.05),armW); l2.position.y=F.L2/2; F.el.add(l2);
+  F.wr=new THREE.Group(); F.wr.position.y=F.L2; F.el.add(F.wr);
+  F.wr.add(new THREE.Mesh(new THREE.SphereGeometry(0.038,12,8),armJ));
+  var palm=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.022,0.045),armJ); palm.position.y=0.022; F.wr.add(palm);
+  F.f1=new THREE.Mesh(new THREE.BoxGeometry(0.016,0.05,0.032),armW); F.f1.position.set(0.035,0.055,0); F.wr.add(F.f1);
+  F.f2=new THREE.Mesh(new THREE.BoxGeometry(0.016,0.05,0.032),armW); F.f2.position.set(-0.035,0.055,0); F.wr.add(F.f2);
+  F.cube=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.09,0.09),
+    new THREE.MeshStandardMaterial({color:0xff7744,emissive:0xff6633,emissiveIntensity:0.7,roughness:0.35}));
+  F.cube.position.set(F.padPos[0].x,0.045,F.padPos[0].z); m3.g.add(F.cube);
+  // keyframes: [u, yawTag(0 home/1 src/2 dst), reach, height, grip]
+  F.keys=[[0.00,0,0.18,0.28,0],[0.14,1,0.30,0.20,0],[0.24,1,0.30,0.045,0],[0.30,1,0.30,0.045,1],
+          [0.40,1,0.30,0.20,1],[0.58,2,0.30,0.20,1],[0.68,2,0.30,0.045,1],[0.74,2,0.30,0.045,0],
+          [0.84,2,0.30,0.20,0],[1.00,0,0.18,0.28,0]];
+  // tablet in the bot's left hand
+  m3.armLG.rotation.x=-0.95;
+  var tablet=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.008,0.085),armJ);
+  tablet.position.set(0,-0.15,0.03); tablet.rotation.x=0.45; m3.armLG.add(tablet);
+  var scr=new THREE.Mesh(new THREE.PlaneGeometry(0.1,0.068),new THREE.MeshBasicMaterial({color:0x66ddff,transparent:true,opacity:0.85}));
+  scr.rotation.x=-Math.PI/2; scr.position.y=0.005; tablet.add(scr);
+  m3.g.position.set(-5.0,0,-4.2); m3.g.rotation.y=0.9; scene.add(m3.g);
+  miniRobots.push({type:'franka',m:m3,t:0,F:F,scr:scr.material});
 
-  // 4. YOLO detector
+  // 4. YOLO detector: head sweeps a scan cone; objects it looks at get a
+  //    bounding box that snaps into place with a class label + confidence
   var m4 = buildMini(0xff8800);
-  var detCols=[0xff8800,0xffcc00,0xff4444];
-  var detOff=[{x:0.75,z:0.15},{x:1.15,z:-0.42},{x:0.52,z:-0.72}];
-  var detBoxes=[];
-  detOff.forEach(function(p,i){
-    var obj=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.15,0.15),
-      new THREE.MeshStandardMaterial({color:detCols[i],emissive:detCols[i],emissiveIntensity:0.5,roughness:0.3}));
-    obj.position.set(p.x,0.075,p.z); m4.g.add(obj);
-    var bb=makeBBox(0.30,0.48,0.30,detCols[i]); bb.position.set(p.x,0.24,p.z); m4.g.add(bb);
-    var lblM=new THREE.MeshBasicMaterial({color:detCols[i],transparent:true,opacity:0.75,side:THREE.DoubleSide});
-    var lbl=new THREE.Mesh(new THREE.PlaneGeometry(0.24,0.06),lblM);
-    lbl.position.set(p.x,0.52,p.z); lbl.rotation.x=-0.3; m4.g.add(lbl);
-    var pl=new THREE.PointLight(detCols[i],0.6,0.8); pl.position.set(p.x,0.25,p.z); m4.g.add(pl);
-    detBoxes.push({mesh:bb,mat:bb.material,lblMat:lblM,pl:pl,phase:i*0.9});
+  var detDefs=[{x:-0.42,z:0.62,col:0xff8800,hex:'#ff8800',name:'cube 0.97',kind:'box', oc:0x4a90c0},
+               {x:0.02, z:0.86,col:0xffcc00,hex:'#ffcc00',name:'ball 0.94',kind:'ball',oc:0xd05a5a},
+               {x:0.45, z:0.6, col:0xff4466,hex:'#ff4466',name:'cone 0.88',kind:'cone',oc:0x58b87a}];
+  var dets=[];
+  detDefs.forEach(function(dd){
+    var om=new THREE.MeshStandardMaterial({color:dd.oc,emissive:dd.oc,emissiveIntensity:0.3,roughness:0.45,metalness:0.2});
+    var geo, h;
+    if (dd.kind==='box')  { geo=new THREE.BoxGeometry(0.13,0.13,0.13); h=0.13; }
+    else if (dd.kind==='ball') { geo=new THREE.SphereGeometry(0.075,20,14); h=0.15; }
+    else { geo=new THREE.ConeGeometry(0.075,0.18,20); h=0.18; }
+    var obj=new THREE.Mesh(geo,om); obj.position.set(dd.x,h/2,dd.z); m4.g.add(obj);
+    var bb=makeBBox(0.2,h+0.05,0.2,dd.col); bb.position.set(dd.x,(h+0.05)/2,dd.z); m4.g.add(bb);
+    var lab=makeLabelSprite(dd.name,dd.hex,'#0a0f14',0.065); lab.position.set(dd.x,h+0.12,dd.z);
+    lab.material.opacity=0; m4.g.add(lab);
+    dets.push({obj:obj,box:bb,label:lab,ang:Math.atan2(dd.x,dd.z),v:0,pop:0});
   });
-  m4.g.position.set(5.2,0.08,-3.8); m4.g.rotation.y=-0.6; scene.add(m4.g);
-  miniRobots.push({type:'yolo',m:m4,t:0,detBoxes:detBoxes});
+  var bp=new THREE.Group(); bp.position.set(0,0.008,0.09); bp.rotation.x=0.35; m4.headG.add(bp);
+  var beamMat=new THREE.MeshBasicMaterial({color:0xff8800,transparent:true,opacity:0.08,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide});
+  var scanCone=new THREE.Mesh(new THREE.ConeGeometry(0.16,0.9,20,1,true),beamMat);
+  scanCone.rotation.x=-Math.PI/2; scanCone.position.z=0.45; bp.add(scanCone);
+  m4.armLG.rotation.x=-0.2; m4.armRG.rotation.x=-0.2;
+  m4.g.position.set(5.2,0,-3.8); m4.g.rotation.y=-0.6; scene.add(m4.g);
+  miniRobots.push({type:'yolo',m:m4,t:0,dets:dets,beamMat:beamMat});
 
-  // 5. SAM segmenter
+  // 5. SAM segmenter: a point prompt pops on each object, then its mask floods in
   var m5 = buildMini(0xaa55ff);
-  var slPts=[new THREE.Vector3(-1.4,0,0),new THREE.Vector3(1.4,0,0)];
-  var slGeo=new THREE.BufferGeometry().setFromPoints(slPts);
-  var slMat=new THREE.LineBasicMaterial({color:0xdd88ff,transparent:true,opacity:0.95});
-  var scanLine=new THREE.Line(slGeo,slMat); m5.g.add(scanLine);
-  var scanLight=new THREE.PointLight(0xaa55ff,2.2,3.0); m5.g.add(scanLight);
-  var scanMat=new THREE.MeshBasicMaterial({color:0xaa55ff,transparent:true,opacity:0.18,side:THREE.DoubleSide,depthWrite:false});
-  var scanPlane=new THREE.Mesh(new THREE.PlaneGeometry(2.8,2.8),scanMat);
-  scanPlane.rotation.x=-Math.PI/2; m5.g.add(scanPlane);
-  var segPatches=[], segCols2=[0xaa55ff,0x7733dd,0xdd88ff];
-  [[-0.4,0.6],[0.6,0.3],[0.1,-0.65]].forEach(function(p,i){
-    var r=0.30+i*0.09;
-    var pm=new THREE.MeshBasicMaterial({color:segCols2[i],transparent:true,opacity:0.40,side:THREE.DoubleSide});
-    var patch=new THREE.Mesh(new THREE.CircleGeometry(r,20),pm);
-    patch.rotation.x=-Math.PI/2; patch.position.set(p[0],0.003,p[1]); m5.g.add(patch);
-    var om=new THREE.MeshBasicMaterial({color:segCols2[i],transparent:true,opacity:0.80,side:THREE.DoubleSide});
-    var ring=new THREE.Mesh(new THREE.RingGeometry(r,r+0.018,20),om);
-    ring.rotation.x=-Math.PI/2; ring.position.set(p[0],0.004,p[1]); m5.g.add(ring);
-    segPatches.push({mesh:patch,mat:pm,ringMat:om,phase:i*1.1});
+  var segDefs=[{x:-0.32,z:0.58,kind:'cyl',col:0xaa55ff},{x:0.04,z:0.84,kind:'box',col:0x55ddff},{x:0.36,z:0.55,kind:'ball',col:0xff66cc}];
+  var neutral=new THREE.MeshStandardMaterial({color:0x8a9aaa,emissive:0x405060,emissiveIntensity:0.35,roughness:0.5,metalness:0.3});
+  var segs=[];
+  segDefs.forEach(function(sd){
+    var geo, h;
+    if (sd.kind==='cyl') { geo=new THREE.CylinderGeometry(0.065,0.065,0.15,20); h=0.15; }
+    else if (sd.kind==='box') { geo=new THREE.BoxGeometry(0.15,0.1,0.12); h=0.1; }
+    else { geo=new THREE.SphereGeometry(0.075,20,14); h=0.15; }
+    var obj=new THREE.Mesh(geo,neutral); obj.position.set(sd.x,h/2,sd.z); m5.g.add(obj);
+    var ov=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:sd.col,transparent:true,opacity:0,depthWrite:false}));
+    ov.position.copy(obj.position); ov.scale.setScalar(1.07); m5.g.add(ov);
+    var fl=new THREE.Mesh(new THREE.CircleGeometry(0.13,28),new THREE.MeshBasicMaterial({color:sd.col,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false}));
+    fl.rotation.x=-Math.PI/2; fl.position.set(sd.x,0.004,sd.z); m5.g.add(fl);
+    var rg=new THREE.Mesh(new THREE.RingGeometry(0.125,0.14,32),new THREE.MeshBasicMaterial({color:sd.col,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false}));
+    rg.rotation.x=-Math.PI/2; rg.position.set(sd.x,0.006,sd.z); m5.g.add(rg);
+    var pr=new THREE.Sprite(new THREE.SpriteMaterial({map:starSpriteTex,color:0xffffff,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));
+    pr.position.set(sd.x,h+0.07,sd.z); m5.g.add(pr);
+    segs.push({ov:ov,fl:fl,rg:rg,pr:pr,ang:Math.atan2(sd.x,sd.z)});
   });
-  m5.armLG.rotation.z=0.5; m5.armLG.rotation.x=-0.55;
-  m5.armRG.rotation.z=-0.5; m5.armRG.rotation.x=-0.55;
-  m5.g.position.set(4.0,0.08,5.5); m5.g.rotation.y=-2.2; scene.add(m5.g);
-  miniRobots.push({type:'sam',m:m5,t:0,scanLine:scanLine,slMat:slMat,scanLight:scanLight,scanPlane:scanPlane,scanMat:scanMat,segPatches:segPatches});
+  var slMat=new THREE.LineBasicMaterial({color:0xdd88ff,transparent:true,opacity:0.9});
+  var scanLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-0.55,0.01,0),new THREE.Vector3(0.55,0.01,0)]),slMat);
+  m5.g.add(scanLine);
+  var curtainMat=new THREE.MeshBasicMaterial({color:0xaa55ff,transparent:true,opacity:0.1,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending});
+  var curtain=new THREE.Mesh(new THREE.PlaneGeometry(1.1,0.22),curtainMat); curtain.position.y=0.11; m5.g.add(curtain);
+  m5.armLG.rotation.x=-1.1; m5.armRG.rotation.x=-1.1; m5.armLG.rotation.z=0.2; m5.armRG.rotation.z=-0.2;
+  m5.g.position.set(4.0,0,5.5); m5.g.rotation.y=-2.2; scene.add(m5.g);
+  miniRobots.push({type:'sam',m:m5,t:0,segs:segs,scanLine:scanLine,slMat:slMat,curtain:curtain,curtainMat:curtainMat});
 
-  // 6. RL training bot
+  // 6. RL agent in a tiny gridworld: ε-greedy episodes that get better over time,
+  //    lava tiles, a goal flag, and a live reward curve above the board
   var m6 = buildMini(0xffdd00);
-  var agentMesh=new THREE.Mesh(new THREE.SphereGeometry(0.055,8,8),
-    new THREE.MeshStandardMaterial({color:0xffdd00,emissive:0xffdd00,emissiveIntensity:1.4}));
-  var agentTrail=new THREE.Mesh(new THREE.TorusGeometry(0.55,0.007,6,48),
-    new THREE.MeshBasicMaterial({color:0xffdd00,transparent:true,opacity:0.14}));
-  agentTrail.rotation.x=-Math.PI/2; agentTrail.position.y=0.008;
-  m6.g.add(agentMesh,agentTrail);
-  var agentL=new THREE.PointLight(0xffdd00,0.7,1.4); m6.g.add(agentL);
-  m6.g.position.set(-4.5,0.08,5.8); m6.g.rotation.y=1.8; scene.add(m6.g);
-  miniRobots.push({type:'rl',m:m6,t:0,agentMesh:agentMesh,agentL:agentL,agentAngle:0,agentSpeed:1.2});
+  var R={i:0,j:0,fi:0,fj:0,hopT:1,landed:true,timer:0.8,done:false,ep:0,steps:0,rewards:[],glow:[],tiles:[]};
+  R.lava={'1,1':1,'2,2':1};
+  function tx(i){ return (i-1.5)*0.17; }
+  function tz(j){ return 0.45+j*0.17; }
+  R.tx=tx; R.tz=tz;
+  for (var ti=0; ti<4; ti++){ R.tiles.push([]); R.glow.push([]);
+    for (var tj=0; tj<4; tj++){
+      var key=ti+','+tj, isLava=!!R.lava[key], isGoal=(ti===3&&tj===3), isStart=(ti===0&&tj===0);
+      var base= isLava?0x661818 : isGoal?0x665a10 : isStart?0x0e3a4a : 0x0e2233;
+      var em  = isLava?0xff3322 : isGoal?0xffcc22 : isStart?0x22ccff : 0x1a4466;
+      var tmat=new THREE.MeshStandardMaterial({color:base,emissive:em,emissiveIntensity:isLava||isGoal?0.55:0.15,roughness:0.5,metalness:0.4});
+      var tile=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.02,0.15),tmat);
+      tile.position.set(tx(ti),0.01,tz(tj)); m6.g.add(tile);
+      R.tiles[ti].push({mat:tmat,base:tmat.emissiveIntensity}); R.glow[ti].push(0);
+    }
+  }
+  var pole=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,0.2,6),new THREE.MeshStandardMaterial({color:0xdddddd}));
+  pole.position.set(tx(3)+0.05,0.12,tz(3)); m6.g.add(pole);
+  var flag=new THREE.Mesh(new THREE.PlaneGeometry(0.08,0.05),new THREE.MeshBasicMaterial({color:0xffcc22,side:THREE.DoubleSide}));
+  flag.position.set(tx(3)+0.09,0.195,tz(3)); m6.g.add(flag); R.flag=flag;
+  R.agent=new THREE.Mesh(new THREE.SphereGeometry(0.045,14,10),new THREE.MeshBasicMaterial({color:0xffee55}));
+  R.agent.position.set(tx(0),0.065,tz(0)); m6.g.add(R.agent);
+  R.agentGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:starSpriteTex,color:0xffdd00,transparent:true,opacity:0.9,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));
+  R.agentGlow.scale.setScalar(0.35); R.agent.add(R.agentGlow);
+  R.plus=makeLabelSprite('+1',null,'#ffe066',0.1); R.plus.material.opacity=0; m6.g.add(R.plus); R.plusT=1;
+  R.minus=makeLabelSprite('-1',null,'#ff5544',0.1); R.minus.material.opacity=0; m6.g.add(R.minus); R.minusT=1;
+  // reward-curve hologram (canvas sprite, redrawn once per episode)
+  R.chartC=document.createElement('canvas'); R.chartC.width=256; R.chartC.height=150;
+  R.chartTex=new THREE.CanvasTexture(R.chartC); R.chartTex.minFilter=THREE.LinearFilter; R.chartTex.generateMipmaps=false;
+  R.chart=new THREE.Sprite(new THREE.SpriteMaterial({map:R.chartTex,transparent:true,depthWrite:false,fog:false,opacity:0.92}));
+  R.chart.scale.set(0.6,0.35,1); R.chart.position.set(0,0.62,0.72); m6.g.add(R.chart);
+  drawRLChart(R);
+  m6.armLG.rotation.x=-0.3; m6.armRG.rotation.x=-0.3;
+  m6.g.position.set(-4.5,0,5.8); m6.g.rotation.y=1.8; scene.add(m6.g);
+  miniRobots.push({type:'rl',m:m6,t:0,R:R});
 })();
+
+function drawRLChart(R) {
+  var c=R.chartC, x=c.getContext('2d'), W=c.width, H=c.height;
+  x.clearRect(0,0,W,H);
+  x.fillStyle='rgba(3,14,24,0.85)'; x.fillRect(0,0,W,H);
+  x.strokeStyle='rgba(255,221,0,0.6)'; x.lineWidth=2; x.strokeRect(1,1,W-2,H-2);
+  x.fillStyle='#ffdd00'; x.font='bold 18px "Courier New", monospace'; x.textBaseline='top';
+  x.fillText('REWARD  EP '+R.ep, 12, 8);
+  var eps=Math.max(0.05, 0.8*Math.pow(0.82,R.ep));
+  x.fillStyle='rgba(255,221,0,0.6)'; x.font='14px "Courier New", monospace';
+  x.fillText('ε='+eps.toFixed(2), W-80, 11);
+  var L=14, T=38, PW=W-28, PH=H-52;
+  x.strokeStyle='rgba(255,221,0,0.2)'; x.lineWidth=1;
+  x.beginPath(); x.moveTo(L,T+PH/2); x.lineTo(L+PW,T+PH/2); x.stroke();
+  var r=R.rewards, n=r.length;
+  if (n) {
+    x.strokeStyle='#ffdd00'; x.lineWidth=2.5; x.beginPath();
+    for (var i=0;i<n;i++){
+      var px=L+(n===1?PW/2:i/(Math.max(n,2)-1)*PW), py=T+PH*(1-(r[i]+1)/2);
+      if(i===0) x.moveTo(px,py); else x.lineTo(px,py);
+    }
+    x.stroke();
+    for (var k=0;k<n;k++){
+      var qx=L+(n===1?PW/2:k/(Math.max(n,2)-1)*PW), qy=T+PH*(1-(r[k]+1)/2);
+      x.fillStyle=r[k]>0?'#ffee88':'#ff5544'; x.beginPath(); x.arc(qx,qy,3,0,Math.PI*2); x.fill();
+    }
+  }
+  R.chartTex.needsUpdate=true;
+}
 
 // ─── Shooting stars ───────────────────────────────────────────────────────────
 
 var shootingStars = [];
 var nextShoot = 0;
-// Invisible material for generous click targets on small / fast objects
 var HIT_MAT = new THREE.MeshBasicMaterial({transparent:true, opacity:0, depthWrite:false});
 var ssColors = [0xffffff,0xddeeff,0xffeecc,0xaaccff,0xffd0a0,0xccffee];
 function spawnShootingStar() {
@@ -1247,37 +1401,92 @@ function mkMat(col,em,ei) {
 }
 
 var Robot = (function(){
+  // UNIT-E: rounded shell, glossy black visor face with glowing eyes and a smile,
+  // headphone ear pods, glowing chest core, backpack, elbows and knees.
   function Robot() {
     this.root  = new THREE.Group();
-    var S = mkMat(0xc4d4e2,0xc4d4e2,0.22), D = mkMat(0x8899a8,0x8899a8,0.12), CG = mkMat(0x00d4ff,0x00d4ff,1.6);
+    var SH  = new THREE.MeshStandardMaterial({color:0xeef3f8, emissive:0xbfd0e0, emissiveIntensity:0.28, roughness:0.28, metalness:0.25});
+    var JT  = new THREE.MeshStandardMaterial({color:0x2b3642, emissive:0x121c26, emissiveIntensity:0.6, roughness:0.4, metalness:0.7});
+    var VIS = new THREE.MeshStandardMaterial({color:0x03060b, emissive:0x001018, emissiveIntensity:0.6, roughness:0.08, metalness:0.95});
+    var ACC = new THREE.MeshStandardMaterial({color:0x00d4ff, emissive:0x00d4ff, emissiveIntensity:1.3, roughness:0.3, metalness:0.3});
+    var GLW = new THREE.MeshBasicMaterial({color:0x7ff0ff});
+    this.coreMat = new THREE.MeshStandardMaterial({color:0x00d4ff, emissive:0x00d4ff, emissiveIntensity:1.6});
+    function mesh(geo, mat, shadow){ var m=new THREE.Mesh(geo,mat); if(shadow) m.castShadow=true; return m; }
 
+    // ── Torso ──
     this.bodyG = new THREE.Group(); this.bodyG.position.y=0.72;
-    var bm = new THREE.Mesh(new THREE.BoxGeometry(0.56,0.65,0.36),S); bm.castShadow=true;
-    var ch = new THREE.Mesh(new THREE.BoxGeometry(0.26,0.2,0.04),CG); ch.position.set(0,0.02,0.19);
-    var cl = new THREE.PointLight(0x00d4ff,0.38,1.2); cl.position.set(0,0.02,0.38);
-    this.bodyG.add(bm,ch,cl);
+    var torso = mesh(new THREE.CylinderGeometry(0.27,0.21,0.46,32), SH, true); torso.position.y=0.02;
+    var shoulders = mesh(new THREE.SphereGeometry(0.27,32,14,0,Math.PI*2,0,Math.PI/2), SH, true);
+    shoulders.scale.y=0.38; shoulders.position.y=0.25;
+    var belt = mesh(new THREE.TorusGeometry(0.215,0.022,10,40), ACC); belt.rotation.x=Math.PI/2; belt.position.y=-0.2;
+    var hips = mesh(new THREE.CylinderGeometry(0.2,0.17,0.12,28), JT, true); hips.position.y=-0.27;
+    // chest core: dark socket, glowing ring, bright centre
+    var socket = mesh(new THREE.CylinderGeometry(0.1,0.1,0.03,32), VIS); socket.rotation.x=Math.PI/2; socket.position.set(0,0.06,0.245);
+    var ring = mesh(new THREE.TorusGeometry(0.072,0.013,10,36), this.coreMat); ring.position.set(0,0.06,0.262);
+    var core = mesh(new THREE.SphereGeometry(0.035,16,12), GLW); core.scale.z=0.4; core.position.set(0,0.06,0.262);
+    var cl = new THREE.PointLight(0x00d4ff,0.45,1.3); cl.position.set(0,0.06,0.45);
+    // side accent stripes
+    [-1,1].forEach(function(s){
+      var st=mesh(new THREE.BoxGeometry(0.018,0.2,0.05), ACC); st.position.set(s*0.235,0.03,0.09); st.rotation.z=s*0.12; this.bodyG.add(st);
+    }.bind(this));
+    // backpack with vents
+    var pack = mesh(new THREE.BoxGeometry(0.3,0.3,0.12), JT, true); pack.position.set(0,0.04,-0.25);
+    var packLid = mesh(new THREE.BoxGeometry(0.26,0.26,0.02), SH); packLid.position.set(0,0.04,-0.315);
+    [-0.06,0.06].forEach(function(x){
+      var v=mesh(new THREE.BoxGeometry(0.035,0.14,0.012), ACC); v.position.set(x,0.04,-0.328); this.bodyG.add(v);
+    }.bind(this));
+    var neck = mesh(new THREE.CylinderGeometry(0.075,0.09,0.12,20), JT); neck.position.y=0.33;
+    this.bodyG.add(torso,shoulders,belt,hips,socket,ring,core,cl,pack,packLid,neck);
 
-    this.headG = new THREE.Group(); this.headG.position.y=1.18;
-    var hm = new THREE.Mesh(new THREE.BoxGeometry(0.46,0.36,0.36),S); hm.castShadow=true;
-    var eg = new THREE.BoxGeometry(0.086,0.068,0.04);
-    var le = new THREE.Mesh(eg,CG); le.position.set(-0.105,0.06,0.19);
-    var re = new THREE.Mesh(eg,CG); re.position.set(0.105,0.06,0.19);
-    this.eyes = [le, re];
-    var eL = new THREE.PointLight(0x00d4ff,0.6,0.85); eL.position.set(0,0.06,0.34);
-    var mo = new THREE.Mesh(new THREE.BoxGeometry(0.17,0.022,0.04),mkMat(0x00d4ff,0x00d4ff,0.8));
-    mo.position.set(0,-0.07,0.19);
-    this.headG.add(hm,le,re,eL,mo);
-    this.mouth = mo;
-    [[-0.26],[0.26]].forEach(function(d){var e=new THREE.Mesh(new THREE.BoxGeometry(0.055,0.09,0.055),D);e.position.set(d[0],0.04,0);this.headG.add(e);}.bind(this));
+    // ── Head ──
+    this.headG = new THREE.Group(); this.headG.position.y=1.2;
+    var skull = mesh(new THREE.SphereGeometry(1,40,28), SH, true); skull.scale.set(0.28,0.22,0.245);
+    // visor = front slice of a slightly larger ellipsoid
+    var visor = mesh(new THREE.SphereGeometry(1,40,24, Math.PI/2-0.95, 1.9, Math.PI/2-0.5, 1.0), VIS);
+    visor.scale.set(0.29,0.228,0.255);
+    this.headG.add(skull,visor);
+    // eyes live in groups so blinking can scale them without losing their shape
+    var eyeGeo = new THREE.SphereGeometry(1,20,14);
+    this.eyes = [-1,1].map(function(s){
+      var eg=new THREE.Group(); eg.position.set(s*0.085,0.025,0.244);
+      var e=mesh(eyeGeo, GLW); e.scale.set(0.048,0.052,0.014); eg.add(e);
+      var hl=mesh(new THREE.SphereGeometry(0.011,8,6), new THREE.MeshBasicMaterial({color:0xffffff}));
+      hl.position.set(0.015,0.02,0.012); eg.add(hl);
+      this.headG.add(eg); return eg;
+    }.bind(this));
+    // smile
+    var mo = mesh(new THREE.TorusGeometry(0.045,0.008,8,20,Math.PI), GLW);
+    mo.rotation.z=Math.PI; mo.position.set(0,-0.045,0.25);
+    this.mouth = mo; this.headG.add(mo);
+    // soft cheek glow
+    [-1,1].forEach(function(s){
+      var ck=mesh(new THREE.CircleGeometry(0.022,16), new THREE.MeshBasicMaterial({color:0xff6fa8,transparent:true,opacity:0.45}));
+      ck.position.set(s*0.15,-0.035,0.222); ck.rotation.y=s*0.55; this.headG.add(ck);
+    }.bind(this));
+    var eL = new THREE.PointLight(0x00d4ff,0.6,0.9); eL.position.set(0,0.03,0.4); this.headG.add(eL);
+    // headphone ear pods + band
+    [-1,1].forEach(function(s){
+      var pod=mesh(new THREE.CylinderGeometry(0.08,0.08,0.07,24), JT, true); pod.rotation.z=Math.PI/2; pod.position.set(s*0.285,0,0);
+      var cap=mesh(new THREE.TorusGeometry(0.05,0.012,8,24), ACC); cap.rotation.y=Math.PI/2; cap.position.set(s*0.322,0,0);
+      var dot=mesh(new THREE.SphereGeometry(0.022,10,8), GLW); dot.scale.x=0.5; dot.position.set(s*0.322,0,0);
+      this.headG.add(pod,cap,dot);
+    }.bind(this));
+    var band = mesh(new THREE.TorusGeometry(0.29,0.018,8,40,Math.PI), JT); band.position.y=0.0; band.rotation.y=0; band.scale.y=0.85;
+    this.headG.add(band);
 
-    this.antG=new THREE.Group(); this.antG.position.y=0.2;
-    var aS=new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.016,0.26,8),D); aS.position.y=0.13;
-    var aB=new THREE.Mesh(new THREE.SphereGeometry(0.042,8,8),CG); aB.position.y=0.27;
-    var aL=new THREE.PointLight(0x00d4ff,0.28,0.6); aL.position.y=0.27;
-    this.antG.add(aS,aB,aL); this.headG.add(this.antG);
+    // antenna
+    this.antG=new THREE.Group(); this.antG.position.y=0.205;
+    var aBase=mesh(new THREE.CylinderGeometry(0.035,0.045,0.03,16), JT);
+    var aS=mesh(new THREE.CylinderGeometry(0.01,0.012,0.2,8), JT); aS.position.y=0.11;
+    var aB=mesh(new THREE.SphereGeometry(0.038,16,12), this.coreMat); aB.position.y=0.23;
+    var aL=new THREE.PointLight(0x00d4ff,0.3,0.6); aL.position.y=0.23;
+    this.antG.add(aBase,aS,aB,aL); this.headG.add(this.antG);
 
-    this.leftArm  = mkArm(-1,D); this.rightArm = mkArm(1,D);
-    this.leftLeg  = mkLeg(-1,D); this.rightLeg = mkLeg(1,D);
+    // ── Limbs ──
+    this.leftArm  = mkArm(-1,SH,JT,ACC); this.rightArm = mkArm(1,SH,JT,ACC);
+    this.leftElbow = this.leftArm.userData.elbow; this.rightElbow = this.rightArm.userData.elbow;
+    this.leftLeg  = mkLeg(-1,SH,JT,ACC); this.rightLeg = mkLeg(1,SH,JT,ACC);
+    this.leftKnee = this.leftLeg.userData.knee; this.rightKnee = this.rightLeg.userData.knee;
 
     this.root.add(this.bodyG,this.headG,this.leftArm,this.rightArm,this.leftLeg,this.rightLeg);
     this.baseY=0.114; this.root.position.y=this.baseY;
@@ -1287,63 +1496,104 @@ var Robot = (function(){
     fill.position.set(0, 2.5, 0.5);
     this.root.add(fill);
 
-    var blob=new THREE.Mesh(new THREE.CircleGeometry(0.34,16),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.2}));
+    var blob=new THREE.Mesh(new THREE.CircleGeometry(0.36,20),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.2}));
     blob.rotation.x=-Math.PI/2; blob.position.y=-this.baseY+0.002;
     this.root.add(blob); this.blob=blob;
 
-    this.state='idle'; this.t=0; this.target=null; this.stLook=null; this.onDone=null; this.speed=2.6;
-    this.headTargetY=0;
+    this.state='idle'; this.t=0; this.target=null; this.stLook=null; this.onDone=null;
+    this.speed=2.5; this.curSpeed=0; this.phase=0; this.gait=0; this.yawTarget=0; this.stepIdx=0;
+    this.headTargetY=0; this.blinkT=0; this.nextBlink=2.5;
   }
 
-  function mkArm(s,D){ var g=new THREE.Group(); g.position.set(s*0.375,0.98,0);
-    var u=new THREE.Mesh(new THREE.BoxGeometry(0.13,0.44,0.13),D); u.position.y=-0.22; u.castShadow=true;
-    var h=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.13,0.15),mkMat(0x6a7a88)); h.position.y=-0.48;
-    g.add(u,h); return g; }
+  // Shoulder pad → upper arm → elbow → forearm with glowing cuff → round hand
+  function mkArm(s,SH,JT,ACC){ var g=new THREE.Group(); g.position.set(s*0.34,0.97,0);
+    var pad=new THREE.Mesh(new THREE.SphereGeometry(0.1,20,14),SH); pad.castShadow=true; pad.scale.set(1,0.9,1);
+    var up=new THREE.Mesh(new THREE.CylinderGeometry(0.052,0.048,0.2,14),JT); up.position.y=-0.14;
+    var elbow=new THREE.Group(); elbow.position.y=-0.25;
+    var ej=new THREE.Mesh(new THREE.SphereGeometry(0.06,14,10),JT);
+    var fa=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.058,0.17,18),SH); fa.position.y=-0.1; fa.castShadow=true;
+    var cuff=new THREE.Mesh(new THREE.TorusGeometry(0.058,0.012,8,24),ACC); cuff.rotation.x=Math.PI/2; cuff.position.y=-0.18;
+    var hand=new THREE.Mesh(new THREE.SphereGeometry(0.068,16,12),JT); hand.position.y=-0.235; hand.scale.set(1,1.05,0.9);
+    elbow.add(ej,fa,cuff,hand);
+    g.add(pad,up,elbow); g.userData.elbow=elbow; return g; }
 
-  function mkLeg(s,D){ var g=new THREE.Group(); g.position.set(s*0.16,0.38,0);
-    var u=new THREE.Mesh(new THREE.BoxGeometry(0.165,0.4,0.165),D); u.position.y=-0.2; u.castShadow=true;
-    var f=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.088,0.26),new THREE.MeshStandardMaterial({color:0x607080,roughness:0.5,metalness:0.5}));
-    f.position.set(0,-0.45,0.05); g.add(u,f); return g; }
+  // Thigh → knee → shin with accent band → rounded boot with dark sole
+  function mkLeg(s,SH,JT,ACC){ var g=new THREE.Group(); g.position.set(s*0.12,0.38,0);
+    var th=new THREE.Mesh(new THREE.CylinderGeometry(0.065,0.06,0.2,14),JT); th.position.y=-0.1; th.castShadow=true;
+    var knee=new THREE.Group(); knee.position.y=-0.2;
+    var kj=new THREE.Mesh(new THREE.SphereGeometry(0.075,14,10),SH);
+    var sh=new THREE.Mesh(new THREE.CylinderGeometry(0.082,0.07,0.18,18),SH); sh.position.y=-0.11; sh.castShadow=true;
+    var band=new THREE.Mesh(new THREE.TorusGeometry(0.074,0.01,8,24),ACC); band.rotation.x=Math.PI/2; band.position.y=-0.17;
+    var boot=new THREE.Mesh(new THREE.SphereGeometry(1,20,12,0,Math.PI*2,0,Math.PI/2),SH);
+    boot.scale.set(0.095,0.075,0.15); boot.position.set(0,-0.274,0.035); boot.castShadow=true;
+    var sole=new THREE.Mesh(new THREE.CylinderGeometry(1,1,1,20),JT);
+    sole.scale.set(0.097,0.02,0.152); sole.position.set(0,-0.284,0.035);
+    knee.add(kj,sh,band,boot,sole); g.add(th,knee); g.userData.knee=knee; return g; }
 
   Robot.prototype.moveTo=function(tx,tz,lx,lz,cb){
-    this.target={x:tx,z:tz}; this.stLook=(lx!==null)?{x:lx,z:lz}:null; this.onDone=cb||null; this.state='walk';
-    this.root.rotation.y=Math.atan2(tx-this.root.position.x, tz-this.root.position.z);
+    this.target={x:tx,z:tz}; this.stLook=(lx!==null&&lx!==undefined)?{x:lx,z:lz}:null;
+    this.onDone=cb||null; this.state='walk';
   };
-  Robot.prototype.goHome=function(cb){ this.moveTo(0,0,null,null,function(){this.root.rotation.y=0;cb&&cb();}.bind(this)); };
+  Robot.prototype.goHome=function(cb){ var self=this; this.moveTo(0,0,null,null,function(){ self.yawTarget=0; cb&&cb(); }); };
 
   Robot.prototype.update=function(dt){
-    this.t+=dt; var t=this.t;
-    if(this.state==='idle'){
-      this.root.position.y=this.baseY+Math.sin(t*1.25)*0.022;
-      this.antG.rotation.z=Math.sin(t*1.9)*0.11;
-      this.headG.rotation.y+=(this.headTargetY-this.headG.rotation.y)*0.08;
-      this.leftArm.rotation.x=Math.sin(t*1.25)*0.04;
-      this.rightArm.rotation.x=-Math.sin(t*1.25)*0.04;
-      this.leftLeg.rotation.x=0; this.rightLeg.rotation.x=0;
-      this.blob.material.opacity=0.2;
-    } else if(this.state==='walk'&&this.target){
-      var rx=this.root.position.x, rz=this.root.position.z;
-      var _dx=rx-this.target.x, _dz=rz-this.target.z;
-      var dist=Math.sqrt(_dx*_dx+_dz*_dz);
-      if(dist<0.08){
-        this.root.position.x=this.target.x; this.root.position.z=this.target.z; this.root.position.y=this.baseY;
-        if(this.stLook){ this.root.rotation.y=Math.atan2(this.stLook.x-this.root.position.x,this.stLook.z-this.root.position.z); }
-        this.leftLeg.rotation.x=0; this.rightLeg.rotation.x=0;
-        this.leftArm.rotation.x=0; this.rightArm.rotation.x=0;
-        this.headG.rotation.y=0; this.headTargetY=0;
-        this.state='idle'; var cb=this.onDone; this.onDone=null; cb&&cb();
+    this.t+=dt; var t=this.t, r=this.root;
+
+    if(this.state==='walk'&&this.target){
+      var dx=this.target.x-r.position.x, dz=this.target.z-r.position.z, dist=Math.sqrt(dx*dx+dz*dz);
+      if(dist<0.03){
+        r.position.x=this.target.x; r.position.z=this.target.z;
+        this.yawTarget=this.stLook?Math.atan2(this.stLook.x-r.position.x,this.stLook.z-r.position.z):r.rotation.y;
+        this.curSpeed=0; this.state='idle'; this.headTargetY=0;
+        var cb=this.onDone; this.onDone=null; cb&&cb();
       } else {
-        var dx=this.target.x-rx, dz=this.target.z-rz, len=Math.sqrt(dx*dx+dz*dz);
-        var step=Math.min(this.speed*dt,dist);
-        this.root.position.x+=(dx/len)*step; this.root.position.z+=(dz/len)*step;
-        var sw=Math.sin(t*9)*0.38;
-        this.leftLeg.rotation.x=sw; this.rightLeg.rotation.x=-sw;
-        this.leftArm.rotation.x=-sw*0.45; this.rightArm.rotation.x=sw*0.45;
-        this.root.position.y=this.baseY+Math.abs(Math.sin(t*9))*0.035;
-        this.headG.rotation.y=0; this.antG.rotation.z=Math.sin(t*9)*0.05;
-        this.blob.material.opacity=0.12;
+        // turn smoothly toward the target, only speed up once facing it, ease in and out
+        var d=angDiff(r.rotation.y, Math.atan2(dx,dz));
+        r.rotation.y+=d*(1-Math.exp(-9*dt));
+        var facing=Math.max(0,Math.cos(d));
+        var want=this.speed*Math.min(1,Math.max(0.3,dist/1.1))*facing*facing;
+        this.curSpeed=damp(this.curSpeed,want,5,dt);
+        var step=Math.min(this.curSpeed*dt,dist);
+        r.position.x+=dx/dist*step; r.position.z+=dz/dist*step;
+        // gait phase follows distance travelled, so feet don't skate
+        this.phase+=step*5.4 + (1-facing)*dt*6;
+        this.gait=damp(this.gait, Math.min(1, 0.35+this.curSpeed/this.speed), 8, dt);
+        var si=Math.floor(this.phase/Math.PI);
+        if(si!==this.stepIdx){
+          this.stepIdx=si;
+          var side=(si%2)?1:-1, cy=Math.cos(r.rotation.y), sy=Math.sin(r.rotation.y);
+          spawnFootPuff(r.position.x+side*0.16*cy, r.position.z-side*0.16*sy);
+        }
       }
     }
+    if(this.state==='idle'){
+      this.gait=damp(this.gait,0,6,dt);
+      if(!waving) r.rotation.y+=angDiff(r.rotation.y,this.yawTarget)*(1-Math.exp(-6*dt));
+      this.headG.rotation.y=damp(this.headG.rotation.y,this.headTargetY,5,dt);
+    } else {
+      this.headG.rotation.y=damp(this.headG.rotation.y,0,6,dt);
+    }
+
+    var g=this.gait, p=this.phase, s=Math.sin(p), c=Math.cos(p);
+    this.leftLeg.rotation.x=-s*0.55*g;  this.rightLeg.rotation.x=s*0.55*g;
+    this.leftKnee.rotation.x=Math.max(0,c)*0.85*g;  this.rightKnee.rotation.x=Math.max(0,-c)*0.85*g;
+    this.leftArm.rotation.x= s*0.5*g + Math.sin(t*1.25)*0.04*(1-g);
+    this.rightArm.rotation.x=-s*0.5*g - Math.sin(t*1.25)*0.04*(1-g);
+    this.leftArm.rotation.z=-0.07; this.rightArm.rotation.z=0.07;
+    this.leftElbow.rotation.x=-0.18-Math.max(0,-s)*0.5*g; this.rightElbow.rotation.x=-0.18-Math.max(0,s)*0.5*g;
+    this.coreMat.emissiveIntensity=1.3+Math.sin(t*2.2)*0.5;
+    r.position.y=this.baseY + Math.sin(t*1.25)*0.022*(1-g) + (1-Math.cos(2*p))*0.03*g;
+    r.rotation.z=s*0.035*g;
+    this.bodyG.rotation.x=0.07*g; this.bodyG.rotation.y=s*0.09*g;
+    this.headG.rotation.x=-0.04*g + Math.cos(2*p)*0.03*g;
+    this.antG.rotation.z=Math.sin(t*1.9)*0.11*(1-g) - s*0.18*g;
+    this.blob.material.opacity=0.2-0.07*g;
+
+    // occasional blink
+    this.nextBlink-=dt;
+    if(this.nextBlink<=0){ this.blinkT=0.13; this.nextBlink=2+Math.random()*3.5; }
+    var bl=1; if(this.blinkT>0){ this.blinkT-=dt; bl=0.12; }
+    this.eyes[0].scale.y=this.eyes[1].scale.y=bl;
   };
   return Robot;
 })();
@@ -1353,10 +1603,24 @@ var robot = new Robot();
 // ─── Stations ─────────────────────────────────────────────────────────────────
 
 var stationObjs = [];
+var labelHover = null;
+
+// Soft vertical light beam so every station reads from across the scene
+var beamTex = (function(){
+  var c=document.createElement('canvas'); c.width=4; c.height=128;
+  var x=c.getContext('2d'), g=x.createLinearGradient(0,0,0,128);
+  g.addColorStop(0,'rgba(255,255,255,0)');
+  g.addColorStop(0.55,'rgba(255,255,255,0.25)');
+  g.addColorStop(1,'rgba(255,255,255,1)');
+  x.fillStyle=g; x.fillRect(0,0,4,128);
+  return new THREE.CanvasTexture(c);
+})();
+var beamGeo = new THREE.CylinderGeometry(0.5,0.62,3.2,32,1,true);
 
 STATIONS.forEach(function(data, idx) {
   var group = new THREE.Group();
   group.position.set(data.px, 0, data.pz);
+  group.scale.setScalar(1.25);
 
   var dm  = new THREE.MeshStandardMaterial({color:0x0d1e2e,roughness:0.5,metalness:0.6});
   var acc = new THREE.MeshStandardMaterial({color:data.color,emissive:data.color,emissiveIntensity:0.55,roughness:0.3,metalness:0.7});
@@ -1372,7 +1636,7 @@ STATIONS.forEach(function(data, idx) {
   ring2.material.emissiveIntensity=0.3; group.add(ring2);
 
   var fGroup = new THREE.Group(); fGroup.position.y=0.2; group.add(fGroup);
-  var extras = { fGroup:fGroup, seed:idx*1.3, rings:[], nnNodes:[], nnLines:[] };
+  var extras = { fGroup:fGroup, seed:idx*1.3, rings:[], nnNodes:[], nnLines:[], pulses:[] };
 
   if (data.id==='about') {
     var pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,0.55,8),dm); pole.position.y=0.275;
@@ -1395,7 +1659,7 @@ STATIONS.forEach(function(data, idx) {
     layers.forEach(function(layer) {
       layer.forEach(function(n) {
         var mat = new THREE.MeshStandardMaterial({color:data.color,emissive:data.color,emissiveIntensity:0.5,transparent:true,opacity:0.9});
-        var node = new THREE.Mesh(new THREE.SphereGeometry(0.038,8,8), mat);
+        var node = new THREE.Mesh(new THREE.SphereGeometry(0.042,10,10), mat);
         node.position.set(n.x,n.y,0);
         fGroup.add(node);
         extras.nnNodes.push(node);
@@ -1463,13 +1727,27 @@ STATIONS.forEach(function(data, idx) {
     }
   }
 
-  var ptL=new THREE.PointLight(data.color,1.1,5);
+  var ptL=new THREE.PointLight(data.color,1.4,6);
   ptL.position.y=1.2; group.add(ptL); extras.ptLight=ptL;
 
+  // Light beam + ground pulses (these also make the station a bigger click target)
+  var beam=new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({color:data.color,map:beamTex,transparent:true,opacity:0.26,
+    blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false}));
+  beam.position.y=1.6; group.add(beam); extras.beam=beam;
+  for (var pi2=0; pi2<2; pi2++) {
+    var pul=new THREE.Mesh(new THREE.RingGeometry(0.5,0.54,48),
+      new THREE.MeshBasicMaterial({color:data.color,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending}));
+    pul.rotation.x=-Math.PI/2; pul.position.y=0.06; pul.userData.phase=pi2*0.5;
+    group.add(pul); extras.pulses.push(pul);
+  }
+
   var labelEl=document.createElement('div');
-  labelEl.className='slabel'; labelEl.style.color=data.hex; labelEl.style.borderColor=data.hex+'55';
-  labelEl.textContent=data.label; labelEl.dataset.idx=idx;
+  labelEl.className='slabel'; labelEl.style.color=data.hex; labelEl.style.setProperty('--c',data.hex);
+  labelEl.innerHTML='<span class="sl-num">0'+(idx+1)+'</span><span>'+data.label+'</span>';
+  labelEl.dataset.idx=idx;
   labelEl.addEventListener('click',function(e){e.stopPropagation();navigateTo(parseInt(e.currentTarget.dataset.idx));});
+  labelEl.addEventListener('mouseenter',function(){ labelHover=idx; });
+  labelEl.addEventListener('mouseleave',function(){ if(labelHover===idx) labelHover=null; });
   document.getElementById('labels').appendChild(labelEl);
 
   scene.add(group);
@@ -1483,7 +1761,6 @@ STATIONS.forEach(function(data, idx) {
 var TAPV = ('ontouchstart' in window) ? 'TAP' : 'CLICK';
 function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
 
-// Planets: every one is clickable and has something to say
 var PLANET_LINES = [
   'GAS GIANT "OVERFIT-1". IT MEMORIZED THE ENTIRE GALAXY.',
   'RINGED GIANT "TRANSFORMER". 96 LAYERS OF ATMOSPHERE.',
@@ -1519,7 +1796,6 @@ function pokePlanet(i) {
   robotSay(p.line, 4);
 }
 
-// Particle bursts (stars caught, pokes, plotted stars)
 var bursts = [];
 function spawnBurst(pos, col, n, speed, size) {
   var geo = new THREE.BufferGeometry(), arr = new Float32Array(n*3), vel = [];
@@ -1536,14 +1812,13 @@ function spawnBurst(pos, col, n, speed, size) {
   bursts.push({pts:pts, geo:geo, mat:mat, vel:vel, t:0, life:1.3});
 }
 
-// Background mini-robots: tap one and it hops and introduces itself
 var MINI_INFO = [
   {col:0x00d4ff, tag:'PATROL-A://', lines:['PERIMETER SECURE. MOSTLY.', 'LAP 4,012. NO REGRETS.', 'DON\'T MIND ME. JUST PATROLLING.', 'OUCH. I MEAN: HELLO.']},
   {col:0xff3080, tag:'PATROL-B://', lines:['I WALK IN CIRCLES. THEY CALL IT A TRAINING LOOP.', 'HI! I AM THE PINK ONE.', 'ARE WE THERE YET? NO? OK.', 'STOP POKING. OKAY ONE MORE.']},
   {col:0xdde8ff, tag:'FRANKA://',   lines:['GRASP SUCCESS: 47% → 71%. PROUD OF ME?', 'THIS CUBE AND I HAVE HISTORY.', 'RESIDUAL RL MADE ME WHO I AM.', 'PLEASE. I AM HOLDING SOMETHING.']},
   {col:0xff8800, tag:'YOLO://',     lines:['3 OBJECTS DETECTED. YOU ONLY LOOK ONCE.', 'YOU: HUMAN. CONFIDENCE 0.98.', 'BOUNDING BOXES ARE MY LOVE LANGUAGE.', 'NEW CLASS DETECTED: FRIEND.']},
   {col:0xaa55ff, tag:'SAM://',      lines:['SEGMENTING EVERYTHING. LITERALLY EVERYTHING.', 'I MASKED YOU. SORRY.', 'SCAN COMPLETE: YOU ARE ONE (1) SEGMENT.', 'PROMPT ME AGAIN. I DARE YOU.']},
-  {col:0xffdd00, tag:'RL-AGENT://', lines:['EPISODE 9,812. REWARD STILL GOING UP.', 'EXPLORE OR EXPLOIT? YES.', 'THAT CLICK WAS +1 REWARD. THANKS!', 'POLICY UPDATED: BE NICE TO HUMANS.']}
+  {col:0xffdd00, tag:'RL-AGENT://', lines:['EPISODE 9,812. REWARD STILL GOING UP.', 'EXPLORE OR EXPLOIT? YES.', 'THAT CLICK WAS +1 REWARD. THANKS!', 'POLICY UPDATED: AVOID LAVA.']}
 ];
 var miniSayEl = document.getElementById('mini-say'), miniTagEl = document.getElementById('mini-tag'), miniTextEl = document.getElementById('mini-text');
 var miniSay = {mr:null, full:'', n:0, acc:0, hold:0, active:false};
@@ -1566,7 +1841,7 @@ function updateMiniSpeech(dt) {
     miniSay.hold -= dt;
     if (miniSay.hold <= 0) { miniSay.active = false; miniSayEl.classList.remove('show'); }
   }
-  _mv.copy(miniSay.mr.m.g.position); _mv.y += 1.0; _mv.project(camera);
+  _mv.copy(miniSay.mr.m.g.position); _mv.y += 0.85; _mv.project(camera);
   miniSayEl.style.left = ((_mv.x + 1) / 2 * window.innerWidth) + 'px';
   miniSayEl.style.top  = ((-_mv.y + 1) / 2 * window.innerHeight) + 'px';
   miniSayEl.style.visibility = _mv.z > 1 ? 'hidden' : '';
@@ -1575,9 +1850,139 @@ var miniHits = [];
 miniRobots.forEach(function(mr,i){
   mr.info = MINI_INFO[i]; mr.hop = 0; mr.lineIdx = 0;
   mr.baseY = mr.m.g.position.y; mr.baseRot = mr.m.g.rotation.y;
+  mr.nextBlink = 1 + Math.random()*3; mr.blinkT = 0;
   var h = new THREE.Mesh(new THREE.SphereGeometry(0.42,8,6), HIT_MAT);
   h.position.y = 0.32; h.userData.mini = mr; mr.m.g.add(h); miniHits.push(h);
 });
+// ─── Bot social layer: detours, greetings, high fives ───────────────────────
+// Each task bot "owns" a circle (itself + its workstation). Patrol bots bend
+// their route around those circles instead of walking through them, the task
+// bot looks up and waves as they pass, and when the two patrol bots meet they
+// stop, face each other and wave hello.
+var WORKSPACE = {franka:[0.3,0.3,0.75], yolo:[0,0.45,0.72], sam:[0,0.45,0.72], rl:[0,0.55,0.8]};
+var obstacles = [], patrols = [];
+miniRobots.forEach(function(mr){
+  mr.greetT = 0; mr.greetCd = 0; mr.partner = null;
+  if (mr.type === 'patrol') {
+    mr.off = 0; mr.px = mr.m.g.position.x; mr.pz = mr.m.g.position.z;
+    mr.yaw = mr.orbitAngle + (mr.orbitSpeed > 0 ? Math.PI/2 : -Math.PI/2);
+    mr.wave = 0;
+    patrols.push(mr); return;
+  }
+  var w = WORKSPACE[mr.type];
+  var v = new THREE.Vector3(w[0],0,w[1]).applyEuler(new THREE.Euler(0,mr.baseRot,0)).add(mr.m.g.position);
+  mr.obs = {r:w[2], ro:Math.sqrt(v.x*v.x+v.z*v.z), ao:Math.atan2(v.x,v.z)};
+  mr.armBase = {x:mr.m.armRG.rotation.x, z:mr.m.armRG.rotation.z};
+  obstacles.push(mr);
+});
+var MEET_LINES = ['HEY! SAME LOOP, DIFFERENT DAY.', 'HIGH FIVE! ✋', 'COLLISION AVOIDED. FRIENDSHIP DETECTED.', 'AFTER YOU. NO, AFTER YOU.', 'SYNCING GRADIENTS... DONE. BYE!'];
+var PASS_LINES = {
+  franka:['NICE GRASP, FRANKA!', 'DON\'T DROP IT!'],
+  yolo:  ['DETECT ME, YOLO!', 'AM I IN YOUR DATASET?'],
+  sam:   ['SEGMENT ME TOO!', 'NICE MASKS, SAM.'],
+  rl:    ['GO FOR THE FLAG!', 'AVOID THE LAVA, BUDDY.']
+};
+
+function startMeet(a, b) {
+  a.greetT = b.greetT = 2.6; a.greetCd = b.greetCd = 14;
+  a.partner = b; b.partner = a;
+  var mid = a.m.g.position.clone().add(b.m.g.position).multiplyScalar(0.5); mid.y = 0.6;
+  spawnBurst(mid, 0xff88cc, 24, 1.2, 0.1);
+  if (!miniSay.active) miniSpeak(Math.random()<0.5?a:b, pick(MEET_LINES));
+}
+
+function updateMeetings(dt) {
+  miniRobots.forEach(function(mr){ mr.greetCd = Math.max(0, mr.greetCd - dt); });
+  if (patrols.length === 2) {
+    var a = patrols[0], b = patrols[1];
+    var dx = a.m.g.position.x - b.m.g.position.x, dz = a.m.g.position.z - b.m.g.position.z;
+    if (a.greetT<=0 && b.greetT<=0 && a.greetCd<=0 && b.greetCd<=0 && dx*dx+dz*dz < 1.3*1.3) startMeet(a, b);
+  }
+  patrols.forEach(function(p){
+    p.wave = Math.max(0, p.wave - dt*1.5);
+    if (p.greetT > 0) return;
+    obstacles.forEach(function(o){
+      var dx = p.m.g.position.x - o.m.g.position.x, dz = p.m.g.position.z - o.m.g.position.z;
+      if (dx*dx+dz*dz < 1.9*1.9) {
+        p.wave = 1;
+        if (o.greetT <= 0 && o.greetCd <= 0) {
+          o.greetT = 2.0; o.greetCd = 9; o.partner = p;
+          if (!miniSay.active && Math.random() < 0.7) miniSpeak(p, pick(PASS_LINES[o.type]));
+        }
+      }
+    });
+  });
+}
+
+function updatePatrol(mr, dt) {
+  var m = mr.m;
+  if (mr.greetT > 0) {
+    // stopped: face the other bot and wave
+    mr.greetT -= dt;
+    var o = mr.partner.m.g.position;
+    mr.yaw += angDiff(mr.yaw, Math.atan2(o.x - mr.px, o.z - mr.pz)) * (1 - Math.exp(-8*dt));
+    m.g.position.set(mr.px, 0, mr.pz);
+    miniWalkPose(m, mr.phase, 0);
+    var k = Math.min(1, (2.6 - mr.greetT)/0.3) * Math.min(1, Math.max(0, mr.greetT)/0.35);
+    m.armRG.rotation.z = 2.5*k + Math.sin(mr.t*13)*0.35*k;
+    m.headG.rotation.z = Math.sin(mr.t*5)*0.1*k;
+    var el = 2.6 - mr.greetT;
+    if (el < 0.4) m.g.position.y += Math.sin(el/0.4*Math.PI)*0.12;
+  } else {
+    // walk the orbit, bending the radius around other bots' workstations
+    var R0 = mr.orbitR, a = mr.orbitAngle, want = 0;
+    obstacles.forEach(function(o){
+      var arc = Math.abs(angDiff(a, o.obs.ao)) * R0;
+      var clear = o.obs.r + 0.35, reach = clear + 0.9;
+      if (arc > reach) return;
+      var outOff = o.obs.ro + clear - R0, inOff = o.obs.ro - clear - R0;
+      if (R0 + outOff > 8.9) outOff = 99;
+      var off = Math.abs(outOff) < Math.abs(inOff) ? outOff : inOff;
+      var w = smooth((reach - arc) / 0.9);
+      if (Math.abs(off*w) > Math.abs(want)) want = off*w;
+    });
+    // keep-right rule: when the two patrol bots approach, the outer one steps further out
+    patrols.forEach(function(q){
+      if (q === mr || mr.orbitR < q.orbitR) return;
+      var arc = Math.abs(angDiff(a, q.orbitAngle)) * R0;
+      if (arc >= 2.2) return;
+      var need = 0.75 - ((R0 + want) - (q.orbitR + q.off));
+      if (need > 0) want += need * smooth((2.2 - arc) / 0.8);
+    });
+    mr.off = damp(mr.off, want, 3, dt);
+    mr.orbitAngle += mr.orbitSpeed * dt;
+    var R = R0 + mr.off;
+    var nx = Math.sin(mr.orbitAngle)*R, nz = Math.cos(mr.orbitAngle)*R;
+    var dx = nx - mr.px, dz = nz - mr.pz, len = Math.sqrt(dx*dx+dz*dz);
+    if (len > 1e-5) mr.yaw += angDiff(mr.yaw, Math.atan2(dx,dz)) * (1 - Math.exp(-10*dt));
+    mr.phase += len*16;
+    mr.px = nx; mr.pz = nz;
+    m.g.position.set(nx, 0, nz);
+    miniWalkPose(m, mr.phase, 1);
+    m.headG.rotation.z = 0;
+    // friendly wave while walking past a coworker
+    if (mr.wave > 0) m.armRG.rotation.z = 2.2*smooth(mr.wave) + Math.sin(mr.t*12)*0.3*mr.wave;
+    else m.armRG.rotation.z = 0;
+  }
+  m.g.rotation.y = mr.yaw;
+  m.headG.rotation.y = mr.greetT > 0 ? 0 : Math.sin(mr.t*0.6)*0.35;
+}
+
+// Task bots look up from their work and wave back
+function updateTaskGreet(mr, dt) {
+  var m = mr.m;
+  if (mr.greetT <= 0) return;
+  mr.greetT -= dt;
+  if (mr.greetT <= 0) { m.armRG.rotation.x = mr.armBase.x; m.armRG.rotation.z = mr.armBase.z; return; }
+  var k = Math.min(1, (2.0 - mr.greetT)/0.3) * Math.min(1, mr.greetT/0.35);
+  m.armRG.rotation.x = mr.armBase.x*(1-k);
+  m.armRG.rotation.z = mr.armBase.z + 2.4*k + Math.sin(mr.t*12)*0.35*k;
+  var p = mr.partner.m.g.position, g = m.g.position;
+  var la = angDiff(mr.baseRot, Math.atan2(p.x-g.x, p.z-g.z));
+  m.headG.rotation.y += (Math.max(-1.3, Math.min(1.3, la)) - m.headG.rotation.y) * k;
+  m.headG.rotation.x *= (1-k);
+}
+
 function pokeMini(mr) {
   if (mr.hop <= 0) {
     mr.hop = 1;
@@ -1588,7 +1993,6 @@ function pokeMini(mr) {
   mr.lineIdx++;
 }
 
-// Rockets: tap for afterburners + barrel roll
 var ROCKET_LINES = ['AFTERBURNERS ENGAGED. WHEEEE.', 'ROCKET BOOSTED. SAFETY REVIEW: SKIPPED.', 'BARREL ROLL EXECUTED. 10/10 FORM.'];
 function boostRocket(rk) {
   if (rk.boost > 0) return;
@@ -1597,7 +2001,6 @@ function boostRocket(rk) {
   robotSay(pick(ROCKET_LINES), 2.8);
 }
 
-// Shooting stars: catch them. Every 5th catch triggers a meteor shower
 var starsCaught = 0, showerLeft = 0, showerT = 0;
 var starsEl = document.getElementById('stars'), starCountEl = document.getElementById('star-count');
 var CATCH_LINES = ['STAR CAUGHT. WISH SUBMITTED FOR REVIEW.', 'NICE REFLEXES. FASTER THAN MY INFERENCE.', 'GOT ONE. STORING IN MY POCKET DIMENSION.'];
@@ -1614,7 +2017,6 @@ function catchStar(ss) {
   else robotSay(pick(CATCH_LINES), 2.6);
 }
 
-// Empty sky: plot your own stars; they link up into a constellation
 var userStars = [], constLine = null;
 var constMat = new THREE.LineBasicMaterial({color:0x9fdcff, transparent:true, opacity:0.4, fog:false, depthWrite:false});
 function plotStar(pos) {
@@ -1633,7 +2035,6 @@ function plotStar(pos) {
   robotSay(n === 1 ? 'NEW STAR PLOTTED. ADD MORE TO DRAW A CONSTELLATION.' : 'CONSTELLATION: ' + n + ' STARS. VERY ARTISTIC.', 2.8);
 }
 
-// UFO: drifts across the back of the sky now and then. Tap it and it bolts
 var ufo = null, nextUfo = 7;
 var UFO_LINES = ['UNIDENTIFIED OBJECT. PROBABLY A GAN ARTIFACT.', 'IT FLED. I ONLY WANTED ITS TRAINING DATA.', 'OUT-OF-DISTRIBUTION SAMPLE. LOGGED.'];
 function spawnUfo() {
@@ -1803,15 +2204,18 @@ function updateSpace(dt) {
   }
 }
 
-// ─── Ripple system ────────────────────────────────────────────────────────────
+// ─── Ripple system (floor clicks + footstep puffs) ───────────────────────────
 
 var ripples = [];
-function spawnRipple(pos) {
-  var mat = new THREE.MeshBasicMaterial({color:0x00d4ff,side:THREE.DoubleSide,transparent:true,opacity:0.55});
+function spawnRipple(pos, o) {
+  o = o || {};
+  var op = o.op || 0.55;
+  var mat = new THREE.MeshBasicMaterial({color:o.col||0x00d4ff,side:THREE.DoubleSide,transparent:true,opacity:op,depthWrite:false});
   var mesh = new THREE.Mesh(new THREE.RingGeometry(0.05,0.14,36), mat);
   mesh.rotation.x = -Math.PI/2; mesh.position.set(pos.x,0.012,pos.z);
-  scene.add(mesh); ripples.push({mesh:mesh,t:0,life:1.4});
+  scene.add(mesh); ripples.push({mesh:mesh,t:0,life:o.life||1.4,max:o.max||9,op:op});
 }
+function spawnFootPuff(x,z) { spawnRipple({x:x,z:z},{op:0.3,life:0.55,max:2.2}); }
 
 // ─── Raycasting ───────────────────────────────────────────────────────────────
 
@@ -1827,7 +2231,6 @@ robot.root.traverse(function(o){ if(o.isMesh) robotMeshes.push(o); });
 
 var waving = false, waveT = 0, waveRot0 = 0, waveBurst = false;
 var WAVE_DUR = 2.2;
-function smooth(x){ x = Math.max(0, Math.min(1, x)); return x*x*(3-2*x); }
 function startWave() {
   waving = true; waveT = 0; waveBurst = false;
   waveRot0 = robot.root.rotation.y;
@@ -1843,27 +2246,23 @@ function updateWave(dt) {
   waveT += dt;
   var w = waveT;
   if (w >= WAVE_DUR) { resetWave(); robot.root.rotation.y = waveRot0; return; }
-  // 0–0.3s raise the arm, then wave, last 0.4s lower it
   var up = w < 0.3 ? smooth(w/0.3) : (w > WAVE_DUR-0.4 ? smooth((WAVE_DUR-w)/0.4) : 1);
   var swing = Math.sin((w-0.3)*11) * 0.38 * up;
 
-  // Turn to face the viewer while waving, then turn back
   var face = Math.atan2(camera.position.x - robot.root.position.x, camera.position.z - robot.root.position.z);
-  var d = face - waveRot0; while(d > Math.PI) d -= Math.PI*2; while(d < -Math.PI) d += Math.PI*2;
+  var d = angDiff(waveRot0, face);
   robot.root.rotation.y = waveRot0 + d*up;
 
-  // Right arm up over the head, swinging side to side
   robot.rightArm.rotation.z = up*2.6 + swing;
   robot.rightArm.rotation.x = -0.2*up;
+  robot.rightElbow.rotation.x = -0.18 - 0.35*up;
   robot.leftArm.rotation.z = -0.15*up;
 
-  // Happy face: squinted eyes, wider mouth, head tilt, bouncy antenna
   robot.eyes.forEach(function(e){ e.scale.y = 1 - 0.6*up; });
   robot.mouth.scale.set(1 + 0.5*up, 1 + 0.8*up, 1);
   robot.headG.rotation.z = Math.sin(w*5)*0.12*up;
   robot.antG.rotation.z = Math.sin(w*16)*0.35*up;
 
-  // Little hop at the start
   if (w < 0.45) robot.root.position.y += Math.sin(w/0.45*Math.PI)*0.14;
 
   if (!waveBurst && w > 0.35) {
@@ -1915,10 +2314,7 @@ renderer.domElement.addEventListener('mousemove', function(e) {
     var fp2=new THREE.Vector3(); raycaster.ray.intersectPlane(floorPlane,fp2);
     if(fp2){
       var dx=fp2.x-robot.root.position.x, dz=fp2.z-robot.root.position.z;
-      var worldAng=Math.atan2(dx,dz);
-      var bodyAng=robot.root.rotation.y;
-      var diff=worldAng-bodyAng;
-      while(diff>Math.PI)diff-=Math.PI*2; while(diff<-Math.PI)diff+=Math.PI*2;
+      var diff=angDiff(robot.root.rotation.y, Math.atan2(dx,dz));
       robot.headTargetY=Math.max(-0.45,Math.min(0.45,diff));
     }
   }
@@ -1938,7 +2334,7 @@ function navigateTo(idx) {
   var st=stationObjs[idx], px=st.data.px, pz=st.data.pz;
   var len=Math.sqrt(px*px+pz*pz), nx=-px/len, nz=-pz/len;
   robotSay('NAVIGATING → ' + st.data.label + ' ...', 6);
-  robot.moveTo(px+nx*1.25, pz+nz*1.25, px, pz, function(){openPanel(st.data);});
+  robot.moveTo(px+nx*1.35, pz+nz*1.35, px, pz, function(){openPanel(st.data);});
 }
 
 function openPanel(data) {
@@ -1972,7 +2368,6 @@ document.addEventListener('keydown', function(e) {
   else if(e.key==='ArrowLeft'&&activeIdx!==null)  navigateTo((activeIdx+4)%5);
 });
 
-// Swipe the bottom sheet down to close it (any touch screen)
 (function(){
   var y0=null, dy=0;
   panelEl.addEventListener('touchstart',function(e){
@@ -2032,7 +2427,7 @@ function robotSay(text, hold) {
 function updateSpeech(dt) {
   if (say.active) {
     if (say.n < say.full.length) {
-      say.acc += dt * 42;                              // typing speed (chars/sec)
+      say.acc += dt * 42;
       var k = Math.floor(say.acc);
       if (k > 0) { say.acc -= k; say.n = Math.min(say.full.length, say.n + k); sayTextEl.textContent = say.full.slice(0, say.n); }
     } else {
@@ -2046,7 +2441,6 @@ function updateSpeech(dt) {
     idleWait -= dt;
     if (idleWait <= 0) { robotSay(IDLE_LINES[idleIdx % IDLE_LINES.length], 3.8); idleIdx++; }
   }
-  // Follow the robot's head on screen
   _sv.copy(robot.root.position); _sv.y += 1.95; _sv.project(camera);
   sayEl.style.left = ((_sv.x + 1) / 2 * window.innerWidth) + 'px';
   sayEl.style.top  = ((-_sv.y + 1) / 2 * window.innerHeight) + 'px';
@@ -2058,7 +2452,7 @@ function updateSpeech(dt) {
 var _lv = new THREE.Vector3();
 function updateLabels() {
   stationObjs.forEach(function(st) {
-    st.group.getWorldPosition(_lv); _lv.y+=1.62; _lv.project(camera);
+    st.group.getWorldPosition(_lv); _lv.y+=2.25; _lv.project(camera);
     var x=(_lv.x+1)/2*window.innerWidth;
     var y=(-_lv.y+1)/2*window.innerHeight;
     var behind=_lv.z>1;
@@ -2087,6 +2481,159 @@ window.addEventListener('resize',function(){
   renderer.setSize(window.innerWidth,window.innerHeight);
 });
 
+// ─── Mini-robot task animations ──────────────────────────────────────────────
+
+var _tmpV = new THREE.Vector3();
+
+function updateFranka(mr, dt) {
+  var F=mr.F, m=mr.m, T=6;
+  var n=Math.floor(mr.t/T), u=(mr.t%T)/T;
+  var srcI=(n%2), dstI=1-srcI;
+  var src=srcI?F.yawB:F.yawA, dst=srcI?F.yawA:F.yawB;
+  var K=F.keys, k=0;
+  while(k<K.length-2 && u>K[k+1][0]) k++;
+  var a=K[k], b=K[k+1], f=smooth((u-a[0])/(b[0]-a[0]));
+  var Y=[0,src,dst];
+  var yaw=Y[a[1]]+(Y[b[1]]-Y[a[1]])*f;
+  var rr=a[2]+(b[2]-a[2])*f, hh=a[3]+(b[3]-a[3])*f, grip=a[4]+(b[4]-a[4])*f;
+
+  // 2-link IK in the arm's vertical plane; wrist always points the gripper down
+  F.yawG.rotation.y=yaw;
+  var wy=hh+F.G-F.S, d=Math.min(Math.sqrt(rr*rr+wy*wy), F.L1+F.L2-0.001);
+  var al=Math.atan2(rr,wy);
+  var E=Math.acos(Math.max(-1,Math.min(1,(F.L1*F.L1+F.L2*F.L2-d*d)/(2*F.L1*F.L2))));
+  var B=Math.acos(Math.max(-1,Math.min(1,(F.L1*F.L1+d*d-F.L2*F.L2)/(2*F.L1*d))));
+  var p1=al-B, p2=Math.PI-E;
+  F.sh.rotation.z=-p1; F.el.rotation.z=-p2; F.wr.rotation.z=-(Math.PI-p1-p2);
+  var gap=0.072-0.018*grip;
+  F.f1.position.x=gap/2+0.009; F.f2.position.x=-gap/2-0.009;
+
+  if (u<0.28) F.cube.position.set(F.padPos[srcI].x,0.045,F.padPos[srcI].z);
+  else if (u<0.71) { F.cube.position.set(F.bx+rr*Math.cos(yaw), hh, F.bz-rr*Math.sin(yaw)); F.cube.rotation.y=yaw; }
+  else F.cube.position.set(F.padPos[dstI].x,0.045,F.padPos[dstI].z);
+
+  if (u>=0.71 && F.lastPlaced!==n) {
+    F.lastPlaced=n; F.padGlow[dstI]=1;
+    F.cube.getWorldPosition(_tmpV); spawnBurst(_tmpV, 0xff8855, 14, 0.7, 0.07);
+  }
+  for (var i=0;i<2;i++){ F.padGlow[i]=Math.max(0,F.padGlow[i]-dt*1.2); F.pads[i].opacity=0.3+F.padGlow[i]*0.6; }
+
+  // supervisor watches the cube and taps the tablet
+  var la=Math.atan2(F.cube.position.x, F.cube.position.z);
+  m.headG.rotation.y=damp(m.headG.rotation.y, Math.max(-0.9,Math.min(0.9,la)), 4, dt);
+  m.headG.rotation.x=0.18;
+  m.armRG.rotation.x=-0.7+Math.sin(mr.t*7)*0.08;
+  mr.scr.opacity=0.7+Math.sin(mr.t*3)*0.15;
+}
+
+function updateYolo(mr, dt) {
+  var m=mr.m;
+  var hy=Math.sin(mr.t*0.75)*0.8;
+  m.headG.rotation.y=hy; m.headG.rotation.x=0.12;
+  mr.beamMat.opacity=0.07+Math.abs(Math.sin(mr.t*5))*0.04;
+  mr.dets.forEach(function(d){
+    if (Math.abs(hy-d.ang)<0.1) { if (d.v<0.15) d.pop=1; d.v=1; }
+    else d.v=Math.max(0,d.v-dt*0.3);
+    d.pop=Math.max(0,d.pop-dt*3);
+    d.box.scale.setScalar(1+d.pop*0.35);
+    var vis=Math.min(1,d.v*1.4);
+    d.box.material.opacity=vis*(d.pop>0 ? (Math.sin(mr.t*40)>0?1:0.3) : 0.9);
+    d.label.material.opacity=vis;
+    d.obj.rotation.y+=dt*0.3;
+  });
+}
+
+function updateSam(mr, dt) {
+  var m=mr.m;
+  var sz=0.35+((mr.t*0.3)%1)*0.65;
+  mr.scanLine.position.z=sz; mr.curtain.position.z=sz;
+  mr.slMat.opacity=0.6+Math.abs(Math.sin(mr.t*3))*0.35;
+  mr.curtainMat.opacity=0.06+Math.abs(Math.sin(mr.t*3))*0.06;
+  var focus=0, best=99;
+  mr.segs.forEach(function(s,k){
+    var lt=((mr.t-k*1.4)%7+7)%7;
+    var pp = lt<0.25 ? lt/0.25 : 1;
+    var po = lt<0.5 ? 1 : Math.max(0,1-(lt-0.5)/0.4);
+    s.pr.scale.setScalar(0.22*pp); s.pr.material.opacity=po;
+    var a = lt<0.3?0 : lt<0.8?(lt-0.3)/0.5 : lt<5.8?1 : lt<6.5?1-(lt-5.8)/0.7 : 0;
+    var sa=smooth(a);
+    s.ov.material.opacity=0.55*sa;
+    s.fl.material.opacity=0.28*sa;
+    s.rg.material.opacity=0.9*sa;
+    s.rg.scale.setScalar(0.5+0.5*sa);
+    if (lt<best) { best=lt; focus=s.ang; }
+  });
+  m.headG.rotation.y=damp(m.headG.rotation.y, focus, 3, dt);
+  m.headG.rotation.x=0.2;
+}
+
+function rlPolicy(i,j) {
+  if (j===3) return 0;
+  if (i===3) return 2;
+  if (i===0) return 2;
+  if (j===0) return 0;
+  if (i===1&&j===2) return 2;
+  if (i===2&&j===1) return 0;
+  return 2;
+}
+var RL_DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
+function updateRL(mr, dt) {
+  var R=mr.R, m=mr.m;
+  R.hopT=Math.min(1,R.hopT+dt/0.24);
+  var hp=smooth(R.hopT);
+  var ax=R.tx(R.fi)+(R.tx(R.i)-R.tx(R.fi))*hp, az=R.tz(R.fj)+(R.tz(R.j)-R.tz(R.fj))*hp;
+  R.agent.position.set(ax, 0.065+Math.sin(hp*Math.PI)*0.08, az);
+
+  if (R.hopT>=1 && !R.landed) {
+    R.landed=true; R.steps++;
+    R.glow[R.i][R.j]=1;
+    var key=R.i+','+R.j, rew=null;
+    if (R.lava[key]) {
+      rew=-1; R.minusT=0; R.minus.position.set(ax,0.22,az);
+      R.agent.getWorldPosition(_tmpV); spawnBurst(_tmpV,0xff4422,16,0.8,0.07);
+    } else if (R.i===3&&R.j===3) {
+      rew=Math.max(0.2, 1-R.steps*0.04); R.plusT=0; R.plus.position.set(ax,0.24,az);
+      R.agent.getWorldPosition(_tmpV); spawnBurst(_tmpV,0xffdd33,20,0.9,0.08);
+    } else if (R.steps>=18) rew=-0.5;
+    if (rew!==null) {
+      R.done=true; R.timer=0.9;
+      R.rewards.push(rew); if (R.rewards.length>16) R.rewards.shift();
+      drawRLChart(R);
+    }
+  }
+
+  R.timer-=dt;
+  if (R.timer<=0) {
+    if (R.done) {
+      R.done=false; R.ep++; R.steps=0;
+      if (R.ep>=24) { R.ep=0; R.rewards=[]; }
+      R.fi=R.i=0; R.fj=R.j=0; R.hopT=1; R.landed=true;
+      drawRLChart(R);
+      R.timer=0.45;
+    } else {
+      var eps=Math.max(0.05, 0.8*Math.pow(0.82,R.ep));
+      var act = Math.random()<eps ? Math.floor(Math.random()*4) : rlPolicy(R.i,R.j);
+      R.fi=R.i; R.fj=R.j;
+      R.i=Math.max(0,Math.min(3,R.i+RL_DIRS[act][0]));
+      R.j=Math.max(0,Math.min(3,R.j+RL_DIRS[act][1]));
+      R.hopT=0; R.landed=false; R.timer=0.3;
+    }
+  }
+
+  for (var i=0;i<4;i++) for (var j=0;j<4;j++){
+    R.glow[i][j]=Math.max(0,R.glow[i][j]-dt*0.9);
+    R.tiles[i][j].mat.emissiveIntensity=R.tiles[i][j].base+R.glow[i][j]*0.9;
+  }
+  R.plusT=Math.min(1,R.plusT+dt/1.1);  R.plus.material.opacity=1-R.plusT;  R.plus.position.y+=dt*0.12;
+  R.minusT=Math.min(1,R.minusT+dt/1.1); R.minus.material.opacity=1-R.minusT; R.minus.position.y+=dt*0.12;
+  R.flag.rotation.y=Math.sin(mr.t*4)*0.4;
+  R.agentGlow.material.opacity=0.7+Math.sin(mr.t*8)*0.2;
+
+  var la=Math.atan2(ax,az);
+  m.headG.rotation.y=damp(m.headG.rotation.y, la, 5, dt);
+  m.headG.rotation.x=0.22;
+}
+
 // ─── Main loop ────────────────────────────────────────────────────────────────
 
 var clock=new THREE.Clock(), gt=0;
@@ -2102,15 +2649,26 @@ function animate() {
 
   stationObjs.forEach(function(st,si) {
     var ex=st.extras, t=gt, seed=ex.seed;
-    var isHov=(si===hoveredSt);
+    var isHov=(si===hoveredSt)||(si===labelHover), isAct=(si===activeIdx), hot=isHov||isAct;
 
     ex.fGroup.position.y=0.2+Math.sin(t*1.4+seed)*0.055;
-    var tScale=isHov?1.12:1;
+    var tScale=hot?1.12:1;
     ex.fGroup.scale.x+=(tScale-ex.fGroup.scale.x)*0.1;
     ex.fGroup.scale.y+=(tScale-ex.fGroup.scale.y)*0.1;
     ex.fGroup.scale.z+=(tScale-ex.fGroup.scale.z)*0.1;
 
-    ex.ptLight.intensity=(isHov?2.8:1.0)+Math.sin(t*2.2+seed)*0.25;
+    ex.ptLight.intensity=(hot?3.0:1.4)+Math.sin(t*2.2+seed)*0.25;
+
+    var bT = isAct?0.7 : isHov?0.55 : 0.24+Math.sin(t*1.6+seed)*0.06;
+    ex.beam.material.opacity += (bT-ex.beam.material.opacity)*0.12;
+    ex.pulses.forEach(function(pr){
+      var q=((t*0.45)+pr.userData.phase)%1;
+      pr.scale.setScalar(1+q*1.5);
+      pr.material.opacity=(1-q)*(hot?0.8:0.45);
+    });
+    stationRims[si].emissiveIntensity = hot ? 2.0 : 0.8+Math.sin(t*2+seed)*0.25;
+    stationGlows[si].opacity = hot ? 0.2 : 0.1;
+    st.labelEl.classList.toggle('hot', hot);
 
     if(ex.screen) ex.screen.material.emissiveIntensity=0.6+Math.sin(t*0.9+seed)*0.18;
 
@@ -2183,14 +2741,14 @@ function animate() {
 
   ripples=ripples.filter(function(r){
     r.t+=dt; var p=r.t/r.life;
-    if(p>=1){scene.remove(r.mesh);return false;}
-    var sc=1+p*9; r.mesh.scale.set(sc,1,sc); r.mesh.material.opacity=0.55*(1-p);
+    if(p>=1){scene.remove(r.mesh); r.mesh.geometry.dispose(); r.mesh.material.dispose(); return false;}
+    var sc=1+p*r.max; r.mesh.scale.set(sc,1,sc); r.mesh.material.opacity=r.op*(1-p);
     return true;
   });
 
-  // Camera follow + parallax (adapts to screen shape)
+  // Camera follow + parallax
   var cb = camBase();
-  var zoomTarget = panelOpen ? 0.62 : 1;   // zoom in on the robot when the sheet is up
+  var zoomTarget = panelOpen ? 0.62 : 1;
   camZoom += (zoomTarget - camZoom) * 0.05;
   camT.lerp(robot.root.position,0.06);
   var tx=camT.x+mouseParallax.x*0.5;
@@ -2201,7 +2759,6 @@ function animate() {
   camera.position.z+=(tz-camera.position.z)*0.055;
   camera.lookAt(camT.x,camT.y+0.5,camT.z);
 
-  // Shift the rendered view up so the robot sits above the bottom sheet
   var vsTarget = panelOpen ? window.innerHeight*0.3 : 0;
   viewShift += (vsTarget - viewShift) * 0.08;
   if (Math.abs(viewShift) > 0.5) {
@@ -2211,89 +2768,27 @@ function animate() {
   }
 
   // ── Mini robots ──────────────────────────────────────────────────────────
+  updateMeetings(dt);
   miniRobots.forEach(function(mr) {
     mr.t += dt;
     var m = mr.m;
     if (mr.type !== 'patrol') { m.g.position.y = mr.baseY; m.g.rotation.y = mr.baseRot; }
 
     if (mr.type === 'patrol') {
-      mr.orbitAngle += mr.orbitSpeed * dt;
-      var px = Math.sin(mr.orbitAngle)*mr.orbitR, pz = Math.cos(mr.orbitAngle)*mr.orbitR;
-      m.g.position.x = px; m.g.position.z = pz;
-      m.g.position.y = 0.08 + Math.abs(Math.sin(mr.t*7))*0.016;
-      m.g.rotation.y = -mr.orbitAngle + (mr.orbitSpeed>0 ? Math.PI : 0);
-      var sw = Math.sin(mr.t*7)*0.4;
-      m.legLG.rotation.x= sw; m.legRG.rotation.x=-sw;
-      m.armLG.rotation.x=-sw*0.45; m.armRG.rotation.x=sw*0.45;
+      updatePatrol(mr, dt);
+    } else if (mr.type === 'franka') updateFranka(mr, dt);
+    else if (mr.type === 'yolo') updateYolo(mr, dt);
+    else if (mr.type === 'sam') updateSam(mr, dt);
+    else if (mr.type === 'rl') updateRL(mr, dt);
+    if (mr.type !== 'patrol') updateTaskGreet(mr, dt);
 
-    } else if (mr.type === 'franka') {
-      var ph = (mr.t % 5.0) / 5.0;
-      mr.fPivot.rotation.x = Math.sin(ph*Math.PI*2)*0.55 - 0.05;
-      mr.fSeg2.rotation.x = -Math.abs(Math.sin(ph*Math.PI*2+0.3))*0.45;
-      var gripping = (ph > 0.28 && ph < 0.78);
-      mr.gf1.position.x = gripping ? 0.012 : 0.034;
-      mr.gf2.position.x = gripping ? -0.012 : -0.034;
-      mr.gripL.intensity = gripping ? 1.8 : 0.3;
-      var liftAmt = (gripping && ph<0.55) ? Math.min(1,(ph-0.28)/0.12)*0.28 : (gripping ? Math.max(0,(0.78-ph)/0.15)*0.28 : 0);
-      mr.pickCube.position.y = 0.05 + liftAmt;
-      m.headG.rotation.x = -0.12;
-      m.armLG.rotation.x = 0.15 + Math.sin(mr.t*0.7)*0.1;
-      mr.sparkTimer -= dt;
-      if (gripping && mr.sparkTimer <= 0) {
-        mr.sparkTimer = 0.14 + Math.random()*0.22;
-        var rp = m.g.position;
-        var sp = new THREE.Mesh(new THREE.SphereGeometry(0.012,4,4),
-          new THREE.MeshBasicMaterial({color:Math.random()>0.5?0xddeeff:0xaabbcc,transparent:true,opacity:0.9}));
-        sp.position.set(rp.x+0.45*Math.cos(m.g.rotation.y), 0.18, rp.z+0.45*Math.sin(m.g.rotation.y));
-        scene.add(sp);
-        sparks.push({mesh:sp,t:0,life:0.22,vx:(Math.random()-0.5)*0.65,vy:0.5+Math.random()*0.5,vz:(Math.random()-0.5)*0.65});
-      }
-
-    } else if (mr.type === 'yolo') {
-      mr.detBoxes.forEach(function(db){
-        var conf = 0.45 + Math.abs(Math.sin(mr.t*1.8+db.phase))*0.55;
-        db.mat.opacity = conf;
-        db.lblMat.opacity = 0.55 + Math.abs(Math.sin(mr.t*2.2+db.phase))*0.40;
-        db.pl.intensity = 0.4 + conf*0.8;
-      });
-      m.headG.rotation.y = Math.sin(mr.t*0.55)*0.55;
-      m.headG.rotation.x = Math.sin(mr.t*0.3)*0.06 - 0.04;
-      m.armLG.rotation.x = -0.18 + Math.sin(mr.t*0.5)*0.08;
-      m.armRG.rotation.x = -0.18 + Math.sin(mr.t*0.6)*0.08;
-
-    } else if (mr.type === 'sam') {
-      var scanY = 0.26 + Math.sin(mr.t*0.9)*0.24;
-      mr.scanLine.position.y = scanY;
-      mr.slMat.opacity = 0.75 + Math.abs(Math.sin(mr.t*0.9))*0.22;
-      mr.scanLight.position.y = scanY;
-      mr.scanLight.intensity = 1.2 + Math.abs(Math.sin(mr.t*0.9))*1.8;
-      mr.scanPlane.position.y = scanY * 0.4;
-      mr.scanMat.opacity = 0.08 + Math.abs(Math.sin(mr.t*0.9))*0.12;
-      mr.segPatches.forEach(function(sp){
-        sp.mat.opacity = 0.25 + Math.abs(Math.sin(mr.t*1.2+sp.phase))*0.35;
-        sp.ringMat.opacity = 0.55 + Math.abs(Math.sin(mr.t*1.8+sp.phase))*0.40;
-        sp.mesh.scale.setScalar(0.82 + Math.abs(Math.sin(mr.t*0.7+sp.phase))*0.32);
-      });
-      m.armLG.rotation.x = -0.55 + Math.sin(mr.t*0.55)*0.2;
-      m.armRG.rotation.x = -0.55 + Math.sin(mr.t*0.55+1.0)*0.2;
-
-    } else if (mr.type === 'rl') {
-      mr.agentAngle += mr.agentSpeed * dt;
-      mr.agentMesh.position.set(
-        Math.sin(mr.agentAngle)*0.55,
-        0.055 + Math.abs(Math.sin(mr.agentAngle*2))*0.04,
-        Math.cos(mr.agentAngle)*0.55
-      );
-      mr.agentL.position.copy(mr.agentMesh.position);
-      var lapFrac = (mr.agentAngle%(Math.PI*2))/(Math.PI*2);
-      m.headG.rotation.x = lapFrac < 0.06 ? -0.22 : Math.sin(mr.t*0.35)*0.04;
-      m.headG.rotation.y = Math.sin(mr.t*0.3)*0.18;
-    }
-
-    m.antBall.emissiveIntensity = 2.5 + Math.sin(mr.t*3.5)*1;
-    m.antLight.intensity = 0.18 + Math.sin(mr.t*3.5)*0.1;
-    m.eyeL.emissiveIntensity = m.eyeR.emissiveIntensity = 3 + Math.sin(mr.t*2)*0.5;
-    m.halo.intensity = 0.6 + Math.sin(mr.t*2)*0.2;
+    // idle life: blink, antenna pulse, halo breathing
+    mr.nextBlink -= dt;
+    if (mr.nextBlink <= 0) { mr.blinkT = 0.12; mr.nextBlink = 2 + Math.random()*4; }
+    var bl = 1; if (mr.blinkT > 0) { mr.blinkT -= dt; bl = 0.15; }
+    m.eyes[0].scale.y = m.eyes[1].scale.y = bl;
+    m.antBall.scale.setScalar(1 + Math.sin(mr.t*3.5)*0.2);
+    m.halo.intensity = 1.5 + Math.sin(mr.t*2)*0.3;
 
     if (mr.hop > 0) {
       mr.hop = Math.max(0, mr.hop - dt/0.75);
@@ -2302,18 +2797,6 @@ function animate() {
       m.g.rotation.y += hk*Math.PI*2;
       m.halo.intensity += Math.sin(hk*Math.PI)*3;
     }
-  });
-
-  // ── Sparks ────────────────────────────────────────────────────────────────
-  sparks = sparks.filter(function(sp) {
-    sp.t += dt; var p = sp.t/sp.life;
-    if (p >= 1) { scene.remove(sp.mesh); return false; }
-    sp.mesh.position.x += sp.vx*dt;
-    sp.mesh.position.y += sp.vy*dt - 3*p*dt;
-    sp.mesh.position.z += sp.vz*dt;
-    sp.mesh.material.opacity = 0.95*(1-p);
-    sp.mesh.scale.setScalar(1-p*0.6);
-    return true;
   });
 
   // ── Shooting stars ────────────────────────────────────────────────────────
@@ -2366,7 +2849,6 @@ setTimeout(function(){
   document.getElementById('header').classList.add('show');
   document.getElementById('nav').classList.add('show');
   document.getElementById('hint').classList.add('show');
-  // First words after booting
   setTimeout(function(){ booted = true; if(!say.active && !panelOpen) robotSay('BEEP BOOP. HELLO, HUMAN.', 1.8); }, 900);
 },1400);
 </script>
