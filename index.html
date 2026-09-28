@@ -194,6 +194,23 @@
       opacity:0.7;
     }
     @keyframes caret { 50% { opacity:0; } }
+    /* when there's no room above the head (or the panel is open) the bubble sits beside it */
+    #robot-say.side { transform:translate(0,-50%); margin-top:0; margin-left:44px; }
+    #robot-say.side::after { left:-6px; top:50%; bottom:auto; transform:translateY(-50%) rotate(135deg); }
+    #robot-say.side.left { transform:translate(-100%,-50%); margin-left:-44px; }
+    #robot-say.side.left::after { left:auto; right:-6px; transform:translateY(-50%) rotate(-45deg); }
+
+    /* ── Zoom-out button (shown while focused on a bot) ─── */
+    #zoom-out {
+      position:fixed; left:50%; bottom:calc(64px + env(safe-area-inset-bottom)); z-index:45;
+      transform:translate(-50%,12px); opacity:0; pointer-events:none;
+      padding:10px 20px; border-radius:22px; border:1.5px solid #00d4ff; background:rgba(4,12,24,0.9);
+      color:#8eeaff; font-family:'Courier New',ui-monospace,monospace; font-size:0.8rem; letter-spacing:2.5px;
+      cursor:pointer; backdrop-filter:blur(8px); box-shadow:0 0 18px -6px #00d4ff; white-space:nowrap;
+      transition:opacity 0.3s, transform 0.3s, background 0.2s;
+    }
+    #zoom-out.show { opacity:1; transform:translate(-50%,0); pointer-events:auto; }
+    #zoom-out:hover { background:rgba(0,212,255,0.12); }
 
     /* ── Mini-robot speech bubble ─────────────────────────── */
     #mini-say {
@@ -247,6 +264,7 @@
       .nav-dot::after { display:none; }
 
       #hint { bottom:calc(58px + env(safe-area-inset-bottom)); font-size:0.66rem; letter-spacing:2px; }
+      #zoom-out { font-size:0.7rem; letter-spacing:1.5px; padding:9px 16px; }
 
       .slabel { font-size:0.68rem; letter-spacing:2px; padding:5px 12px 5px 6px; gap:7px; }
       .slabel .sl-num { min-width:21px; height:18px; font-size:0.6rem; }
@@ -292,6 +310,7 @@
   <span class="touch-only">TAP A STATION &nbsp;·&nbsp; TAP THE ROBOT TO SAY HI</span>
 </div>
 <div id="labels"></div>
+<button id="zoom-out">← BACK TO UNIT-E</button>
 <div id="mini-say"><span class="say-tag" id="mini-tag"></span><span id="mini-text"></span></div>
 <div id="stars">★ <span id="star-count">0</span> CAUGHT</div>
 <div id="robot-say"><span class="say-tag">UNIT-E://</span><span id="say-text"></span><span class="say-caret">█</span></div>
@@ -529,6 +548,7 @@ camera.lookAt(0, 0, 0);
     x.beginPath(); x.moveTo(p[0]+spLen*0.6,p[1]-spLen*0.6); x.lineTo(p[0]-spLen*0.6,p[1]+spLen*0.6); x.stroke();
   });
 
+  window.SKY_CANVAS=c;
   var tex=new THREE.CanvasTexture(c);
   var sphere=new THREE.Mesh(
     new THREE.SphereGeometry(58,48,32),
@@ -658,23 +678,7 @@ STATIONS.forEach(function(data){
   stationRims.push(rim.material); stationGlows.push(glow.material);
 });
 
-// ── Central hub ─────────────────────────────────────────────────────────────
-var hubRings=[];
-(function(){
-  var hubMat=new THREE.MeshStandardMaterial({color:0x00d4ff,emissive:0x00d4ff,emissiveIntensity:0.5,roughness:0.2,metalness:0.9});
-  var r1=new THREE.Mesh(new THREE.TorusGeometry(0.7,0.016,8,56),hubMat.clone());
-  r1.rotation.x=Math.PI/2; r1.position.y=0.06; scene.add(r1); hubRings.push({m:r1,spin:'y',speed:0.35});
-  var topL=new THREE.PointLight(0x00d4ff,0.7,2.2); topL.position.y=0.4; scene.add(topL);
-  hubRings.push({m:null,spin:null,topLight:topL});
-})();
-
-var beaconRing = new THREE.Mesh(
-  new THREE.RingGeometry(0.22, 0.4, 48),
-  new THREE.MeshBasicMaterial({ color:0x00d4ff, side:THREE.DoubleSide, transparent:true, opacity:0.22 })
-);
-beaconRing.rotation.x = -Math.PI/2;
-beaconRing.position.y = 0.015;
-scene.add(beaconRing);
+// (dock is built after the robot exists — see updateDock)
 
 // ─── Stars ────────────────────────────────────────────────────────────────────
 
@@ -1283,7 +1287,7 @@ function makeBBox(w,h,d,col){
   R.chartC=document.createElement('canvas'); R.chartC.width=256; R.chartC.height=150;
   R.chartTex=new THREE.CanvasTexture(R.chartC); R.chartTex.minFilter=THREE.LinearFilter; R.chartTex.generateMipmaps=false;
   R.chart=new THREE.Sprite(new THREE.SpriteMaterial({map:R.chartTex,transparent:true,depthWrite:false,fog:false,opacity:0.92}));
-  R.chart.scale.set(0.6,0.35,1); R.chart.position.set(0,0.62,0.72); m6.g.add(R.chart);
+  R.chart.scale.set(0.52,0.3,1); R.chart.position.set(0,0.98,-0.35); m6.g.add(R.chart);
   drawRLChart(R);
   m6.armLG.rotation.x=-0.3; m6.armRG.rotation.x=-0.3;
   m6.g.position.set(-4.5,0,5.8); m6.g.rotation.y=1.8; scene.add(m6.g);
@@ -1353,28 +1357,121 @@ function spawnShootingStar() {
 
 var rockets = [];
 var nextRocket = 0;
+
+// Reflections: the nebula sky doubles as an environment map, so metal surfaces
+// on the rockets and UFO pick up real colour instead of looking flat grey.
+var SKY_ENV = null;
+if (window.SKY_CANVAS && THREE.EquirectangularReflectionMapping !== undefined) {
+  SKY_ENV = new THREE.CanvasTexture(window.SKY_CANVAS);
+  SKY_ENV.mapping = THREE.EquirectangularReflectionMapping;
+}
+// Soft round puff for exhaust glow + smoke
+var PUFF_TEX = (function(){
+  var c=document.createElement('canvas'); c.width=c.height=64;
+  var x=c.getContext('2d'), g=x.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.35,'rgba(255,255,255,0.55)');
+  g.addColorStop(0.7,'rgba(255,255,255,0.14)'); g.addColorStop(1,'rgba(255,255,255,0)');
+  x.fillStyle=g; x.fillRect(0,0,64,64);
+  return new THREE.CanvasTexture(c);
+})();
+// Flame gradient along the plume (bright at the nozzle, fading to nothing)
+var FLAME_TEX = (function(){
+  var c=document.createElement('canvas'); c.width=8; c.height=128;
+  var x=c.getContext('2d'), g=x.createLinearGradient(0,0,0,128);
+  g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(0.45,'rgba(255,255,255,0.35)');
+  g.addColorStop(0.85,'rgba(255,255,255,0.9)'); g.addColorStop(1,'rgba(255,255,255,1)');
+  x.fillStyle=g; x.fillRect(0,0,8,128);
+  return new THREE.CanvasTexture(c);
+})();
+
+var smoke = [];
+var SMOKE_MAX = LOW_POWER ? 70 : 160;
+function spawnSmoke(pos, vel, hot) {
+  if (smoke.length >= SMOKE_MAX) { var old = smoke.shift(); scene.remove(old.sp); old.sp.material.dispose(); }
+  var sp = new THREE.Sprite(new THREE.SpriteMaterial({map:PUFF_TEX, color:hot?0xffb070:0xc8ccd4, transparent:true,
+    opacity:hot?0.55:0.3, depthWrite:false, fog:true}));
+  sp.position.copy(pos); sp.scale.setScalar(0.25); scene.add(sp);
+  smoke.push({sp:sp, vel:vel, t:0, life:2.2+Math.random()*1.2, hot:hot, s0:0.22+Math.random()*0.1});
+}
+function updateSmoke(dt) {
+  smoke = smoke.filter(function(s){
+    s.t += dt; var p = s.t/s.life;
+    if (p >= 1) { scene.remove(s.sp); s.sp.material.dispose(); return false; }
+    s.sp.position.addScaledVector(s.vel, dt); s.vel.multiplyScalar(0.97);
+    s.sp.scale.setScalar(s.s0 + p*1.6);
+    if (s.hot && p > 0.12) { s.hot = false; s.sp.material.color.setHex(0xb8bec8); }
+    s.sp.material.opacity = (s.hot?0.55:0.32)*(1-p)*(1-p);
+    return true;
+  });
+}
+
+function metal(col, rough, metalness, emi, ei) {
+  var m = new THREE.MeshStandardMaterial({color:col, roughness:rough, metalness:metalness,
+    emissive:emi||0x000000, emissiveIntensity:ei||0});
+  if (SKY_ENV) { m.envMap = SKY_ENV; m.envMapIntensity = 1.2; }
+  return m;
+}
+
 function spawnRocket() {
   var g = new THREE.Group();
-  var bMat = new THREE.MeshStandardMaterial({color:0xd8e0e8,emissive:0xc8d8e8,emissiveIntensity:0.55,roughness:0.22,metalness:0.75});
-  var nMat = new THREE.MeshStandardMaterial({color:0xff4422,emissive:0xff7744,emissiveIntensity:1.1,roughness:0.3,metalness:0.1});
-  g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.22,1.0,8), bMat));
-  var nose=new THREE.Mesh(new THREE.ConeGeometry(0.18,0.5,8),nMat); nose.position.y=0.75; g.add(nose);
-  for(var fi=0;fi<4;fi++){
-    var fa=fi*(Math.PI/2);
-    var fin=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.28,0.38),bMat);
-    fin.position.set(Math.sin(fa)*0.18,-0.42,Math.cos(fa)*0.18);
-    fin.rotation.y=fa; g.add(fin);
+  var white = metal(0xf2f4f7, 0.32, 0.35, 0x8a96a4, 0.35);
+  var black = metal(0x14181e, 0.4, 0.6, 0x05080c, 0.3);
+  var steel = metal(0x9aa3ad, 0.22, 0.95, 0x20262d, 0.4);
+  var red   = metal(0xd8322a, 0.35, 0.3, 0x5a0d08, 0.5);
+
+  // smooth ogive body (lathe profile, axis = +y)
+  var prof = [[0,1.28],[0.05,1.22],[0.1,1.12],[0.145,0.98],[0.18,0.8],[0.2,0.62],[0.205,0.45],[0.205,-0.55],[0.19,-0.6],[0,-0.6]]
+    .map(function(p){ return new THREE.Vector2(p[0],p[1]); });
+  var body = new THREE.Mesh(new THREE.LatheGeometry(prof, 36), white); g.add(body);
+  // nose tip, stripes and classic black/white roll pattern
+  var tip = new THREE.Mesh(new THREE.LatheGeometry([[0,1.285],[0.052,1.215],[0.075,1.17],[0,1.17]].map(function(p){return new THREE.Vector2(p[0],p[1]);}),24), red); g.add(tip);
+  [0.3,-0.35].forEach(function(y){
+    var band = new THREE.Mesh(new THREE.CylinderGeometry(0.209,0.209,0.07,36), black); band.position.y=y; g.add(band);
+  });
+  var roll = new THREE.Mesh(new THREE.CylinderGeometry(0.208,0.208,0.2,36,1,true,0,Math.PI), black);
+  roll.position.y = 0.0; g.add(roll);
+  var roll2 = new THREE.Mesh(new THREE.CylinderGeometry(0.208,0.208,0.14,36,1,true,Math.PI,Math.PI), black);
+  roll2.position.y = -0.2; g.add(roll2);
+  // porthole
+  var port = new THREE.Mesh(new THREE.TorusGeometry(0.05,0.012,8,20), steel);
+  port.position.set(0,0.62,0.192); port.rotation.x = -0.12; g.add(port);
+  var glass = new THREE.Mesh(new THREE.CircleGeometry(0.045,20), new THREE.MeshBasicMaterial({color:0x9fe8ff}));
+  glass.position.set(0,0.62,0.19); glass.rotation.x = -0.12; g.add(glass);
+  // swept fins
+  var fs = new THREE.Shape();
+  fs.moveTo(0,0); fs.lineTo(0.2,-0.2); fs.lineTo(0.22,-0.46); fs.lineTo(0,-0.34); fs.lineTo(0,0);
+  var finGeo = new THREE.ExtrudeGeometry(fs, {depth:0.018, bevelEnabled:false});
+  for (var fi=0; fi<4; fi++) {
+    var piv = new THREE.Group(); piv.rotation.y = fi*Math.PI/2 + Math.PI/4; g.add(piv);
+    var fin = new THREE.Mesh(finGeo, fi%2?black:red); fin.position.set(0.19,-0.2,-0.009); piv.add(fin);
   }
-  var winMesh=new THREE.Mesh(new THREE.SphereGeometry(0.07,7,5),
-    new THREE.MeshStandardMaterial({color:0x88ddff,emissive:0x88ddff,emissiveIntensity:1.3}));
-  winMesh.position.y=0.15; g.add(winMesh);
-  var flameMat=new THREE.MeshBasicMaterial({color:0xff9944,transparent:true,opacity:0.9,side:THREE.DoubleSide});
-  var flame=new THREE.Mesh(new THREE.ConeGeometry(0.14,0.55,8),flameMat);
-  flame.position.y=-0.77; flame.rotation.x=Math.PI; g.add(flame);
-  var iMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.7,side:THREE.DoubleSide});
-  var iFlame=new THREE.Mesh(new THREE.ConeGeometry(0.07,0.35,6),iMat);
-  iFlame.position.y=-0.77; iFlame.rotation.x=Math.PI; g.add(iFlame);
-  var exL=new THREE.PointLight(0xff8833,5.5,4.0); exL.position.y=-0.9; g.add(exL);
+  // engine bell
+  var bell = new THREE.Mesh(new THREE.LatheGeometry([[0.07,-0.6],[0.075,-0.64],[0.11,-0.74],[0.14,-0.82]].map(function(p){return new THREE.Vector2(p[0],p[1]);}),28),
+    metal(0x3a3f46, 0.3, 0.9, 0x2a1408, 0.6));
+  bell.material.side = THREE.DoubleSide; g.add(bell);
+
+  // exhaust: outer plume, inner core, nozzle glow, shock diamonds
+  var plume = new THREE.Group(); plume.position.y = -0.82; g.add(plume);
+  function flame(r, len, col, op){
+    var m = new THREE.MeshBasicMaterial({color:col, map:FLAME_TEX, transparent:true, opacity:op,
+      blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide});
+    var c = new THREE.Mesh(new THREE.ConeGeometry(r, len, 24, 1, true), m);
+    c.rotation.x = Math.PI; c.position.y = -len/2; plume.add(c); return c;
+  }
+  var outer = flame(0.17, 1.3, 0xff7a2a, 0.75);
+  var mid   = flame(0.12, 0.85, 0xffc060, 0.85);
+  var core  = flame(0.07, 0.45, 0xffffff, 1.0);
+  var glow = new THREE.Sprite(new THREE.SpriteMaterial({map:PUFF_TEX, color:0xffa050, transparent:true, opacity:0.9,
+    blending:THREE.AdditiveBlending, depthWrite:false}));
+  glow.scale.setScalar(0.9); plume.add(glow);
+  var diamonds = [];
+  for (var di=0; di<3; di++) {
+    var d = new THREE.Sprite(new THREE.SpriteMaterial({map:PUFF_TEX, color:0xfff0d0, transparent:true, opacity:0.8,
+      blending:THREE.AdditiveBlending, depthWrite:false}));
+    d.position.y = -0.18 - di*0.2; d.scale.setScalar(0.16 - di*0.03); plume.add(d); diamonds.push(d);
+  }
+  var exL = new THREE.PointLight(0xff8833, 5.5, 5.0); exL.position.y = -1.0; g.add(exL);
+
   var theta=Math.random()*Math.PI*2;
   var sy=1.5+Math.random()*3.5;
   var sr=22;
@@ -1386,9 +1483,41 @@ function spawnRocket() {
   g.quaternion.copy(q);
   scene.add(g);
   var rHit = new THREE.Mesh(new THREE.SphereGeometry(1.3,8,6), HIT_MAT); g.add(rHit);
-  var rk = {g:g, dir:dir, flame:flame, iFlame:iFlame, flameMat:flameMat, iMat:iMat, spd:4+Math.random()*2.5, t:0, life:11+Math.random()*4, exL:exL, hit:rHit, boost:0};
+  var rk = {g:g, dir:dir, plume:plume, flames:[outer,mid,core], glow:glow, diamonds:diamonds,
+    spd:4+Math.random()*2.5, t:0, life:11+Math.random()*4, exL:exL, hit:rHit, boost:0, smokeT:0};
   rHit.userData.rocket = rk;
   rockets.push(rk);
+}
+
+var _rkN = new THREE.Vector3();
+function updateRockets(dt) {
+  nextRocket -= dt;
+  if (nextRocket <= 0) { spawnRocket(); nextRocket = 10+Math.random()*14; }
+  rockets = rockets.filter(function(rk) {
+    rk.t += dt; var p = rk.t/rk.life;
+    if (p >= 1) { scene.remove(rk.g); return false; }
+    var boosting = rk.boost > 0;
+    if (boosting) { rk.boost -= dt; rk.g.rotateY(dt*9); }
+    var spd = rk.spd*(boosting?3.2:1);
+    rk.g.position.addScaledVector(rk.dir, spd*dt);
+    var flick = 0.85 + Math.random()*0.3, fs = boosting ? 1.7 : 1;
+    rk.plume.scale.set(fs*(0.95+Math.random()*0.1), fs*flick, fs*(0.95+Math.random()*0.1));
+    rk.flames[0].material.opacity = 0.6*flick; rk.flames[1].material.opacity = 0.75*flick;
+    rk.glow.material.opacity = 0.75 + Math.random()*0.25;
+    rk.diamonds.forEach(function(d,i){ d.material.opacity = (0.55 + Math.random()*0.4)*(1 - i*0.2); });
+    rk.exL.intensity = 5.5*flick*(boosting?2:1)*(1-p*0.3);
+    // smoke trail: puffs left behind at the nozzle, drifting slowly
+    rk.smokeT -= dt;
+    if (rk.smokeT <= 0) {
+      rk.smokeT = (LOW_POWER ? 0.07 : 0.035) / (boosting ? 2 : 1);
+      _rkN.set(0,-1.05,0); rk.g.localToWorld(_rkN);
+      var v = rk.dir.clone().multiplyScalar(-0.6 - Math.random()*0.4);
+      v.x += (Math.random()-0.5)*0.3; v.y += (Math.random()-0.5)*0.3 + 0.05; v.z += (Math.random()-0.5)*0.3;
+      spawnSmoke(_rkN.clone(), v, Math.random() < 0.35);
+    }
+    return true;
+  });
+  updateSmoke(dt);
 }
 
 // ─── Robot ────────────────────────────────────────────────────────────────────
@@ -1582,7 +1711,10 @@ var Robot = (function(){
     this.leftArm.rotation.z=-0.07; this.rightArm.rotation.z=0.07;
     this.leftElbow.rotation.x=-0.18-Math.max(0,-s)*0.5*g; this.rightElbow.rotation.x=-0.18-Math.max(0,s)*0.5*g;
     this.coreMat.emissiveIntensity=1.3+Math.sin(t*2.2)*0.5;
-    r.position.y=this.baseY + Math.sin(t*1.25)*0.022*(1-g) + (1-Math.cos(2*p))*0.03*g;
+    // stand on the dock when home, step down onto the floor when walking off
+    var dh=Math.sqrt(r.position.x*r.position.x+r.position.z*r.position.z);
+    this.groundY=damp(this.groundY||0, dh<0.86 ? DOCK_TOP : 0, 14, dt);
+    r.position.y=this.baseY + this.groundY + Math.sin(t*1.25)*0.022*(1-g) + (1-Math.cos(2*p))*0.03*g;
     r.rotation.z=s*0.035*g;
     this.bodyG.rotation.x=0.07*g; this.bodyG.rotation.y=s*0.09*g;
     this.headG.rotation.x=-0.04*g + Math.cos(2*p)*0.03*g;
@@ -1599,6 +1731,106 @@ var Robot = (function(){
 })();
 
 var robot = new Robot();
+
+// ── UNIT-E's charging dock ──────────────────────────────────────────────────
+// Layered metal platform, a printed pad with its name ringing the edge, a glowing
+// rim, a slowly turning segmented halo on the floor, four beacon pylons, and
+// "charging" rings that rise off the pad while UNIT-E is standing on it.
+var DOCK_TOP = 0.07;
+var dock = (function(){
+  var g = new THREE.Group(); scene.add(g);
+  var dark  = new THREE.MeshStandardMaterial({color:0x0a1622, roughness:0.35, metalness:0.85, emissive:0x04101a, emissiveIntensity:0.6});
+  var steel = new THREE.MeshStandardMaterial({color:0x2a3f55, roughness:0.28, metalness:0.9, emissive:0x0a1a28, emissiveIntensity:0.6});
+  var glowM = new THREE.MeshStandardMaterial({color:0x00d4ff, emissive:0x00d4ff, emissiveIntensity:1.6, roughness:0.3});
+
+  var foot = new THREE.Mesh(new THREE.CylinderGeometry(1.0,1.06,0.03,64), dark); foot.position.y=0.015; foot.receiveShadow=true; g.add(foot);
+  var deck = new THREE.Mesh(new THREE.CylinderGeometry(0.86,0.94,0.04,64), steel); deck.position.y=0.05; deck.receiveShadow=true; g.add(deck);
+  var rim = new THREE.Mesh(new THREE.TorusGeometry(0.87,0.016,10,80), glowM); rim.rotation.x=Math.PI/2; rim.position.y=DOCK_TOP; g.add(rim);
+  var rim2 = new THREE.Mesh(new THREE.TorusGeometry(1.03,0.01,8,80), glowM); rim2.rotation.x=Math.PI/2; rim2.position.y=0.032; g.add(rim2);
+
+  // printed pad: circuit rings, tick marks and the dock's name around the edge
+  var padTex = (function(){
+    var S=512, c=document.createElement('canvas'); c.width=c.height=S;
+    var x=c.getContext('2d'), C=S/2;
+    x.fillStyle='#06121c'; x.fillRect(0,0,S,S);
+    var rg=x.createRadialGradient(C,C,0,C,C,C); rg.addColorStop(0,'rgba(0,212,255,0.35)'); rg.addColorStop(0.5,'rgba(0,212,255,0.06)'); rg.addColorStop(1,'rgba(0,0,0,0)');
+    x.fillStyle=rg; x.fillRect(0,0,S,S);
+    x.strokeStyle='rgba(0,212,255,0.85)'; x.lineWidth=3; x.beginPath(); x.arc(C,C,C-14,0,Math.PI*2); x.stroke();
+    x.strokeStyle='rgba(0,212,255,0.35)'; x.lineWidth=1.5; x.beginPath(); x.arc(C,C,C-70,0,Math.PI*2); x.stroke();
+    x.strokeStyle='rgba(0,212,255,0.55)'; x.lineWidth=2; x.beginPath(); x.arc(C,C,92,0,Math.PI*2); x.stroke();
+    for (var i=0;i<72;i++){ var a=i/72*Math.PI*2, r1=C-70, r2=r1+(i%6===0?16:7);
+      x.strokeStyle='rgba(0,212,255,'+(i%6===0?0.8:0.35)+')'; x.lineWidth=i%6===0?2.5:1.2;
+      x.beginPath(); x.moveTo(C+Math.cos(a)*r1,C+Math.sin(a)*r1); x.lineTo(C+Math.cos(a)*r2,C+Math.sin(a)*r2); x.stroke(); }
+    // hex cells around the centre
+    x.strokeStyle='rgba(0,212,255,0.18)'; x.lineWidth=1.2;
+    for (var hq=-3;hq<=3;hq++) for (var hr=-3;hr<=3;hr++){ var hx=C+hq*34+(hr%2?17:0), hy=C+hr*29;
+      var dd=Math.hypot(hx-C,hy-C); if(dd<100||dd>165) continue;
+      x.beginPath(); for(var k=0;k<6;k++){var ha=k*Math.PI/3+Math.PI/6; x.lineTo(hx+17*Math.cos(ha),hy+17*Math.sin(ha));} x.closePath(); x.stroke(); }
+    // name around the edge
+    var txt='UNIT-E  ·  CHARGING DOCK  ·  EST. 2026  ·  ';
+    x.font='bold 22px "Courier New", monospace'; x.fillStyle='rgba(140,235,255,0.9)'; x.textAlign='center'; x.textBaseline='middle';
+    for (var t=0;t<2;t++) for (var ci=0;ci<txt.length;ci++){
+      var ang=(t*txt.length+ci)/(txt.length*2)*Math.PI*2 - Math.PI/2;
+      x.save(); x.translate(C+Math.cos(ang)*(C-42), C+Math.sin(ang)*(C-42)); x.rotate(ang+Math.PI/2); x.fillText(txt[ci],0,0); x.restore(); }
+    // centre emblem
+    x.fillStyle='rgba(0,212,255,0.9)'; x.beginPath(); x.arc(C,C,10,0,Math.PI*2); x.fill();
+    x.strokeStyle='rgba(0,212,255,0.9)'; x.lineWidth=3;
+    for (var s=0;s<3;s++){ x.beginPath(); x.arc(C,C,26,s*Math.PI*2/3+0.3,s*Math.PI*2/3+1.6); x.stroke(); }
+    var tx=new THREE.CanvasTexture(c); tx.anisotropy=renderer.capabilities.getMaxAnisotropy(); return tx;
+  })();
+  var pad = new THREE.Mesh(new THREE.CircleGeometry(0.8,64), new THREE.MeshBasicMaterial({map:padTex}));
+  pad.rotation.x=-Math.PI/2; pad.position.y=DOCK_TOP+0.001; g.add(pad);
+  var emblemSpin = new THREE.Mesh(new THREE.RingGeometry(0.16,0.19,48,1,0,Math.PI*1.2),
+    new THREE.MeshBasicMaterial({color:0x7ff0ff, transparent:true, opacity:0.8, side:THREE.DoubleSide, depthWrite:false, blending:THREE.AdditiveBlending}));
+  emblemSpin.rotation.x=-Math.PI/2; emblemSpin.position.y=DOCK_TOP+0.004; g.add(emblemSpin);
+
+  // segmented halo on the floor, slowly turning
+  var halo = new THREE.Group(); halo.position.y=0.012; g.add(halo);
+  var haloMats=[];
+  for (var i=0;i<16;i++){
+    var m=new THREE.MeshBasicMaterial({color:0x00d4ff, transparent:true, opacity:0.5, side:THREE.DoubleSide, depthWrite:false, blending:THREE.AdditiveBlending});
+    var seg=new THREE.Mesh(new THREE.RingGeometry(1.12,1.2,10,1,i/16*Math.PI*2,Math.PI*2/16*0.7), m);
+    seg.rotation.x=-Math.PI/2; halo.add(seg); haloMats.push(m);
+  }
+  // four beacon pylons
+  var beacons=[];
+  for (var p=0;p<4;p++){
+    var a=p*Math.PI/2+Math.PI/4;
+    var py=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.05,0.16,10), dark); py.position.set(Math.cos(a)*0.97,0.11,Math.sin(a)*0.97); g.add(py);
+    var bm=new THREE.MeshBasicMaterial({color:0x7ff0ff});
+    var bl=new THREE.Mesh(new THREE.SphereGeometry(0.03,12,8), bm); bl.position.set(Math.cos(a)*0.97,0.21,Math.sin(a)*0.97); g.add(bl);
+    beacons.push(bm);
+  }
+  // rising charge rings
+  var charge=[];
+  for (var r=0;r<3;r++){
+    var cm=new THREE.MeshBasicMaterial({color:0x00d4ff, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending});
+    var ring=new THREE.Mesh(new THREE.TorusGeometry(0.42,0.01,8,48), cm); ring.rotation.x=Math.PI/2; g.add(ring);
+    charge.push({m:ring, mat:cm, phase:r/3});
+  }
+  var light=new THREE.PointLight(0x00d4ff,0.8,2.6); light.position.y=0.45; g.add(light);
+  return {g:g, rimMat:glowM, halo:halo, haloMats:haloMats, emblem:emblemSpin, beacons:beacons, charge:charge, light:light, home:0};
+})();
+
+function updateDock(dt) {
+  var d=Math.sqrt(robot.root.position.x*robot.root.position.x+robot.root.position.z*robot.root.position.z);
+  var atHome = (d < 0.3 && robot.state === 'idle') ? 1 : 0;
+  dock.home = damp(dock.home, atHome, 3, dt);
+  dock.halo.rotation.y += dt*0.12;
+  dock.emblem.rotation.z -= dt*1.4;
+  dock.haloMats.forEach(function(m,i){ m.opacity = 0.18 + 0.32*Math.max(0, Math.sin(gt*2.2 - i*0.4)); });
+  dock.rimMat.emissiveIntensity = 1.2 + Math.sin(gt*2)*0.4 + dock.home*0.4;
+  var blink = Math.floor(gt*2) % 4;
+  dock.beacons.forEach(function(m,i){ m.color.setHex(i===blink ? 0xffffff : 0x1a7a99); });
+  dock.charge.forEach(function(c){
+    var q=((gt*0.45)+c.phase)%1;
+    c.m.position.y = DOCK_TOP + 0.02 + q*1.6;
+    c.m.scale.setScalar(1 - q*0.25);
+    c.mat.opacity = dock.home * 0.7 * Math.sin(q*Math.PI);
+  });
+  dock.light.intensity = 0.6 + dock.home*0.5 + Math.sin(gt*2)*0.15;
+}
+
 
 // ─── Stations ─────────────────────────────────────────────────────────────────
 
@@ -1842,8 +2074,9 @@ function updateMiniSpeech(dt) {
     if (miniSay.hold <= 0) { miniSay.active = false; miniSayEl.classList.remove('show'); }
   }
   _mv.copy(miniSay.mr.m.g.position); _mv.y += 0.85; _mv.project(camera);
-  miniSayEl.style.left = ((_mv.x + 1) / 2 * window.innerWidth) + 'px';
-  miniSayEl.style.top  = ((-_mv.y + 1) / 2 * window.innerHeight) + 'px';
+  var mw = miniSayEl.offsetWidth, mh = miniSayEl.offsetHeight, W = window.innerWidth, H = window.innerHeight;
+  miniSayEl.style.left = Math.max(mw/2 + 10, Math.min(W - mw/2 - 10, (_mv.x + 1) / 2 * W)) + 'px';
+  miniSayEl.style.top  = Math.max(mh + 20, Math.min(H - 10, (-_mv.y + 1) / 2 * H)) + 'px';
   miniSayEl.style.visibility = _mv.z > 1 ? 'hidden' : '';
 }
 var miniHits = [];
@@ -1851,7 +2084,7 @@ miniRobots.forEach(function(mr,i){
   mr.info = MINI_INFO[i]; mr.hop = 0; mr.lineIdx = 0;
   mr.baseY = mr.m.g.position.y; mr.baseRot = mr.m.g.rotation.y;
   mr.nextBlink = 1 + Math.random()*3; mr.blinkT = 0;
-  var h = new THREE.Mesh(new THREE.SphereGeometry(0.42,8,6), HIT_MAT);
+  var h = new THREE.Mesh(new THREE.SphereGeometry(0.6,8,6), HIT_MAT);
   h.position.y = 0.32; h.userData.mini = mr; mr.m.g.add(h); miniHits.push(h);
 });
 // ─── Bot social layer: detours, greetings, high fives ───────────────────────
@@ -1872,6 +2105,7 @@ miniRobots.forEach(function(mr){
   var w = WORKSPACE[mr.type];
   var v = new THREE.Vector3(w[0],0,w[1]).applyEuler(new THREE.Euler(0,mr.baseRot,0)).add(mr.m.g.position);
   mr.obs = {r:w[2], ro:Math.sqrt(v.x*v.x+v.z*v.z), ao:Math.atan2(v.x,v.z)};
+  mr.focusPt = v.clone();
   mr.armBase = {x:mr.m.armRG.rotation.x, z:mr.m.armRG.rotation.z};
   obstacles.push(mr);
 });
@@ -1983,7 +2217,24 @@ function updateTaskGreet(mr, dt) {
   m.headG.rotation.x *= (1-k);
 }
 
+// ─── Camera focus on a bot ───────────────────────────────────────────────────
+var camFocus = null, camYaw = 0;
+var zoomBtn = document.getElementById('zoom-out');
+function focusMini(mr) {
+  if (panelOpen) closePanel();
+  camFocus = mr;
+  zoomBtn.classList.add('show');
+  document.getElementById('hint').style.opacity = '0';
+}
+function unfocusCam() {
+  if (!camFocus) return;
+  camFocus = null;
+  zoomBtn.classList.remove('show');
+}
+zoomBtn.addEventListener('click', function(e){ e.stopPropagation(); unfocusCam(); });
+
 function pokeMini(mr) {
+  focusMini(mr);
   if (mr.hop <= 0) {
     mr.hop = 1;
     var p = mr.m.g.position.clone(); p.y += 0.6;
@@ -2039,23 +2290,72 @@ var ufo = null, nextUfo = 7;
 var UFO_LINES = ['UNIDENTIFIED OBJECT. PROBABLY A GAN ARTIFACT.', 'IT FLED. I ONLY WANTED ITS TRAINING DATA.', 'OUT-OF-DISTRIBUTION SAMPLE. LOGGED.'];
 function spawnUfo() {
   var g = new THREE.Group();
-  var hull = new THREE.Mesh(new THREE.SphereGeometry(0.9,28,14),
-    new THREE.MeshStandardMaterial({color:0xb8c4d0, emissive:0x8090a0, emissiveIntensity:0.5, roughness:0.25, metalness:0.85}));
-  hull.scale.set(1,0.26,1); g.add(hull);
-  var dome = new THREE.Mesh(new THREE.SphereGeometry(0.42,18,10,0,Math.PI*2,0,Math.PI/2),
-    new THREE.MeshStandardMaterial({color:0x66ffe0, emissive:0x33ffcc, emissiveIntensity:0.9, transparent:true, opacity:0.75}));
-  dome.position.y = 0.12; g.add(dome);
-  var lights = [];
-  for (var i=0;i<8;i++){
-    var a = i/8*Math.PI*2;
-    var lm = new THREE.MeshBasicMaterial({color:i%2?0xff3080:0x00d4ff});
-    var l = new THREE.Mesh(new THREE.SphereGeometry(0.06,6,6), lm);
-    l.position.set(Math.cos(a)*0.78, -0.02, Math.sin(a)*0.78); g.add(l); lights.push(lm);
+  var spinG = new THREE.Group(); g.add(spinG);          // hull + lights spin, dome stays level
+  var hullM = metal(0xaab4c0, 0.22, 0.9, 0x2a323c, 0.55);
+  var darkM = metal(0x2a3038, 0.35, 0.85, 0x0a0e14, 0.5);
+  // classic saucer profile
+  var prof = [[0,-0.2],[0.3,-0.19],[0.62,-0.13],[0.9,-0.05],[1.02,0.0],[0.98,0.035],[0.8,0.08],[0.55,0.13],[0.42,0.15],[0,0.155]]
+    .map(function(p){ return new THREE.Vector2(p[0],p[1]); });
+  var hull = new THREE.Mesh(new THREE.LatheGeometry(prof, 48), hullM); spinG.add(hull);
+  var rim = new THREE.Mesh(new THREE.TorusGeometry(1.0,0.035,10,64), darkM); rim.rotation.x = Math.PI/2; spinG.add(rim);
+  // panel seams on top
+  for (var s=0; s<12; s++) {
+    var a = s/12*Math.PI*2;
+    var seam = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.008,0.012), darkM);
+    seam.position.set(Math.cos(a)*0.68, 0.1, Math.sin(a)*0.68); seam.rotation.y = -a; seam.rotation.z = -0.17;
+    spinG.add(seam);
   }
-  var beamMat = new THREE.MeshBasicMaterial({color:0x66ffe0, transparent:true, opacity:0, side:THREE.DoubleSide,
+  // glowing portholes
+  for (var w=0; w<10; w++) {
+    var a2 = w/10*Math.PI*2;
+    var ph = new THREE.Mesh(new THREE.SphereGeometry(0.045,10,8), new THREE.MeshBasicMaterial({color:0xffe3a0}));
+    ph.scale.y = 0.6; ph.position.set(Math.cos(a2)*0.78, 0.07, Math.sin(a2)*0.78); spinG.add(ph);
+  }
+  // chasing underside lights
+  var lights = [];
+  for (var i=0; i<14; i++) {
+    var a3 = i/14*Math.PI*2;
+    var lm = new THREE.MeshBasicMaterial({color:0x00d4ff});
+    var l = new THREE.Mesh(new THREE.SphereGeometry(0.05,8,6), lm);
+    l.position.set(Math.cos(a3)*0.86, -0.06, Math.sin(a3)*0.86); spinG.add(l); lights.push(lm);
+  }
+  // underside engine core
+  var coreM = new THREE.MeshBasicMaterial({color:0x66ffe0, side:THREE.DoubleSide});
+  var coreDisc = new THREE.Mesh(new THREE.CircleGeometry(0.26,32), coreM);
+  coreDisc.rotation.x = Math.PI/2; coreDisc.position.y = -0.205; g.add(coreDisc);
+  var coreRing = new THREE.Mesh(new THREE.TorusGeometry(0.3,0.03,8,40), darkM); coreRing.rotation.x = Math.PI/2; coreRing.position.y = -0.2; g.add(coreRing);
+  var coreGlow = new THREE.Sprite(new THREE.SpriteMaterial({map:PUFF_TEX, color:0x66ffe0, transparent:true, opacity:0.8,
+    blending:THREE.AdditiveBlending, depthWrite:false}));
+  coreGlow.scale.setScalar(1.2); coreGlow.position.y = -0.3; g.add(coreGlow);
+  // glass dome with a tiny pilot
+  var domeM = new THREE.MeshStandardMaterial({color:0x9ff5ff, emissive:0x1a6a78, emissiveIntensity:0.5,
+    roughness:0.05, metalness:0.2, transparent:true, opacity:0.38, depthWrite:false});
+  if (SKY_ENV) { domeM.envMap = SKY_ENV; domeM.envMapIntensity = 1.5; }
+  var dome = new THREE.Mesh(new THREE.SphereGeometry(0.42,32,16,0,Math.PI*2,0,Math.PI/2), domeM);
+  dome.position.y = 0.14; g.add(dome);
+  var alien = new THREE.Group(); alien.position.y = 0.16; g.add(alien);
+  var skin = new THREE.MeshStandardMaterial({color:0x7dff8a, emissive:0x2fa040, emissiveIntensity:0.6, roughness:0.5});
+  var torso = new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.1,0.14,14), skin); torso.position.y = 0.07; alien.add(torso);
+  var head = new THREE.Mesh(new THREE.SphereGeometry(0.1,18,14), skin); head.scale.set(1,1.15,0.95); head.position.y = 0.23; alien.add(head);
+  [-1,1].forEach(function(sd){
+    var eye = new THREE.Mesh(new THREE.SphereGeometry(0.035,12,8), new THREE.MeshBasicMaterial({color:0x05070a}));
+    eye.scale.set(0.8,1.3,0.5); eye.position.set(sd*0.042,0.24,0.085); eye.rotation.z = sd*0.4; alien.add(eye);
+    var ant = new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,0.1,6), skin);
+    ant.position.set(sd*0.05,0.36,0); ant.rotation.z = -sd*0.35; alien.add(ant);
+    var bob = new THREE.Mesh(new THREE.SphereGeometry(0.018,8,6), new THREE.MeshBasicMaterial({color:0xfff27a}));
+    bob.position.set(sd*0.07,0.41,0); alien.add(bob);
+  });
+  // tractor beam: bright under the saucer, fading toward the ground
+  var beamTexDown = (function(){
+    var c=document.createElement('canvas'); c.width=8; c.height=128;
+    var x=c.getContext('2d'), gr=x.createLinearGradient(0,0,0,128);
+    gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(0.5,'rgba(255,255,255,0.35)'); gr.addColorStop(1,'rgba(255,255,255,0)');
+    x.fillStyle=gr; x.fillRect(0,0,8,128); return new THREE.CanvasTexture(c);
+  })();
+  var beamMat = new THREE.MeshBasicMaterial({color:0x66ffe0, map:beamTexDown, transparent:true, opacity:0, side:THREE.DoubleSide,
     blending:THREE.AdditiveBlending, depthWrite:false});
-  var beam = new THREE.Mesh(new THREE.ConeGeometry(0.95,3.6,24,1,true), beamMat);
-  beam.position.y = -1.9; g.add(beam);
+  var beam = new THREE.Mesh(new THREE.CylinderGeometry(0.26,1.1,3.6,32,1,true), beamMat);
+  beam.position.y = -2.0; g.add(beam);
   var glow = new THREE.PointLight(0x66ffe0, 1.5, 6); glow.position.y = -0.4; g.add(glow);
   var hit = new THREE.Mesh(new THREE.SphereGeometry(1.4,8,6), HIT_MAT); g.add(hit);
 
@@ -2063,7 +2363,8 @@ function spawnUfo() {
   var from = new THREE.Vector3(-22*side, 2.6+Math.random()*1.0, -8-Math.random()*4);
   var to   = new THREE.Vector3( 22*side, 2.6+Math.random()*1.0, -7-Math.random()*4);
   g.position.copy(from); scene.add(g);
-  ufo = {g:g, from:from, to:to, t:0, dur:15, beamMat:beamMat, lights:lights, glow:glow, hit:hit, flee:false, fleeT:0};
+  ufo = {g:g, spinG:spinG, from:from, to:to, t:0, dur:15, beamMat:beamMat, lights:lights, glow:glow, hit:hit,
+    alien:alien, coreGlow:coreGlow, flee:false, fleeT:0};
   hit.userData.ufo = ufo;
   if (!say.active && !panelOpen) robotSay('ALERT: UNIDENTIFIED FLYING OBJECT. ' + TAPV + ' IT?', 3.2);
 }
@@ -2180,8 +2481,16 @@ function updateSpace(dt) {
   if (ufo) {
     var u = ufo;
     u.t += dt;
-    u.lights.forEach(function(m,i){ m.color.setHex(((Math.floor(gt*6)+i)%2) ? 0xff3080 : 0x00d4ff); });
-    u.g.rotation.y += dt*1.5;
+    // chasing lights, spinning hull, a pilot who looks around
+    var head = Math.floor(gt*14) % u.lights.length;
+    u.lights.forEach(function(m,i){
+      var d = (i - head + u.lights.length) % u.lights.length;
+      m.color.setHex(d === 0 ? 0xffffff : d < 3 ? 0xff3080 : 0x0a6a88);
+    });
+    u.spinG.rotation.y += dt*1.2;
+    u.alien.rotation.y = Math.sin(u.t*0.9)*1.1;
+    u.alien.position.y = 0.16 + Math.sin(u.t*3)*0.01;
+    u.coreGlow.material.opacity = 0.6 + Math.sin(u.t*6)*0.25;
     if (!u.flee) {
       var s = u.t/u.dur;
       var e = s*s*(3-2*s);
@@ -2272,6 +2581,23 @@ function updateWave(dt) {
   }
 }
 
+// Small, far-away bots are hard to hit (and station beams sit in front of the
+// back ones), so a click anywhere near a bot on screen counts as clicking it.
+var _pv = new THREE.Vector3();
+function pickMiniScreen(cx, cy) {
+  var best = null, bd = IS_TOUCH ? 60 : 46;
+  miniRobots.forEach(function(mr){
+    var pts = [mr.m.g.position]; if (mr.focusPt) pts.push(mr.focusPt);
+    pts.forEach(function(pt){
+      _pv.copy(pt); _pv.y += 0.3; _pv.project(camera);
+      if (_pv.z > 1) return;
+      var d = Math.hypot((_pv.x+1)/2*window.innerWidth - cx, (-_pv.y+1)/2*window.innerHeight - cy);
+      if (d < bd) { bd = d; best = mr; }
+    });
+  });
+  return best;
+}
+
 renderer.domElement.addEventListener('click', function(e) {
   mouse2d.x=(e.clientX/window.innerWidth)*2-1;
   mouse2d.y=-(e.clientY/window.innerHeight)*2+1;
@@ -2284,6 +2610,9 @@ renderer.domElement.addEventListener('click', function(e) {
     return;
   }
 
+  var near = pickMiniScreen(e.clientX, e.clientY);
+  if (near) { pokeMini(near); return; }
+
   var hits=raycaster.intersectObjects(interactiveList());
   if(hits.length){
     var u=hits[0].object.userData;
@@ -2295,6 +2624,7 @@ renderer.domElement.addEventListener('click', function(e) {
     else if(u.planetIdx!==undefined) pokePlanet(u.planetIdx);
     return;
   }
+  if (camFocus) { unfocusCam(); return; }
   var fp=new THREE.Vector3();
   if(raycaster.ray.intersectPlane(floorPlane,fp) && Math.sqrt(fp.x*fp.x+fp.z*fp.z)<9.5) spawnRipple(fp);
   else plotStar(raycaster.ray.at(36, new THREE.Vector3()));
@@ -2308,7 +2638,7 @@ renderer.domElement.addEventListener('mousemove', function(e) {
   var hits=raycaster.intersectObjects(interactiveList());
   var hu=hits.length?hits[0].object.userData:null;
   hoveredSt=(hu&&hu.stIdx!==undefined)?hu.stIdx:null;
-  renderer.domElement.style.cursor=hits.length?'pointer':'default';
+  renderer.domElement.style.cursor=(hits.length||pickMiniScreen(e.clientX,e.clientY))?'pointer':'default';
 
   if(robot.state==='idle'){
     var fp2=new THREE.Vector3(); raycaster.ray.intersectPlane(floorPlane,fp2);
@@ -2326,6 +2656,7 @@ var activeIdx=null, panelOpen=false;
 var panelEl=document.getElementById('panel');
 
 function navigateTo(idx) {
+  unfocusCam();
   if (waving) resetWave();
   activeIdx=idx; panelOpen=true;
   panelEl.classList.remove('open');
@@ -2363,7 +2694,7 @@ document.querySelectorAll('.nav-dot').forEach(function(dot){
 
 document.addEventListener('keydown', function(e) {
   if(e.key>='1'&&e.key<='5') navigateTo(parseInt(e.key)-1);
-  else if(e.key==='Escape') { if(panelOpen) closePanel(); }
+  else if(e.key==='Escape') { if(camFocus) unfocusCam(); else if(panelOpen) closePanel(); }
   else if(e.key==='ArrowRight'&&activeIdx!==null) navigateTo((activeIdx+1)%5);
   else if(e.key==='ArrowLeft'&&activeIdx!==null)  navigateTo((activeIdx+4)%5);
 });
@@ -2405,7 +2736,7 @@ var IDLE_LINES = [
   'THE PLANETS ARE CLICKABLE. I CHECKED.',
   'SHOOTING STARS CAN BE CAUGHT. I BELIEVE IN YOU.',
   TAP + ' EMPTY SKY TO PLOT YOUR OWN STARS.',
-  'THE LITTLE ROBOTS ARE MY COWORKERS. SAY HI.',
+  TAP + ' A LITTLE BOT TO ZOOM IN ON ITS WORK.',
   'RESEARCH STATION RECOMMENDED. PROBABILITY OF INTEREST: 0.97',
   'STATUS: ALL SYSTEMS NOMINAL. AWAITING INPUT.'
 ];
@@ -2437,14 +2768,41 @@ function updateSpeech(dt) {
         idleWait = idleIdx === 0 ? 0.6 : 6 + Math.random() * 4;
       }
     }
-  } else if (booted && !panelOpen && robot.state === 'idle') {
+  } else if (booted && !panelOpen && !camFocus && robot.state === 'idle') {
     idleWait -= dt;
     if (idleWait <= 0) { robotSay(IDLE_LINES[idleIdx % IDLE_LINES.length], 3.8); idleIdx++; }
   }
+  placeRobotBubble();
+}
+
+// Keep UNIT-E's bubble fully on screen: above the head when there's room,
+// otherwise beside the head; never under the panel or past the screen edges.
+var _sv2 = new THREE.Vector3();
+function placeRobotBubble() {
+  var W = window.innerWidth, H = window.innerHeight;
+  var bw = sayEl.offsetWidth, bh = sayEl.offsetHeight;
+  var floorY = panelOpen ? H - panelEl.getBoundingClientRect().height - 12 : H - 12;
   _sv.copy(robot.root.position); _sv.y += 1.95; _sv.project(camera);
-  sayEl.style.left = ((_sv.x + 1) / 2 * window.innerWidth) + 'px';
-  sayEl.style.top  = ((-_sv.y + 1) / 2 * window.innerHeight) + 'px';
-  sayEl.style.visibility = _sv.z > 1 ? 'hidden' : '';
+  var tx = (_sv.x + 1) / 2 * W, ty = (-_sv.y + 1) / 2 * H;
+  var side = panelOpen || (ty - bh - 16 < 10), left = false;
+  var x, y;
+  if (side) {
+    _sv2.copy(robot.root.position); _sv2.y += 1.3; _sv2.project(camera);
+    var hx = (_sv2.x + 1) / 2 * W, hy = (-_sv2.y + 1) / 2 * H;
+    if (hx + 44 + bw <= W - 10) { x = hx; }                       // fits on the right
+    else if (hx - 44 - bw >= 10) { x = hx; left = true; }          // fits on the left
+    else { side = false; }                                          // narrow phone: go above, clamped
+    y = Math.max(bh/2 + 10, Math.min(floorY - bh/2, hy));
+  }
+  if (!side) {
+    x = Math.max(bw/2 + 10, Math.min(W - bw/2 - 10, tx));
+    y = Math.max(bh + 18, Math.min(ty, floorY));
+  }
+  sayEl.classList.toggle('side', side);
+  sayEl.classList.toggle('left', side && left);
+  sayEl.style.left = x + 'px';
+  sayEl.style.top  = y + 'px';
+  sayEl.style.visibility = (_sv.z > 1 || camFocus) ? 'hidden' : '';
 }
 
 // ─── Label projection ─────────────────────────────────────────────────────────
@@ -2725,12 +3083,7 @@ function animate() {
   });
   moons.forEach(function(m){ m.pivot.rotation.y += m.spd * dt; });
 
-  hubRings.forEach(function(hr){
-    if(hr.spin==='y' && hr.m) hr.m.rotation.y += hr.speed*dt;
-    if(hr.topLight) hr.topLight.intensity=0.55+Math.sin(gt*2)*0.25;
-  });
-
-  beaconRing.material.opacity=0.12+Math.sin(gt*2.5)*0.09;
+  updateDock(dt);
   edgeRing.material.opacity=0.55+Math.sin(gt*0.8)*0.12;
 
   for(var pi=0;pi<PC;pi++){
@@ -2748,16 +3101,21 @@ function animate() {
 
   // Camera follow + parallax
   var cb = camBase();
-  var zoomTarget = panelOpen ? 0.62 : 1;
+  // Focused on a bot: fly in close and look at it from in front of its workstation
+  var zoomTarget = camFocus ? ((window.innerWidth/window.innerHeight) < 0.75 ? 0.16 : 0.14) : (panelOpen ? 0.62 : 1);
   camZoom += (zoomTarget - camZoom) * 0.05;
-  camT.lerp(robot.root.position,0.06);
-  var tx=camT.x+mouseParallax.x*0.5;
-  var ty=camT.y+cb.y*camZoom;
-  var tz=camT.z+cb.z*camZoom-mouseParallax.y*0.5;
+  var focusPos = camFocus ? (camFocus.focusPt || camFocus.m.g.position) : robot.root.position;
+  var yawTarget = camFocus ? (camFocus.type === 'patrol' ? camFocus.yaw : camFocus.baseRot) : 0;
+  camYaw += angDiff(camYaw, yawTarget) * 0.04;
+  camT.lerp(focusPos, 0.06);
+  var par = 0.5 * camZoom, hd = cb.z * camZoom;
+  var tx=camT.x + Math.sin(camYaw)*hd + mouseParallax.x*par;
+  var ty=camT.y + cb.y*camZoom;
+  var tz=camT.z + Math.cos(camYaw)*hd - mouseParallax.y*par;
   camera.position.x+=(tx-camera.position.x)*0.055;
   camera.position.y+=(ty-camera.position.y)*0.055;
   camera.position.z+=(tz-camera.position.z)*0.055;
-  camera.lookAt(camT.x,camT.y+0.5,camT.z);
+  camera.lookAt(camT.x, camT.y + (camFocus ? 0.25 : 0.5), camT.z);
 
   var vsTarget = panelOpen ? window.innerHeight*0.3 : 0;
   viewShift += (vsTarget - viewShift) * 0.08;
@@ -2814,23 +3172,8 @@ function animate() {
     return true;
   });
 
-  // ── Rockets ───────────────────────────────────────────────────────────────
-  nextRocket -= dt;
-  if(nextRocket <= 0) { spawnRocket(); nextRocket = 10+Math.random()*14; }
-  rockets = rockets.filter(function(rk) {
-    rk.t += dt; var p = rk.t/rk.life;
-    if(p >= 1) { scene.remove(rk.g); return false; }
-    var boosting = rk.boost > 0;
-    if (boosting) { rk.boost -= dt; rk.g.rotateY(dt*9); }
-    rk.g.position.addScaledVector(rk.dir, rk.spd*(boosting?3.2:1)*dt);
-    var fs = boosting ? 1.8 : 1;
-    rk.flame.scale.set(fs, fs*1.3, fs); rk.iFlame.scale.set(fs, fs*1.3, fs);
-    var flicker = 0.75+Math.random()*0.5;
-    rk.exL.intensity = 5.5*(1-p*0.45)*flicker*(boosting?2:1);
-    rk.flameMat.opacity = 0.9*(1-p*0.3)*flicker;
-    rk.iMat.opacity = 0.7*(1-p*0.3)*flicker;
-    return true;
-  });
+  // ── Rockets ──
+  updateRockets(dt);
 
   updateSpace(dt);
 
