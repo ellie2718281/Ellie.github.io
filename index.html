@@ -526,7 +526,7 @@
     }
     #go-home.show { opacity:1; transform:translate(-50%,0); pointer-events:auto; }
     #go-home:hover { background:rgba(0,212,255,0.14); color:#ffffff; }
-    @media (max-width:768px) { #go-home { top:calc(64px + env(safe-area-inset-top)); font-size:0.66rem; letter-spacing:2px; padding:8px 14px; } }
+    @media (max-width:768px) { #go-home { top:calc(74px + env(safe-area-inset-top)); font-size:0.66rem; letter-spacing:2px; padding:8px 14px; } }
 
     /* ── Reading veil: only while a text panel is open ────────
        Darkens, softens and slightly desaturates the scene, strongest behind the text and
@@ -550,6 +550,58 @@
     }
     @media (prefers-reduced-motion:reduce) { #reading-veil { transition:none; } }
     @media (max-width:768px) { #panel-body { font-size:0.97rem; line-height:1.7; } }
+
+    /* ── Phones and tablets ──────────────────────────────────
+       A labelled tab bar instead of anonymous dots, a thumb stick so you can fly on touch,
+       tips that open at the top and tuck into a corner, lighter effects for mobile GPUs. */
+    #guide li.touch-only { display:none; }
+    #stick, #lift { display:none; }
+    @media (hover:none) {
+      #guide li.touch-only { display:flex; }
+      #stick {
+        display:block; position:fixed; left:18px; bottom:calc(92px + env(safe-area-inset-bottom)); z-index:44;
+        width:108px; height:108px; border-radius:50%; touch-action:none; -webkit-user-select:none; user-select:none;
+        border:1.5px solid rgba(127,231,255,0.38); background:radial-gradient(circle, rgba(0,212,255,0.10), rgba(4,12,24,0.42) 70%);
+        box-shadow:0 0 22px -10px #00d4ff; transition:opacity 0.35s;
+      }
+      #stick::before { content:'▲'; position:absolute; left:50%; top:7px; transform:translateX(-50%); font-size:0.6rem; color:rgba(127,231,255,0.55); }
+      #stick-knob {
+        position:absolute; left:50%; top:50%; width:46px; height:46px; margin:-23px 0 0 -23px; border-radius:50%;
+        background:rgba(127,231,255,0.22); border:1.5px solid #7fe7ff; box-shadow:0 0 14px -4px #00d4ff; pointer-events:none;
+      }
+      #stick.on #stick-knob { background:rgba(127,231,255,0.42); }
+      #lift { display:flex; flex-direction:column; gap:12px; position:fixed; right:18px; bottom:calc(92px + env(safe-area-inset-bottom)); z-index:44; transition:opacity 0.35s; }
+      #lift button {
+        width:50px; height:50px; border-radius:50%; border:1.5px solid rgba(127,231,255,0.45); background:rgba(4,12,24,0.5);
+        color:#a6efff; font-size:0.95rem; touch-action:none; -webkit-user-select:none; user-select:none;
+      }
+      #lift button.on { background:rgba(0,212,255,0.3); color:#ffffff; }
+      #stick.off, #lift.off { opacity:0; pointer-events:none; }
+    }
+    @media (max-width:768px) {
+      #nav {
+        left:0; right:0; top:auto; bottom:0; transform:none; flex-direction:row; justify-content:space-around; gap:0;
+        padding:14px 8px calc(30px + env(safe-area-inset-bottom));
+        background:linear-gradient(to top, rgba(3,8,16,0.9) 0%, rgba(3,8,16,0.6) 60%, rgba(3,8,16,0) 100%);
+      }
+      .nav-dot { width:12px; height:12px; }
+      .nav-dot::before { inset:-14px -22px -26px; }
+      .nav-dot::after {
+        display:block; content:attr(data-m); left:50%; top:19px; transform:translateX(-50%);
+        font-size:0.5rem; letter-spacing:1px; opacity:0.9;
+      }
+      .nav-dot.nav-home { margin:0; }
+      #guide { top:calc(92px + env(safe-area-inset-top)); bottom:auto; }
+      #g-chip { left:auto; right:14px; bottom:auto; top:calc(54px + env(safe-area-inset-top)); }
+      #zoom-out { bottom:calc(82px + env(safe-area-inset-bottom)); }
+      #rl-hud { bottom:calc(132px + env(safe-area-inset-bottom)); }
+      .slabel.edge > span:nth-child(2) { display:none; }          /* pinned outposts shrink to number + distance */
+      .slabel.edge { padding:4px 9px 4px 5px; }
+      /* blurring a WebGL canvas every frame is expensive on phones: tint only */
+      #reading-veil { -webkit-backdrop-filter:none; backdrop-filter:none; }
+      #panel { -webkit-backdrop-filter:none; backdrop-filter:none; background:rgba(5,11,20,0.98); height:60vh; height:60dvh; }
+      #panel-body .gif-grid { grid-template-columns:1fr; }
+    }
   </style>
 </head>
 <body>
@@ -567,12 +619,12 @@
 </div>
 
 <nav id="nav">
-  <div class="nav-dot" data-station="0" data-label="ABOUT"></div>
-  <div class="nav-dot" data-station="1" data-label="RESEARCH"></div>
-  <div class="nav-dot" data-station="2" data-label="INDUSTRY"></div>
-  <div class="nav-dot" data-station="3" data-label="PROJECTS"></div>
-  <div class="nav-dot" data-station="4" data-label="CONTACT"></div>
-  <div class="nav-dot nav-home" id="nav-home" data-label="HOME BASE"></div>
+  <div class="nav-dot" data-station="0" data-label="ABOUT" data-m="ABOUT"></div>
+  <div class="nav-dot" data-station="1" data-label="RESEARCH" data-m="RESEARCH"></div>
+  <div class="nav-dot" data-station="2" data-label="INDUSTRY" data-m="INDUSTRY"></div>
+  <div class="nav-dot" data-station="3" data-label="PROJECTS" data-m="PROJECTS"></div>
+  <div class="nav-dot" data-station="4" data-label="CONTACT" data-m="CONTACT"></div>
+  <div class="nav-dot nav-home" id="nav-home" data-label="HOME BASE" data-m="HOME"></div>
 </nav>
 
 <div id="hint">
@@ -588,6 +640,7 @@
     <li><b style="color:#8eeaff">✦</b><span><em>Drag</em> to look, <span class="desktop-only">scroll</span><span class="touch-only">pinch</span> to zoom</span></li>
     <li><b style="color:#00d4ff">◉</b><span><em class="tap">Click</em> an outpost to fly there</span></li>
     <li class="desktop-only"><b style="color:#9dff9a">▲</b><span><em>W A S D</em> to fly it yourself</span></li>
+    <li class="touch-only"><b style="color:#9dff9a">▲</b><span>Use the <em>stick</em> to fly it yourself</span></li>
     <li><b style="color:#ffcf7a">♪</b><span><em class="tap">Click</em> the robots or the piano</span></li>
   </ul>
   <div class="g-foot"><span class="desktop-only">space ↑ · shift ↓ · H home</span><button id="g-sound">♪ SOUND ON</button></div>
@@ -596,6 +649,8 @@
 <div id="rl-hud"><canvas id="rl-hud-c" width="512" height="300"></canvas></div>
 <button id="zoom-out">← BACK TO UNIT-E</button>
 <button id="go-home">⌂ FLY BACK TO BASE</button>
+<div id="stick" aria-label="Flight stick"><div id="stick-knob"></div></div>
+<div id="lift"><button id="lift-up" aria-label="Climb">▲</button><button id="lift-dn" aria-label="Dive">▼</button></div>
 <div id="mini-say"><span class="say-tag" id="mini-tag"></span><span id="mini-text"></span></div>
 <div id="stars">★ <span id="star-count">0</span> CAUGHT</div>
 <div id="robot-say"><span class="say-tag">UNIT-E://</span><span id="say-text"></span><span class="say-caret">█</span></div>
@@ -760,7 +815,7 @@ var STATIONS = [
 var renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, LOW_POWER ? 1.5 : 2));
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = !IS_TOUCH;          // soft shadows cost more than they show on a phone
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
@@ -3022,6 +3077,8 @@ function updateDeepSpace(dt){
       if (dx*dx+dz*dz<12 && Math.abs(robot.alt-st.py)<3) name=st.label+' OUTPOST'; }
     teleEl.innerHTML=name+' &nbsp;·&nbsp; VEL <b>'+sp.toFixed(1)+'</b> &nbsp;·&nbsp; ALT <b>'+(robot.alt>=0?'+':'')+robot.alt.toFixed(1)+'</b>';
     teleEl.classList.toggle('show', booted && !camFocus && !pianoOpen && !panelShown);
+    var ctlOff=!booted || panelShown || !!camFocus || pianoOpen;
+    document.getElementById('stick').classList.toggle('off', ctlOff); document.getElementById('lift').classList.toggle('off', ctlOff);
     goHomeEl.classList.toggle('show', booted && !camFocus && !pianoOpen && !robot.homing && rp.x*rp.x+rp.z*rp.z > 9.7*9.7);
   }
 }
@@ -4766,7 +4823,7 @@ var IDLE_LINES = [
   'DRAG TO LOOK AROUND. SPACE GOES ALL THE WAY ROUND.',
   IS_TOUCH ? 'TAP A GLOWING LABEL TO START.' : 'TIP: PRESS KEYS 1–5 TO TELEPORT ME.',
   TAP + ' ME. I KNOW SEVEN MOVES.',
-  IS_TOUCH ? 'TAP THE DECK AND I WILL WALK THERE.' : 'W A S D FLIES ME. SPACE CLIMBS, SHIFT DIVES.',
+  IS_TOUCH ? 'THE STICK FLIES ME. THE ARROWS CLIMB AND DIVE.' : 'W A S D FLIES ME. SPACE CLIMBS, SHIFT DIVES.',
   'THE PLANETS ARE CLICKABLE. I CHECKED.',
   'THAT PIANO IS REAL. GO ON, PLAY SOMETHING.',
   'SHOOTING STARS CAN BE CAUGHT. I BELIEVE IN YOU.',
@@ -4834,7 +4891,7 @@ function placeRobotBubble() {
   }
   if (!side) {
     x = Math.max(bw/2 + 10, Math.min(maxR - bw/2 - 10, tx));
-    y = Math.max(bh + 18, Math.min(ty, floorY));
+    y = Math.max(bh + (isMobileLayout() ? 100 : 18), Math.min(ty, floorY));
   }
   sayEl.classList.toggle('side', side);
   sayEl.classList.toggle('left', side && left);
@@ -4923,10 +4980,39 @@ var camRig = {yaw:0.95, pitch:0.6, dist:46, look:1, fov:camFov(), uYaw:0, uPitch
 // ── Flying it yourself: W / S thrust, A / D turn, Space / Shift climb and dive ──
 var keysDown={};
 var PILOT_KEYS={w:1, a:1, s:1, d:1, ' ':1, shift:1};
+var joy={x:0, y:0, v:0, on:false};                 // thumb stick + climb / dive buttons on touch screens
 function pilotInput(){
-  var K=keysDown;
-  return {f:(K.w?1:0)-(K.s?1:0), v:(K[' ']?1:0)-(K.shift?1:0), any:!!(K.w||K.s||K.a||K.d||K[' '])};
+  var K=keysDown, jf=Math.abs(joy.y)>0.14 ? joy.y : 0;
+  return {f:Math.max(-1, Math.min(1, (K.w?1:0)-(K.s?1:0)+jf)), v:Math.max(-1, Math.min(1, (K[' ']?1:0)-(K.shift?1:0)+joy.v)),
+          any:!!(K.w||K.s||K.a||K.d||K[' ']||joy.on||joy.v)};
 }
+(function(){
+  var st=document.getElementById('stick'), knob=document.getElementById('stick-knob'), id=null, R=40;
+  function move(e){
+    var b=st.getBoundingClientRect(), dx=e.clientX-(b.left+b.width/2), dy=e.clientY-(b.top+b.height/2), d=Math.sqrt(dx*dx+dy*dy);
+    if (d>R) { dx*=R/d; dy*=R/d; }
+    joy.x=dx/R; joy.y=-dy/R;
+    knob.style.transform='translate('+dx+'px,'+dy+'px)';
+  }
+  function end(e){
+    if (e.pointerId!==id) return;
+    id=null; joy.x=joy.y=0; joy.on=false; knob.style.transform=''; st.classList.remove('on');
+  }
+  st.addEventListener('pointerdown', function(e){
+    e.preventDefault(); e.stopPropagation();
+    id=e.pointerId; try { st.setPointerCapture(id); } catch(_) {}
+    joy.on=true; st.classList.add('on'); move(e); startPilot();
+  });
+  st.addEventListener('pointermove', function(e){ if (e.pointerId===id) { e.preventDefault(); move(e); } });
+  st.addEventListener('pointerup', end); st.addEventListener('pointercancel', end);
+  [['lift-up',1],['lift-dn',-1]].forEach(function(q){
+    var b=document.getElementById(q[0]);
+    b.addEventListener('pointerdown', function(e){ e.preventDefault(); e.stopPropagation(); joy.v=q[1]; b.classList.add('on'); startPilot(); });
+    ['pointerup','pointercancel','pointerleave'].forEach(function(ev){ b.addEventListener(ev, function(){ if (joy.v===q[1]) joy.v=0; b.classList.remove('on'); }); });
+    b.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+  });
+  st.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+})();
 function startPilot(){
   if (!booted || pianoOpen || robot.state==='pilot') return;
   if (camFocus) unfocusCam();
@@ -4950,7 +5036,7 @@ window.addEventListener('blur', function(){ keysDown={}; });
 function updatePilot(dt){
   var rp=robot.root.position, i, st, dx, dz;
   if (robot.state==='pilot') {
-    var turn=(keysDown.a?1:0)-(keysDown.d?1:0);
+    var turn=(keysDown.a?1:0)-(keysDown.d?1:0) - (Math.abs(joy.x)>0.2 ? joy.x : 0);
     if (turn) { camRig.uYaw+=turn*1.5*dt; camRig.lastInput=gt; }
     // fly up to an outpost and you dock with it
     for (i=0;i<STATIONS.length;i++){
