@@ -602,6 +602,17 @@
       #panel { -webkit-backdrop-filter:none; backdrop-filter:none; background:rgba(5,11,20,0.98); height:60vh; height:60dvh; }
       #panel-body .gif-grid { grid-template-columns:1fr; }
     }
+
+    /* ── "what can I do here" line shown while zoomed in on a robot or the map ── */
+    #focus-tip {
+      position:fixed; left:50%; bottom:calc(112px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:45;
+      max-width:92vw; padding:7px 14px; border-radius:6px; text-align:center;
+      background:rgba(4,12,24,0.78); border:1px solid rgba(127,231,255,0.28);
+      font-family:var(--f-mono); font-size:0.7rem; letter-spacing:1.8px; color:#cfeeff;
+      opacity:0; pointer-events:none; transition:opacity 0.4s;
+    }
+    #focus-tip.show { opacity:1; }
+    @media (max-width:768px) { #focus-tip { bottom:calc(128px + env(safe-area-inset-bottom)); font-size:0.6rem; letter-spacing:1px; } }
   </style>
 </head>
 <body>
@@ -643,11 +654,12 @@
     <li class="touch-only"><b style="color:#9dff9a">▲</b><span>Use the <em>stick</em> to fly it yourself</span></li>
     <li><b style="color:#ffcf7a">♪</b><span><em class="tap">Click</em> the robots or the piano</span></li>
   </ul>
-  <div class="g-foot"><span class="desktop-only">space ↑ · shift ↓ · H home</span><button id="g-sound">♪ SOUND ON</button></div>
+  <div class="g-foot"><span class="desktop-only">E / space ↑ · Q / shift ↓ · H home</span><button id="g-sound">♪ SOUND ON</button></div>
 </div>
-<button id="g-chip" aria-label="Show tips">?</button>
+<button id="g-chip" aria-label="Show tips">? TIPS</button>
 <div id="rl-hud"><canvas id="rl-hud-c" width="512" height="300"></canvas></div>
 <button id="zoom-out">← BACK TO UNIT-E</button>
+<div id="focus-tip"></div>
 <button id="go-home">⌂ FLY BACK TO BASE</button>
 <div id="stick" aria-label="Flight stick"><div id="stick-knob"></div></div>
 <div id="lift"><button id="lift-up" aria-label="Climb">▲</button><button id="lift-dn" aria-label="Dive">▼</button></div>
@@ -1786,6 +1798,25 @@ function metal(col, rough, metalness, emi, ei) {
   return m;
 }
 
+// Ships don't pop into existence: they jump in with a flash, stretched along their heading,
+// and jump out the same way.
+var flashes = [];
+function warpFlash(pos, col, size) {
+  var sp = new THREE.Sprite(new THREE.SpriteMaterial({map:starSpriteTex, color:col, transparent:true, opacity:0,
+    blending:THREE.AdditiveBlending, depthWrite:false, fog:false}));
+  sp.position.copy(pos); sp.scale.setScalar(0.01); scene.add(sp);
+  flashes.push({sp:sp, t:0, life:0.7, size:size||5});
+}
+function updateFlashes(dt) {
+  flashes = flashes.filter(function(f){
+    f.t += dt; var q = f.t/f.life;
+    if (q >= 1) { scene.remove(f.sp); f.sp.material.dispose(); return false; }
+    f.sp.scale.setScalar(f.size*(0.15 + Math.sin(Math.min(1, q*1.6)*Math.PI/2)*0.85));
+    f.sp.material.opacity = q < 0.15 ? q/0.15 : (1-q)*(1-q);
+    return true;
+  });
+}
+
 function spawnRocket() {
   var g = new THREE.Group();
   var white = metal(0xf2f4f7, 0.32, 0.35, 0x8a96a4, 0.35);
@@ -1848,8 +1879,9 @@ function spawnRocket() {
 
   var theta=Math.random()*Math.PI*2;
   var sy=1.5+Math.random()*3.5;
-  var sr=22;
+  var sr=30;
   g.position.set(Math.cos(theta)*sr, sy, Math.sin(theta)*sr);
+  g.scale.setScalar(0.001);
   var exitTheta=theta+Math.PI+(Math.random()-0.5)*1.1;
   var tgt=new THREE.Vector3(Math.cos(exitTheta)*22, sy+(Math.random()-0.5)*1.5, Math.sin(exitTheta)*22);
   var dir=new THREE.Vector3().subVectors(tgt, g.position).normalize();
@@ -1858,7 +1890,7 @@ function spawnRocket() {
   scene.add(g);
   var rHit = new THREE.Mesh(new THREE.SphereGeometry(1.3,8,6), HIT_MAT); g.add(rHit);
   var rk = {g:g, dir:dir, plume:plume, flames:[outer,mid,core], glow:glow, diamonds:diamonds,
-    spd:4+Math.random()*2.5, t:0, life:11+Math.random()*4, exL:exL, hit:rHit, boost:0, smokeT:0};
+    spd:4+Math.random()*2.5, t:0, life:13+Math.random()*4, exL:exL, hit:rHit, boost:0, smokeT:0};
   rHit.userData.rocket = rk;
   rockets.push(rk);
 }
@@ -1872,17 +1904,23 @@ function updateRockets(dt) {
     if (p >= 1) { scene.remove(rk.g); return false; }
     var boosting = rk.boost > 0;
     if (boosting) { rk.boost -= dt; rk.g.rotateY(dt*9); }
-    var spd = rk.spd*(boosting?3.2:1);
+    // jump in over the first second, jump out over the last
+    var left = rk.life - rk.t, kin = smooth(Math.min(1, rk.t/1.1)), kout = smooth(Math.min(1, left/0.9)), vis = kin*kout;
+    if (!rk.fIn) { rk.fIn = true; warpFlash(rk.g.position, 0xffd0a0, 6); }
+    if (left < 0.9 && !rk.fOut) { rk.fOut = true; warpFlash(rk.g.position, 0xffd0a0, 6); }
+    var stretch = 1 + (1-kin)*3 + (1-kout)*3;
+    rk.g.scale.set(Math.max(0.001, vis), Math.max(0.001, vis*stretch), Math.max(0.001, vis));
+    var spd = rk.spd*(boosting?3.2:1)*(1 + (1-kin)*4 + (1-kout)*5);
     rk.g.position.addScaledVector(rk.dir, spd*dt);
     var flick = 0.85 + Math.random()*0.3, fs = boosting ? 1.7 : 1;
     rk.plume.scale.set(fs*(0.95+Math.random()*0.1), fs*flick, fs*(0.95+Math.random()*0.1));
     rk.flames[0].material.opacity = 0.6*flick; rk.flames[1].material.opacity = 0.75*flick;
     rk.glow.material.opacity = 0.75 + Math.random()*0.25;
     rk.diamonds.forEach(function(d,i){ d.material.opacity = (0.55 + Math.random()*0.4)*(1 - i*0.2); });
-    rk.exL.intensity = 5.5*flick*(boosting?2:1)*(1-p*0.3);
+    rk.exL.intensity = 5.5*flick*(boosting?2:1)*(1-p*0.3)*vis;
     // smoke trail: puffs left behind at the nozzle, drifting slowly
     rk.smokeT -= dt;
-    if (rk.smokeT <= 0) {
+    if (rk.smokeT <= 0 && vis > 0.6) {
       rk.smokeT = (LOW_POWER ? 0.07 : 0.035) / (boosting ? 2 : 1);
       _rkN.set(0,-1.05,0); rk.g.localToWorld(_rkN);
       var v = rk.dir.clone().multiplyScalar(-0.6 - Math.random()*0.4);
@@ -1892,6 +1930,7 @@ function updateRockets(dt) {
     return true;
   });
   updateSmoke(dt);
+  updateFlashes(dt);
 }
 
 // ─── Robot ────────────────────────────────────────────────────────────────────
@@ -2112,7 +2151,7 @@ var Robot = (function(){
       var P=pilotInput(), yc=camRig.yaw;
       var ix=-Math.sin(yc)*P.f, iz=-Math.cos(yc)*P.f;
       var top=this.air>0.5 ? FLY_SPEED*0.85 : 3.2;
-      this.vx=damp(this.vx,ix*top,2.6,dt); this.vz=damp(this.vz,iz*top,2.6,dt); this.vy=damp(this.vy,P.v*4.5,3.5,dt);
+      this.vx=damp(this.vx,ix*top,2.6,dt); this.vz=damp(this.vz,iz*top,2.6,dt); this.vy=damp(this.vy,P.v*5,4.5,dt);
       r.position.x+=this.vx*dt; r.position.z+=this.vz*dt; this.alt+=this.vy*dt;
       var sp=Math.sqrt(this.vx*this.vx+this.vz*this.vz);
       if(sp>0.25) r.rotation.y+=angDiff(r.rotation.y,Math.atan2(this.vx,this.vz))*(1-Math.exp(-7*dt));
@@ -2122,7 +2161,7 @@ var Robot = (function(){
       var gp=groundAt(r.position.x,r.position.z,this.alt+0.05);
       if(gp!==null){
         if(this.alt<gp){ this.alt=gp; if(this.vy<0) this.vy=0; }
-        else if(P.v===0 && this.alt-gp<0.8) this.alt=damp(this.alt,gp,5,dt);
+        else if(P.v===0 && this.alt-gp<0.35) this.alt=damp(this.alt,gp,5,dt);   // only the last step down is automatic
         if(this.alt-gp<0.12) avoidProps(r.position);
       }
       // stay inside the chart; hulls and keels are solid
@@ -2834,6 +2873,7 @@ function openPiano() {
   if (typeof camFocus !== 'undefined' && camFocus) unfocusCam();
   if (emote) endEmote();
   camFocus = piano.focus; pianoOpen = true;
+  if (typeof focusTip === 'function') focusTip('');
   if (!soundOn) setSound(true);            // you came to play: sound on
   document.getElementById('hint').style.opacity = '0';
   buildPianoKeys();
@@ -3026,19 +3066,21 @@ STATIONS.forEach(function(data, idx){
 var dust=(function(){
   var N=LOW_POWER?140:280, R=16, base=new Float32Array(N*3), line=new Float32Array(N*6);
   for (var i=0;i<N*3;i++) base[i]=(Math.random()-0.5)*2*R;
-  var pg=new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(base,3));
-  var pm=new THREE.PointsMaterial({map:starSpriteTex, color:0xbfe6ff, size:0.09, transparent:true, opacity:0.5,
+  var pcol=new Float32Array(N*3), lcol=new Float32Array(N*6);
+  var pg=new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(base,3)); pg.setAttribute('color', new THREE.BufferAttribute(pcol,3));
+  var pm=new THREE.PointsMaterial({map:starSpriteTex, color:0xbfe6ff, size:0.09, transparent:true, opacity:0.5, vertexColors:true,
     sizeAttenuation:true, depthWrite:false, blending:THREE.AdditiveBlending});
   var pts=new THREE.Points(pg,pm); pts.frustumCulled=false; scene.add(pts);
-  var lg=new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.BufferAttribute(line,3));
-  var lm=new THREE.LineBasicMaterial({color:0x9fdcff, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending});
+  var lg=new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.BufferAttribute(line,3)); lg.setAttribute('color', new THREE.BufferAttribute(lcol,3));
+  var lm=new THREE.LineBasicMaterial({color:0x9fdcff, transparent:true, opacity:0, vertexColors:true, depthWrite:false, blending:THREE.AdditiveBlending});
   var ls=new THREE.LineSegments(lg,lm); ls.frustumCulled=false; scene.add(ls);
-  return {N:N, R:R, base:base, line:line, pg:pg, lg:lg, lm:lm};
+  return {N:N, R:R, base:base, line:line, pcol:pcol, lcol:lcol, pg:pg, lg:lg, lm:lm};
 })();
 
 var teleEl=document.getElementById('telemetry'), teleT=0;
 function updateDeepSpace(dt){
   updateBaseLife(dt);
+  updateHandsOn(dt);
   skyRoot.position.copy(camera.position);
   if (skyRoot.userData.sky) skyRoot.userData.sky.rotation.y=gt*0.0012;
   if (GIANT) GIANT.sphere.rotation.y+=dt*0.006;
@@ -3063,7 +3105,12 @@ function updateDeepSpace(dt){
     if (b[j+2]-c.z>D.R) b[j+2]-=W2; else if (b[j+2]-c.z<-D.R) b[j+2]+=W2;
     l[q]=b[j]; l[q+1]=b[j+1]; l[q+2]=b[j+2];
     l[q+3]=b[j]-v.x*k; l[q+4]=b[j+1]-v.y*k; l[q+5]=b[j+2]-v.z*k;
+    var edge=1-Math.max(Math.abs(b[j]-c.x), Math.abs(b[j+1]-c.y), Math.abs(b[j+2]-c.z))/D.R;      // 0 at the wrap boundary
+    var br=smooth(Math.max(0, Math.min(1, edge*3)));
+    D.pcol[j]=D.pcol[j+1]=D.pcol[j+2]=br;
+    D.lcol[q]=D.lcol[q+1]=D.lcol[q+2]=D.lcol[q+3]=D.lcol[q+4]=D.lcol[q+5]=br;
   }
+  D.pg.attributes.color.needsUpdate=true; D.lg.attributes.color.needsUpdate=true;
   D.pg.attributes.position.needsUpdate=true; D.lg.attributes.position.needsUpdate=true;
   D.lm.opacity=Math.max(0, Math.min(0.6, (sp-2.5)/9));
 
@@ -3186,6 +3233,7 @@ function waveAtUnitE(){
     side:THREE.DoubleSide, blending:THREE.AdditiveBlending, depthWrite:false}));
   beam.rotation.x = Math.PI; beam.position.y = 0.86; tg.add(beam);
   var mapG = new THREE.Group(); mapG.position.y = 1.18; tg.add(mapG);
+  B.mapG = mapG; B.ped = ped; B.mapDotHits = [];
   var lineM = new THREE.LineBasicMaterial({color:0x7fe7ff, transparent:true, opacity:0.45});
   var hr = new THREE.Mesh(new THREE.TorusGeometry(9.5*MAP_K,0.006,6,48), new THREE.MeshBasicMaterial({color:0x7fe7ff})); hr.rotation.x = Math.PI/2; mapG.add(hr);
   var hd = new THREE.Mesh(new THREE.CircleGeometry(9.5*MAP_K,32), new THREE.MeshBasicMaterial({color:0x00d4ff, transparent:true, opacity:0.16, side:THREE.DoubleSide, depthWrite:false}));
@@ -3198,7 +3246,7 @@ function waveAtUnitE(){
     var halo = glow(starSpriteTex, st.color, 0.3, 0.9); halo.position.set(x,y,z); mapG.add(halo);
     lp.push(new THREE.Vector3(0,0,0), new THREE.Vector3(x,0,z), new THREE.Vector3(x,0,z), new THREE.Vector3(x,y,z));
     var hit = new THREE.Mesh(new THREE.SphereGeometry(0.11,8,6), HIT_MAT); hit.position.set(x,y,z); mapG.add(hit);
-    islandMeshes[idx].push(hit);                         // click a dot on the map to fly to that outpost
+    islandMeshes[idx].push(hit); B.mapDotHits.push(hit); // (makes the dot count as its outpost for hover + click)
     B.mapDots.push(halo);
   });
   mapG.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(lp), lineM));
@@ -3225,7 +3273,7 @@ function waveAtUnitE(){
     var crate = new THREE.Mesh(new THREE.BoxGeometry(0.17,0.17,0.17), cm); crate.position.y = -0.2; g.add(crate);
     var lamp = glow(starSpriteTex, 0xffffff, 0.7, 0.9); lamp.position.y = -0.09; g.add(lamp);
     scene.add(g);
-    var D = {g:g, rotors:rotors, crate:crate, cm:cm, lamp:lamp, a:new THREE.Vector3(), b:new THREE.Vector3(), u:0, phase:'waitA', wait:first*1.7, st:0, yaw:0, dur:6};
+    var D = {g:g, rotors:rotors, crate:crate, cm:cm, lamp:lamp, a:new THREE.Vector3(), b:new THREE.Vector3(), u:0, phase:'waitA', wait:1.5+first*1.7, st:0, yaw:0, dur:6, carry:true, cs:0, dip:1};
     aim(D, first);
     g.position.copy(D.a);
     return D;
@@ -3283,27 +3331,32 @@ function updateBaseLife(dt){
     if (D.phase === 'waitA' || D.phase === 'waitB') {
       D.wait -= dt; bob = Math.sin(gt*3 + k)*0.05;
       if (D.wait <= 0) {
-        if (D.phase === 'waitA') { D.phase = 'out'; D.crate.visible = true; }
+        if (D.phase === 'waitA') { D.phase = 'out'; }
         else { D.phase = 'back'; }
       }
     } else {
       D.u += (D.phase === 'out' ? 1 : -1)*dt/D.dur;
       if (D.phase === 'out' && D.u >= 1) {
-        D.u = 1; D.phase = 'waitB'; D.wait = 1.6; D.crate.visible = false;        // delivered
-        D.g.getWorldPosition(_bl); _bl.y -= 0.2; spawnBurst(_bl, STATIONS[D.st].color, 12, 0.8, 0.09);
+        D.u = 1; D.phase = 'waitB'; D.wait = 2.2; D.carry = false;                // setting it down
+        D.g.getWorldPosition(_bl); _bl.y -= 0.9; spawnBurst(_bl, STATIONS[D.st].color, 12, 0.6, 0.08);
       } else if (D.phase === 'back' && D.u <= 0) {
-        D.u = 0; D.phase = 'waitA'; D.wait = 2 + Math.random()*2;
+        D.u = 0; D.phase = 'waitA'; D.wait = 3 + Math.random()*2; D.carry = true;  // next crate beams up from the deck
         baseLife.aim(D, (D.st + 1 + Math.floor(Math.random()*2)) % STATIONS.length);  // next job
-        D.crate.visible = true;
       }
     }
     var e = smooth(D.u), px = D.g.position.x, pz = D.g.position.z;
-    D.g.position.set(D.a.x + (D.b.x-D.a.x)*e, D.a.y + (D.b.y-D.a.y)*e + Math.sin(D.u*Math.PI)*1.3 + bob, D.a.z + (D.b.z-D.a.z)*e);
+    var waiting = D.phase === 'waitA' || D.phase === 'waitB';
+    D.dip = damp(D.dip||0, waiting ? 1 : 0, 2.2, dt);        // sink toward the deck while loading / unloading
+    D.cs = damp(D.cs||0, D.carry ? 1 : 0, D.carry ? 1.6 : 3, dt);
+    D.crate.visible = D.cs > 0.02;
+    D.crate.scale.setScalar(Math.max(0.001, D.cs));
+    D.crate.position.y = -0.2 - (D.carry ? (1-D.cs)*0.35 : (1-D.cs)*0.75);     // rises into the clamps / lowers onto the pad
+    D.g.position.set(D.a.x + (D.b.x-D.a.x)*e, D.a.y + (D.b.y-D.a.y)*e + Math.sin(D.u*Math.PI)*1.3 + bob - D.dip*0.5, D.a.z + (D.b.z-D.a.z)*e);
     var mx = D.g.position.x - px, mz = D.g.position.z - pz, sp = Math.sqrt(mx*mx+mz*mz)/Math.max(dt,1e-4);
     if (sp > 0.3 && sp < 30) D.yaw += angDiff(D.yaw, Math.atan2(mx, mz))*(1 - Math.exp(-5*dt));
     D.g.rotation.set(Math.min(0.35, sp*0.06), D.yaw, 0, 'YXZ');
     for (var r=0;r<4;r++) D.rotors[r].rotation.y += dt*(34 + r);
-    D.lamp.material.opacity = D.crate.visible ? 0.9 : 0.35 + 0.35*Math.sin(gt*8);
+    D.lamp.material.opacity = D.carry ? 0.5 + 0.4*D.cs : 0.35 + 0.35*Math.sin(gt*8);
   });
 }
 
@@ -3317,6 +3370,13 @@ function updateMiniLife(mr, dt){
   var busy = mr.greetT > 0 || (mr.pState && mr.pState !== 'orbit');
 
   // heads follow UNIT-E when it walks up, and tilt back to watch it fly overhead
+  var hx = rp.x - g.x, hz = rp.z - g.z;
+  if (booted && !busy && mr.greetCd <= 0 && robot.state === 'idle' && robot.air < 0.3 && hx*hx + hz*hz < 1.45*1.45 && Math.abs(robot.alt - g.y) < 0.6) {
+    mr.greetT = mr.type === 'patrol' ? 2.6 : 2.0; mr.greetCd = 12; mr.partner = UNIT_AS_PARTNER; mr.pop = 1;
+    miniSpeak(mr, pick(HI_LINES));
+    spawnBurst(new THREE.Vector3(g.x + hx*0.5, g.y + 0.75, g.z + hz*0.5), mr.info.col, 16, 0.9, 0.08);
+    if (!emote) startEmote();                              // UNIT-E answers
+  }
   var hov = hoverMini === mr && !busy && !camFocus;      // ...or at you, if your cursor is on them
   if (hov && !mr.wasHov) mr.perk = 1;
   mr.wasHov = hov; mr.perk = Math.max(0, (mr.perk||0) - dt*2.5);
@@ -3573,6 +3633,176 @@ function updateStationExtras(st, t, dt, hot){
   }
 }
 
+// ─── Hands-on ─────────────────────────────────────────────────────────────────
+// Zoom in on a bot (click it) and its work becomes something you can change:
+//   Franka → click a pad and the arm carries the cube there
+//   YOLO   → click an object to swap it for something new, then watch it get detected
+//   SAM    → click an object to drop a prompt point on it (again to clear the mask)
+//   RL     → click tiles to place or remove lava; the agent re-plans around it
+// Walk UNIT-E up to any of them for a high-five. The holo table zooms in too.
+
+var propHits = [], mapHits = [], mapTableHits = [], MAP_FOCUS = null;
+var CLICK_W = IS_TOUCH ? 'TAP' : 'CLICK';
+var FOCUS_TIPS = {
+  patrol: CLICK_W + ' IT AGAIN: IT TURNS ROUND AND SPRINTS',
+  franka: CLICK_W + ' A PAD AND THE ARM TAKES THE CUBE THERE',
+  yolo:   CLICK_W + ' AN OBJECT TO SWAP IT FOR SOMETHING NEW',
+  sam:    CLICK_W + ' AN OBJECT TO SEGMENT IT · AGAIN TO CLEAR',
+  rl:     CLICK_W + ' TILES TO PLACE OR REMOVE LAVA',
+  map:    CLICK_W + ' AN OUTPOST TO FLY THERE · DRAG TO LOOK ROUND'
+};
+var HI_LINES = ['HIGH FIVE, UNIT-E!', 'OH HI, BOSS.', 'NICE JETPACK.', 'UNIT-E! OVER HERE!', 'BACK FROM SPACE ALREADY?'];
+function focusTip(text){
+  var el = document.getElementById('focus-tip');
+  el.textContent = text || ''; el.classList.toggle('show', !!text);
+}
+function addProp(parent, geo, x, y, z, owner, fn){
+  var h = new THREE.Mesh(geo, HIT_MAT); h.position.set(x, y, z);
+  h.userData.propOwner = owner; h.userData.prop = fn; parent.add(h); propHits.push(h); return h;
+}
+function rlPaintTile(R, i, j){
+  var t = R.tiles[i][j], lava = !!R.lava[i+','+j], goal = (i===3&&j===3), start = (i===0&&j===0);
+  t.mat.color.setHex(lava?0x661818 : goal?0x665a10 : start?0x0e3a4a : 0x0e2233);
+  t.mat.emissive.setHex(lava?0xff3322 : goal?0xffcc22 : start?0x22ccff : 0x1a4466);
+  t.base = (lava||goal) ? 0.55 : 0.15;
+}
+// Shortest safe route to the flag from wherever the agent is: first step of it (random if walled in)
+function rlPlan(R){
+  var q = [[R.i,R.j]], prev = {}, seen = {}; seen[R.i+','+R.j] = 1;
+  while (q.length) {
+    var c = q.shift(); if (c[0]===3 && c[1]===3) break;
+    for (var a=0;a<4;a++){
+      var ni = c[0]+RL_DIRS[a][0], nj = c[1]+RL_DIRS[a][1], k = ni+','+nj;
+      if (ni<0||ni>3||nj<0||nj>3||seen[k]||R.lava[k]) continue;
+      seen[k] = 1; prev[k] = {from:c[0]+','+c[1], a:a}; q.push([ni,nj]);
+    }
+  }
+  if (!prev['3,3']) return Math.floor(Math.random()*4);
+  var act = 0, cur = '3,3';
+  while (prev[cur]) { act = prev[cur].a; cur = prev[cur].from; }
+  return act;
+}
+function focusMap(){
+  if (panelOpen) closePanel();
+  if (pianoOpen) unfocusCam();
+  camFocus = MAP_FOCUS;
+  zoomBtn.classList.add('show');
+  document.getElementById('rl-hud').classList.remove('show');
+  focusTip(FOCUS_TIPS.map);
+}
+
+(function(){
+  var by = {}; miniRobots.forEach(function(mr){ by[mr.type] = mr; });
+  function hexOf(n){ return '#' + ('000000' + n.toString(16)).slice(-6); }
+  function burstAt(obj, col){ obj.getWorldPosition(_bl); spawnBurst(_bl, col, 14, 0.8, 0.07); }
+
+  // ── Franka: a third pad, and you choose where the cube goes next ──
+  var fr = by.franka, F = fr.F;
+  var pm3 = new THREE.MeshBasicMaterial({color:0xff7744, transparent:true, opacity:0.35, side:THREE.DoubleSide, depthWrite:false});
+  var pad3 = new THREE.Mesh(new THREE.RingGeometry(0.068,0.085,32), pm3);
+  pad3.rotation.x = -Math.PI/2; pad3.position.set(F.bx+0.3, 0.008, F.bz); fr.m.g.add(pad3);
+  F.pads.push(pm3); F.padPos.push({x:F.bx+0.3, z:F.bz}); F.padGlow.push(0);
+  F.yaws = [F.yawA, F.yawB, 0]; F.at = 0; F.srcI = 0; F.dstI = 1; F.want = null; F.n = -1; F.userDst = false;
+  F.padPos.forEach(function(pp, i){
+    addProp(fr.m.g, new THREE.CylinderGeometry(0.12,0.12,0.14,12), pp.x, 0.07, pp.z, fr, function(){
+      var name = 'ABC'.charAt(i);
+      if (i === F.dstI) { miniSpeak(fr, 'PAD ' + name + '? ALREADY ON ITS WAY.'); return; }
+      F.want = i; fr.fast = 6; F.padGlow[i] = 1;
+      miniSpeak(fr, 'TARGET: PAD ' + name + '. NEXT MOVE.');
+    });
+  });
+
+  // ── YOLO: swap what's on the table ──
+  var yo = by.yolo, YCOL = ['#ff8800','#ffcc00','#ff4466'];
+  var YK = [['cube', new THREE.BoxGeometry(0.13,0.13,0.13), 0.13], ['ball', new THREE.SphereGeometry(0.075,20,14), 0.15],
+            ['cone', new THREE.ConeGeometry(0.075,0.18,20), 0.18], ['can', new THREE.CylinderGeometry(0.06,0.06,0.16,20), 0.16],
+            ['ring', new THREE.TorusGeometry(0.06,0.025,10,24), 0.17], ['gem', new THREE.OctahedronGeometry(0.085,0), 0.17]];
+  yo.dets.forEach(function(d, i){
+    d.kind = i;
+    var x = d.obj.position.x, z = d.obj.position.z;
+    addProp(yo.m.g, new THREE.SphereGeometry(0.13,10,8), x, 0.1, z, yo, function(){
+      d.kind = pickOther(YK.length, d.kind);
+      var K = YK[d.kind];
+      d.obj.geometry = K[1]; d.obj.position.y = K[2]/2;
+      yo.m.g.remove(d.label);
+      d.label = makeLabelSprite(K[0] + ' ' + (0.8 + Math.random()*0.19).toFixed(2), YCOL[i], '#0a0f14', 0.065);
+      d.label.position.set(x, K[2]+0.12, z); d.label.material.opacity = 0; yo.m.g.add(d.label);
+      d.v = 0; d.pop = 0; yo.fast = 4;                       // unseen until the scan comes round again
+      burstAt(d.obj, 0xffffff);
+      miniSpeak(yo, pick(['SOMETHING CHANGED. SCANNING...', 'NEW OBJECT? LET ME LOOK.', 'HOLD ON. WHAT IS THAT NOW?']));
+    });
+  });
+
+  // ── SAM: your click is the point prompt ──
+  var sa = by.sam;
+  sa.segs.forEach(function(sg, k){
+    sg.off = k*1.4;
+    addProp(sa.m.g, new THREE.SphereGeometry(0.13,10,8), sg.fl.position.x, 0.09, sg.fl.position.z, sa, function(){
+      var lt = ((sa.t - sg.off)%7 + 7)%7;
+      if (lt >= 0.3 && lt < 5.8) { sg.off = sa.t - 5.8; miniSpeak(sa, 'MASK CLEARED.'); return; }
+      var c = new THREE.Color().setHSL(Math.random(), 0.9, 0.62);
+      sg.ov.material.color.copy(c); sg.fl.material.color.copy(c); sg.rg.material.color.copy(c);
+      sg.off = sa.t;                                         // prompt point now, mask floods in right after
+      miniSpeak(sa, pick(['PROMPT RECEIVED. SEGMENTING.', 'ONE POINT IS ALL I NEED.', 'GOT IT. MASK INCOMING.']));
+    });
+  });
+
+  // ── RL: move the lava ──
+  var rl = by.rl, R = rl.R;
+  for (var i=0;i<4;i++) for (var j=0;j<4;j++) (function(i, j){
+    addProp(rl.m.g, new THREE.BoxGeometry(0.16,0.07,0.16), R.tx(i), 0.035, R.tz(j), rl, function(){
+      var key = i+','+j;
+      if ((i===0&&j===0) || (i===3&&j===3)) { miniSpeak(rl, 'NOT THAT ONE. I NEED IT.'); return; }
+      if (R.lava[key]) { delete R.lava[key]; miniSpeak(rl, 'LAVA GONE. NEW ROUTE!'); }
+      else {
+        if (Object.keys(R.lava).length >= 7) { miniSpeak(rl, 'THAT IS A LOT OF LAVA ALREADY.'); return; }
+        R.lava[key] = 1; miniSpeak(rl, pick(['LAVA! RE-PLANNING...', 'RUDE. BUT I CAN ADAPT.', 'NEW OBSTACLE. LEARNING AGAIN.']));
+      }
+      rlPaintTile(R, i, j); R.glow[i][j] = 1;
+      R.ep = Math.min(R.ep, 3);                              // the world changed: explore a bit before trusting the plan
+    });
+  })(i, j);
+
+  // ── Holo table: zoom in, then hover or click the outposts ──
+  var B = baseLife, mapG = B.mapG;
+  MAP_FOCUS = {type:'map', focusPt:new THREE.Vector3(MAP_POS.x, 1.3, MAP_POS.z), baseRot:0.55,
+               zoom:function(){ return (window.innerWidth/window.innerHeight) < 0.75 ? 0.25 : 0.2; }};
+  B.mapLabels = [];
+  STATIONS.forEach(function(st){
+    var l = makeLabelSprite(st.label, st.hex, '#0a0f14', 0.05);
+    l.position.set(st.px*MAP_K, st.py*MAP_K + 0.1, st.pz*MAP_K); l.material.opacity = 0; mapG.add(l); B.mapLabels.push(l);
+  });
+  B.homeLabel = makeLabelSprite('HOME BASE', '#00d4ff', '#0a0f14', 0.045); B.homeLabel.position.set(0, 0.09, 0); B.homeLabel.material.opacity = 0; mapG.add(B.homeLabel);
+  B.routeArr = new Float32Array(6);
+  var rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.BufferAttribute(B.routeArr, 3));
+  B.routeGeo = rg; B.routeMat = new THREE.LineBasicMaterial({color:0xffffff, transparent:true, opacity:0});
+  var rline = new THREE.Line(rg, B.routeMat); rline.frustumCulled = false; mapG.add(rline);
+  B.droneDots = B.drones.map(function(){
+    var sp = new THREE.Sprite(new THREE.SpriteMaterial({map:starSpriteTex, color:0xffffff, transparent:true, opacity:0.9, blending:THREE.AdditiveBlending, depthWrite:false}));
+    sp.scale.setScalar(0.1); mapG.add(sp); return sp;
+  });
+  var homeHit = new THREE.Mesh(new THREE.CylinderGeometry(9.5*MAP_K, 9.5*MAP_K, 0.08, 16), HIT_MAT); homeHit.userData.home = true; mapG.add(homeHit);
+  mapHits = B.mapDotHits.concat([homeHit]);
+  var shell = new THREE.Mesh(new THREE.SphereGeometry(0.95,12,10), HIT_MAT); mapG.add(shell);
+  mapTableHits = [B.ped, shell];
+})();
+
+function updateHandsOn(dt){
+  var B = baseLife, mf = camFocus === MAP_FOCUS, hs = (typeof hoveredSt === 'number' && hoveredSt >= 0) ? hoveredSt : -1;
+  B.mapLabels.forEach(function(l, k){ l.material.opacity = damp(l.material.opacity, (mf || k === hs) ? 1 : 0, 8, dt); });
+  B.homeLabel.material.opacity = damp(B.homeLabel.material.opacity, mf ? 1 : 0, 8, dt);
+  // a line from where you are to where you're pointing (or already heading)
+  var tgt = hs >= 0 ? hs : ((robot.state === 'walk' && activeIdx !== null && !robot.homing) ? activeIdx : -1), a = B.routeArr;
+  if (tgt >= 0) {
+    var st = STATIONS[tgt];
+    a[0] = B.me.position.x; a[1] = B.me.position.y; a[2] = B.me.position.z;
+    a[3] = st.px*MAP_K; a[4] = st.py*MAP_K; a[5] = st.pz*MAP_K;
+    B.routeGeo.attributes.position.needsUpdate = true;
+  }
+  B.routeMat.opacity = damp(B.routeMat.opacity, tgt >= 0 ? 0.55 + 0.3*Math.sin(gt*8) : 0, 10, dt);
+  B.drones.forEach(function(D, k){ var p = D.g.position; B.droneDots[k].position.set(p.x*MAP_K, p.y*MAP_K, p.z*MAP_K); });
+}
+
 var stationObjs = [];
 var labelHover = null;
 
@@ -3800,7 +4030,11 @@ var MINI_INFO = [
 var miniSayEl = document.getElementById('mini-say'), miniTagEl = document.getElementById('mini-tag'), miniTextEl = document.getElementById('mini-text');
 var miniSay = {mr:null, full:'', n:0, acc:0, hold:0, active:false};
 var _mv = new THREE.Vector3();
+// The little robots only talk on screen while you're at the base with them
+// (or if you've deliberately zoomed in on one from afar).
+function awayFromBase(){ var q=robot.root.position; return q.x*q.x+q.z*q.z > 9.7*9.7; }
 function miniSpeak(mr, text) {
+  if (awayFromBase() && camFocus !== mr) return;
   var hex = '#' + ('000000' + mr.info.col.toString(16)).slice(-6);
   miniSayEl.style.setProperty('--c', hex);
   miniTagEl.textContent = mr.info.tag;
@@ -3810,6 +4044,7 @@ function miniSpeak(mr, text) {
 }
 function updateMiniSpeech(dt) {
   if (!miniSay.active) return;
+  if (awayFromBase() && camFocus !== miniSay.mr) { miniSay.active = false; miniSayEl.classList.remove('show'); return; }   // left the base mid-sentence
   if (miniSay.n < miniSay.full.length) {
     miniSay.acc += dt*45;
     var k = Math.floor(miniSay.acc);
@@ -4079,10 +4314,12 @@ function focusMini(mr) {
   document.getElementById('rl-hud').classList.toggle('show', mr.type === 'rl');
   miniRobots.forEach(function(o){ if (o.R) o.R.chart.visible = (o !== mr); });
   document.getElementById('hint').style.opacity = '0';
+  focusTip(FOCUS_TIPS[mr.type]);
 }
 function unfocusCam() {
   if (!camFocus) return;
   camFocus = null;
+  focusTip('');
   zoomBtn.classList.remove('show');
   closePianoUI();
   document.getElementById('rl-hud').classList.remove('show');
@@ -4271,7 +4508,7 @@ function spawnUfo() {
   var side = Math.random() < 0.5 ? 1 : -1;
   var from = new THREE.Vector3(-34*side, 7.5+Math.random()*1.5, -27-Math.random()*4);
   var to   = new THREE.Vector3( 34*side, 7.5+Math.random()*1.5, -26-Math.random()*4);
-  g.position.copy(from); scene.add(g);
+  g.position.copy(from); g.scale.setScalar(0.001); scene.add(g);
   ufo = {g:g, spinG:spinG, from:from, to:to, t:0, dur:15, beamMat:beamMat, lights:lights, glow:glow, hit:hit,
     alien:alien, coreGlow:coreGlow, flee:false, fleeT:0};
   hit.userData.ufo = ufo;
@@ -4406,6 +4643,11 @@ function updateSpace(dt) {
       u.g.position.lerpVectors(u.from, u.to, e);
       u.g.position.y += Math.sin(u.t*2.2)*0.22;
       u.g.rotation.z = Math.sin(u.t*1.4)*0.12;
+      var uLeft = u.dur - u.t, uIn = smooth(Math.min(1, u.t/1.2)), uOut = smooth(Math.min(1, uLeft/1.0));
+      if (!u.fIn) { u.fIn = true; warpFlash(u.g.position, 0x8fffe8, 7); }
+      if (uLeft < 1.0 && !u.fOut) { u.fOut = true; warpFlash(u.g.position, 0x8fffe8, 7); }
+      u.g.scale.setScalar(Math.max(0.001, uIn*uOut));
+      u.g.position.y += (1-uOut)*7;                           // zips up and away as it leaves
       var beamOn = s > 0.4 && s < 0.6 ? Math.sin((s-0.4)/0.2*Math.PI) : 0;
       u.beamMat.opacity = beamOn*0.32;
       u.glow.intensity = 1.2 + beamOn*2;
@@ -4416,7 +4658,7 @@ function updateSpace(dt) {
       u.g.position.y += (3 + u.fleeT*18)*dt;
       u.g.position.x += (u.to.x > u.from.x ? 1 : -1)*(4 + u.fleeT*10)*dt;
       u.g.rotation.y += dt*18;
-      u.g.scale.setScalar(Math.max(0.05, 1 - u.fleeT*0.5));
+      u.g.scale.setScalar(Math.max(0.005, 1 - u.fleeT*0.62));
       if (u.fleeT > 1.6) { scene.remove(u.g); ufo = null; nextUfo = 10 + Math.random()*8; }
     }
   }
@@ -4670,9 +4912,18 @@ renderer.domElement.addEventListener('click', function(e) {
   }
 
   if (raycaster.intersectObjects(piano.meshes).length) { openPiano(); return; }
+  if (camFocus) {
+    var ph = raycaster.intersectObjects(propHits);
+    if (ph.length && ph[0].object.userData.propOwner === camFocus) { ph[0].object.userData.prop(ph[0]); return; }
+    if (camFocus === MAP_FOCUS) {
+      var mh = raycaster.intersectObjects(mapHits);
+      if (mh.length) { if (mh[0].object.userData.home) goHomeBase(); else navigateTo(mh[0].object.userData.stIdx); return; }
+    }
+  }
   var near = pickMiniScreen(e.clientX, e.clientY);
   if (near) { pokeMini(near); return; }
   if (pianoNear(e.clientX, e.clientY)) { openPiano(); return; }
+  if (!camFocus && raycaster.intersectObjects(mapTableHits).length) { focusMap(); return; }   // first click on the holo table zooms in
 
   var hits=raycaster.intersectObjects(interactiveList());
   if(hits.length){
@@ -4700,7 +4951,10 @@ renderer.domElement.addEventListener('mousemove', function(e) {
   var hu=hits.length?hits[0].object.userData:null;
   hoveredSt=(hu&&hu.stIdx!==undefined)?hu.stIdx:null;
   hoverMini=pickMiniScreen(e.clientX,e.clientY);
-  renderer.domElement.style.cursor=(hits.length||hoverMini||pianoNear(e.clientX,e.clientY))?'pointer':'grab';
+  var overProp=false;
+  if (camFocus) { var hp=raycaster.intersectObjects(propHits); overProp=!!(hp.length && hp[0].object.userData.propOwner===camFocus); }
+  else overProp=raycaster.intersectObjects(mapTableHits).length>0;
+  renderer.domElement.style.cursor=(hits.length||hoverMini||overProp||pianoNear(e.clientX,e.clientY))?'pointer':'grab';
 
   if(robot.state==='idle'){
     var fp2=new THREE.Vector3(); raycaster.ray.intersectPlane(floorPlane,fp2);
@@ -4979,12 +5233,12 @@ var camRig = {yaw:0.95, pitch:0.6, dist:46, look:1, fov:camFov(), uYaw:0, uPitch
 
 // ── Flying it yourself: W / S thrust, A / D turn, Space / Shift climb and dive ──
 var keysDown={};
-var PILOT_KEYS={w:1, a:1, s:1, d:1, ' ':1, shift:1};
+var PILOT_KEYS={w:1, a:1, s:1, d:1, ' ':1, shift:1, e:1, q:1};   // Space or E climbs, Shift or Q dives
 var joy={x:0, y:0, v:0, on:false};                 // thumb stick + climb / dive buttons on touch screens
 function pilotInput(){
   var K=keysDown, jf=Math.abs(joy.y)>0.14 ? joy.y : 0;
-  return {f:Math.max(-1, Math.min(1, (K.w?1:0)-(K.s?1:0)+jf)), v:Math.max(-1, Math.min(1, (K[' ']?1:0)-(K.shift?1:0)+joy.v)),
-          any:!!(K.w||K.s||K.a||K.d||K[' ']||joy.on||joy.v)};
+  return {f:Math.max(-1, Math.min(1, (K.w?1:0)-(K.s?1:0)+jf)), v:Math.max(-1, Math.min(1, ((K[' ']||K.e)?1:0)-((K.shift||K.q)?1:0)+joy.v)),
+          any:!!(K.w||K.s||K.a||K.d||K[' ']||K.e||K.q||K.shift||joy.on||joy.v)};
 }
 (function(){
   var st=document.getElementById('stick'), knob=document.getElementById('stick-knob'), id=null, R=40;
@@ -5027,8 +5281,10 @@ document.addEventListener('keydown', function(e){
   var k=e.key.toLowerCase();
   if (!PILOT_KEYS[k]) return;
   if (k===' ') e.preventDefault();
+  // a button you clicked earlier keeps keyboard focus and would swallow Space (and "click" itself): let go of it
+  var ae=document.activeElement; if (ae && ae!==document.body && ae.blur) ae.blur();
   keysDown[k]=true;
-  if (k!=='shift' && !e.repeat) startPilot();    // a fresh press takes the controls (Shift alone doesn't)
+  if (!e.repeat && (k!=='shift' || !panelOpen)) startPilot();   // a fresh press takes the controls
 });
 document.addEventListener('keyup', function(e){ delete keysDown[e.key.toLowerCase()]; });
 window.addEventListener('blur', function(){ keysDown={}; });
@@ -5119,8 +5375,15 @@ var _tmpV = new THREE.Vector3();
 function updateFranka(mr, dt) {
   var F=mr.F, m=mr.m, T=6;
   var n=Math.floor(mr.t/T), u=(mr.t%T)/T;
-  var srcI=(n%2), dstI=1-srcI;
-  var src=srcI?F.yawB:F.yawA, dst=srcI?F.yawA:F.yawB;
+  if (n!==F.n) {                                  // new move: the cube is wherever the last one left it
+    if (F.n>=0) F.at=F.dstI;
+    F.n=n; F.srcI=F.at;
+    if (F.want!==null && F.want!==F.at) { F.dstI=F.want; F.userDst=true; }        // you picked a pad
+    else { F.dstI=(F.at+1+Math.floor(Math.random()*2))%3; F.userDst=false; }
+    F.want=null;
+  }
+  var srcI=F.srcI, dstI=F.dstI;
+  var src=F.yaws[srcI], dst=F.yaws[dstI];
   var K=F.keys, k=0;
   while(k<K.length-2 && u>K[k+1][0]) k++;
   var a=K[k], b=K[k+1], f=smooth((u-a[0])/(b[0]-a[0]));
@@ -5147,7 +5410,11 @@ function updateFranka(mr, dt) {
     F.lastPlaced=n; F.padGlow[dstI]=1; mr.pop=1; mr.popTxt='✓';
     F.cube.getWorldPosition(_tmpV); spawnBurst(_tmpV, 0xff8855, 14, 0.7, 0.07);
   }
-  for (var i=0;i<2;i++){ F.padGlow[i]=Math.max(0,F.padGlow[i]-dt*1.2); F.pads[i].opacity=0.3+F.padGlow[i]*0.6; }
+  for (var i=0;i<3;i++){
+    F.padGlow[i]=Math.max(0,F.padGlow[i]-dt*1.2);
+    var asked=(i===F.want) || (F.userDst && i===dstI && u<0.71);          // the pad you chose keeps blinking until the cube lands
+    F.pads[i].opacity=Math.min(1, 0.3+F.padGlow[i]*0.6+(asked ? 0.35+0.25*Math.sin(mr.t*10) : 0));
+  }
 
   // supervisor watches the cube and taps the tablet
   var la=Math.atan2(F.cube.position.x, F.cube.position.z);
@@ -5182,7 +5449,7 @@ function updateSam(mr, dt) {
   mr.curtainMat.opacity=0.06+Math.abs(Math.sin(mr.t*3))*0.06;
   var focus=0, best=99;
   mr.segs.forEach(function(s,k){
-    var lt=((mr.t-k*1.4)%7+7)%7;
+    var lt=((mr.t-s.off)%7+7)%7;
     var pp = lt<0.25 ? lt/0.25 : 1;
     var po = lt<0.5 ? 1 : Math.max(0,1-(lt-0.5)/0.4);
     s.pr.scale.setScalar(0.22*pp); s.pr.material.opacity=po;
@@ -5244,7 +5511,7 @@ function updateRL(mr, dt) {
       R.timer=0.45;
     } else {
       var eps=Math.max(0.05, 0.8*Math.pow(0.82,R.ep));
-      var act = Math.random()<eps ? Math.floor(Math.random()*4) : rlPolicy(R.i,R.j);
+      var act = Math.random()<eps ? Math.floor(Math.random()*4) : rlPlan(R);
       R.fi=R.i; R.fj=R.j;
       R.i=Math.max(0,Math.min(3,R.i+RL_DIRS[act][0]));
       R.j=Math.max(0,Math.min(3,R.j+RL_DIRS[act][1]));
