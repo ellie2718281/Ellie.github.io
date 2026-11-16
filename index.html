@@ -658,6 +658,19 @@
     .flipcard:focus-visible { outline:2px solid var(--accent); outline-offset:4px; border-radius:16px; }
     @media (max-width:768px) { .flipcard { margin:0 0 18px; } }
     @media (prefers-reduced-motion:reduce) { .flipcard .flip-inner { transition:none; } }
+
+    /* Flip card, belt and braces: some browsers ignore backface-visibility here and draw BOTH sides at once
+       (one mirrored over the other). So the hidden side is also switched off outright, timed to the moment
+       the card is edge-on, which works everywhere. */
+    .flipcard .flip-inner { -webkit-transform-style:preserve-3d; }
+    .flipcard .flip-front { transform:rotateY(0deg); }
+    .flipcard .flip-face { transition:visibility 0s linear 0.3s; }
+    .flipcard .flip-front { visibility:visible; }
+    .flipcard .flip-back { visibility:hidden; }
+    .flipcard.flipped .flip-front { visibility:hidden; }
+    .flipcard.flipped .flip-back { visibility:visible; }
+    .flipcard .flip-ph i { max-width:86%; line-height:1.5; }
+    @media (prefers-reduced-motion:reduce) { .flipcard .flip-face { transition:none; } }
   </style>
 </head>
 <body>
@@ -777,17 +790,18 @@ var STATIONS = [
   {
     id:'about', label:'ABOUT', color:0x00d4ff, hex:'#00d4ff', px:0, py:2.0, pz:-20,
     eyebrow:'01 · ABOUT', title:"Hi, I'm Ellie.",
-    body:`<!-- PHOTO CARD: put your two pictures at images/photo-1.jpg and images/photo-2.jpg (or change the src below).
-     Until those files exist, each side shows a placeholder. The card is 16:9 (landscape). -->
+    body:`<!-- PHOTO CARD: put your two pictures in the images/ folder as photo-1 and photo-2.
+     Any of .jpg .jpeg .png .webp works, upper or lower case, and photo1 / photo_1 / image1 / image-1 are found too
+     (see PHOTO_NAMES / PHOTO_EXTS in the script). Until a file is found, that side shows a placeholder. 16:9. -->
 <button type="button" class="flipcard" aria-label="Photo card, click to flip" aria-pressed="false">
   <span class="flip-inner">
     <span class="flip-face flip-front">
       <span class="flip-ph"><b>PHOTO 1</b><i>images/photo-1.jpg</i></span>
-      <img src="./images/photo-1.jpg" alt="Ellie Chang" onerror="this.remove()">
+      <img data-photo="1" alt="Ellie Chang">
     </span>
     <span class="flip-face flip-back">
       <span class="flip-ph"><b>PHOTO 2</b><i>images/photo-2.jpg</i></span>
-      <img src="./images/photo-2.jpg" alt="Ellie Chang, second photo" onerror="this.remove()">
+      <img data-photo="2" alt="Ellie Chang, second photo">
     </span>
   </span>
   <span class="flip-hint">↻ FLIP</span>
@@ -5051,6 +5065,7 @@ function openPanel(data) {
   document.getElementById('panel-title').textContent=data.title;
   document.getElementById('panel-body').innerHTML=data.body;
   panelEl.scrollTop=0;
+  loadPhotos(panelEl);
   panelEl.style.setProperty('--accent', data.hex);
   panelEl.classList.add('open'); panelShown=true;
   document.getElementById('reading-veil').classList.add('on');
@@ -5091,6 +5106,31 @@ var goHomeEl=document.getElementById('go-home');
 goHomeEl.addEventListener('click', function(e){ e.stopPropagation(); goHomeBase(); });
 
 document.getElementById('panel-close').addEventListener('click', closePanel);
+// photo card: find each picture whatever it was saved as. File names are case-sensitive on most web hosts,
+// so "photo-2.JPG" or "photo-2.png" would silently fail if we only asked for "photo-2.jpg".
+var PHOTO_NAMES = ['photo-N', 'photoN', 'photo_N', 'imageN', 'image-N', 'image_N'];
+var PHOTO_EXTS  = ['jpg', 'jpeg', 'png', 'webp', 'JPG', 'PNG'];
+var PHOTO_DIRS  = ['./images/', './', './img/'];          // looked in, in this order
+var photoFound = {};
+function loadPhotos(root) {
+  Array.prototype.forEach.call(root.querySelectorAll('img[data-photo]'), function(img){
+    var n = img.getAttribute('data-photo');
+    if (photoFound[n]) { img.src = photoFound[n]; return; }
+    var tries = [];
+    PHOTO_DIRS.forEach(function(dir){ PHOTO_NAMES.forEach(function(nm){ PHOTO_EXTS.forEach(function(ex){ tries.push(dir + nm.replace('N', n) + '.' + ex); }); }); });
+    var i = 0;
+    img.style.display = 'none';
+    img.onload = function(){ photoFound[n] = tries[i]; img.style.display = ''; };
+    img.onerror = function(){
+      i++;
+      if (i < tries.length) { img.src = tries[i]; return; }
+      var note = img.parentNode.querySelector('.flip-ph i');           // nothing matched: say so on the placeholder
+      if (note) note.textContent = 'not found: images/photo-' + n + '.jpg';
+      img.remove();
+    };
+    img.src = tries[0];
+  });
+}
 // photo card: one click flips to the other picture, the next flips back
 panelEl.addEventListener('click', function(e){
   var card = e.target.closest ? e.target.closest('.flipcard') : null;
